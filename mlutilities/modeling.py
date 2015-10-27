@@ -21,6 +21,13 @@ def tuneModel(dataSet, modelCreationConfiguration):
                                                            refit=False)
     gridSearchPredictor.fit(X, y)
 
+    # GridSearchCV returns negative scores for loss functions (like MSE) so that highest score is best, so this
+    # must be corrected for reporting
+    if modelCreationConfiguration.scoreMethod == 'mean_squared_error':
+        bestScore = -gridSearchPredictor.best_score_
+    else:
+        bestScore = gridSearchPredictor.best_score_
+
     # Create new TunedModelConfiguration object
     tunedModelConfiguration = mlutilities.types.TunedModelConfiguration('Tuned ' + modelCreationConfiguration.description \
                                                                             + ' for DataSet: ' + dataSet.description,
@@ -28,7 +35,7 @@ def tuneModel(dataSet, modelCreationConfiguration):
                                                                         modelCreationConfiguration.modelMethod,
                                                                         gridSearchPredictor.best_params_,
                                                                         modelCreationConfiguration.scoreMethod,
-                                                                        gridSearchPredictor.best_score_,
+                                                                        bestScore,
                                                                         gridSearchPredictor.grid_scores_)
     return tunedModelConfiguration
 

@@ -49,6 +49,7 @@ trainDataSets, testDataSets = mlutilities.dataTransformation.splitDataSets(allDa
 # Tune models
 print('Tuning models.')
 scoreMethod = 'mean_squared_error'
+# scoreMethod = 'r2'
 ridgeParameters = [{'alpha': [0.1, 0.5, 1.0],
                     'normalize': [True, False]}]
 ridgeConfig = mlutilities.types.ModelCreationConfiguration('Ridge regression scored by mean_squared_error',
@@ -65,10 +66,14 @@ modelCreationConfigs = [ridgeConfig, randomForestConfig]
 
 
 tunedRidgeConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
-for item in sorted(tunedRidgeConfigs, key=lambda x: -x.bestScore):
+if scoreMethod == 'mean_squared_error':
+    sortedTunedRidgeConfigs = sorted(tunedRidgeConfigs, key=lambda x: x.bestScore)
+else:
+    sortedTunedRidgeConfigs = sorted(tunedRidgeConfigs, key=lambda x: -x.bestScore)
+for item in sortedTunedRidgeConfigs:
     print('Entry:')
     print(item.description)
     print(item.parameters)
-    print(item.bestScore)
+    print('Training score:', item.bestScore)
     print()
 
