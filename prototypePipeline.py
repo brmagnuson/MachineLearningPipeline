@@ -64,8 +64,9 @@ randomForestConfig = mlutilities.types.ModelCreationConfiguration('Random Forest
                                                                   scoreMethod)
 modelCreationConfigs = [ridgeConfig, randomForestConfig]
 
-
 tunedRidgeConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
+
+# Model tuning result reporting
 if scoreMethod == 'mean_squared_error':
     sortedTunedRidgeConfigs = sorted(tunedRidgeConfigs, key=lambda x: x.bestScore)
 else:
