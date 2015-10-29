@@ -1,3 +1,4 @@
+import pickle
 import sklearn.feature_selection
 import sklearn.decomposition
 import sklearn.linear_model
@@ -9,6 +10,7 @@ import mlutilities.modeling
 
 # Get list of data sets.
 print('Reading input data sets.')
+picklePath = 'Pickles/'
 basePath = 'Data/'
 myfeaturesIndex = 5
 myLabelIndex = 4
@@ -20,11 +22,18 @@ dryYearsDataSet = mlutilities.types.DataSet('Dry Years',
                                             basePath + 'jul_IntMnt_driest31.csv',
                                             featuresIndex=myfeaturesIndex,
                                             labelIndex=myLabelIndex)
-regularDataSets = [allYearsDataSet, dryYearsDataSet]
+# regularDataSets = [allYearsDataSet, dryYearsDataSet]
+
+# pickle.dump(regularDataSets, open(picklePath + 'regularDataSets.p', 'wb'))
+regularDataSets = pickle.load(open(picklePath + 'regularDataSets.p', 'rb'))
 
 # Get scaled data sets
 print('Scaling data sets.')
-scaledDataSets = mlutilities.dataTransformation.scaleDataSets(regularDataSets)
+# scaledDataSets = mlutilities.dataTransformation.scaleDataSets(regularDataSets)
+#
+# pickle.dump(scaledDataSets, open(picklePath + 'scaledDataSets.p', 'wb'))
+scaledDataSets = pickle.load(open(picklePath + 'scaledDataSets.p', 'rb'))
+
 allDataSets = regularDataSets + scaledDataSets
 
 # Perform feature engineering
@@ -38,13 +47,22 @@ pcaConfiguration = mlutilities.types.FeatureEngineeringConfiguration('PCA n10',
                                                                      sklearn.decomposition.PCA,
                                                                      {'n_components':10})
 featureEngineeringConfigurations = [varianceThresholdConfiguration, pcaConfiguration]
-featureEngineeredDatasets = mlutilities.dataTransformation.engineerFeaturesForDataSets(allDataSets, featureEngineeringConfigurations)
-allDataSets += featureEngineeredDatasets
+# featureEngineeredDatasets = mlutilities.dataTransformation.engineerFeaturesForDataSets(allDataSets, featureEngineeringConfigurations)
+# allDataSets += featureEngineeredDatasets
+#
+# pickle.dump(allDataSets, open(picklePath + 'allDataSets.p', 'wb'))
+allDataSets = pickle.load(open(picklePath + 'allDataSets.p', 'rb'))
 
 # Train/test split
 print('Splitting into testing & training data.')
 testProportion = 0.25
-trainDataSets, testDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion)
+# trainDataSets, testDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion)
+#
+# pickle.dump(trainDataSets, open(picklePath + 'trainDataSets.p', 'wb'))
+# pickle.dump(testDataSets, open(picklePath + 'testDataSets.p', 'wb'))
+
+trainDataSets = pickle.load(open(picklePath + 'trainDataSets.p', 'rb'))
+testDataSets = pickle.load(open(picklePath + 'testDataSets.p', 'rb'))
 
 # Tune models
 print('Tuning models.')
@@ -64,14 +82,17 @@ randomForestConfig = mlutilities.types.ModelCreationConfiguration('Random Forest
                                                                   scoreMethod)
 modelCreationConfigs = [ridgeConfig, randomForestConfig]
 
-tunedRidgeConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
+# tunedModelConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
+#
+# pickle.dump(tunedModelConfigs, open(picklePath + 'tunedModelConfigs.p', 'wb'))
+tunedModelConfigs = pickle.load(open(picklePath + 'tunedModelConfigs.p', 'rb'))
 
 # Model tuning result reporting
 if scoreMethod == 'mean_squared_error':
-    sortedTunedRidgeConfigs = sorted(tunedRidgeConfigs, key=lambda x: x.bestScore)
+    sortedTunedModelConfigs = sorted(tunedModelConfigs, key=lambda x: x.bestScore)
 else:
-    sortedTunedRidgeConfigs = sorted(tunedRidgeConfigs, key=lambda x: -x.bestScore)
-for item in sortedTunedRidgeConfigs:
+    sortedTunedModelConfigs = sorted(tunedModelConfigs, key=lambda x: -x.bestScore)
+for item in sortedTunedModelConfigs:
     print('Entry:')
     print(item.description)
     print(item.parameters)
