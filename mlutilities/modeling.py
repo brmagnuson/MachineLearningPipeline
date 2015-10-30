@@ -1,3 +1,4 @@
+import copy
 import sklearn.grid_search
 import mlutilities.types
 
@@ -9,7 +10,6 @@ def tuneModel(dataSet, modelCreationConfiguration):
     :return:
     """
     # Get features and label from dataSet
-    # A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples,), for example using ravel().
     X = dataSet.featuresDataFrame
     y = dataSet.labelSeries
 
@@ -47,10 +47,29 @@ def tuneModels(dataSets, modelCreationConfigurations):
     :param modelCreationConfigurations:
     :return:
     """
-
     tunedModelConfigurations = []
     for dataSet in dataSets:
         for modelCreationConfiguration in modelCreationConfigurations:
             tunedModelConfiguration = tuneModel(dataSet, modelCreationConfiguration)
             tunedModelConfigurations.append(tunedModelConfiguration)
     return tunedModelConfigurations
+
+
+def applyModel(tunedModelConfiguration, trainDataSet, testDataSet):
+    """
+
+    :param tunedModelConfig:
+    :param trainDataSet:
+    :param testDataSet:
+    :return:
+    """
+    # Get features and label from dataSet
+    trainFeatures = trainDataSet.featuresDataFrame
+    trainLabel = trainDataSet.labelSeries
+    testFeatures = testDataSet.featuresDataFrame
+    testLabel = testDataSet.labelSeries
+
+    # Train model
+    predictor = tunedModelConfiguration.modelMethod(**tunedModelConfiguration.parameters)
+
+

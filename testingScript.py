@@ -16,7 +16,8 @@ print(allYearsDataSet)
 
 # Train/test split
 testProportion = 0.25
-trainDataSet, testDataSet = mlutilities.dataTransformation.splitDataSet(allYearsDataSet, testProportion)
+splitDataSet = mlutilities.dataTransformation.splitDataSet(allYearsDataSet, testProportion)
+trainDataSet = splitDataSet.trainDataSet
 
 parameters = [{'alpha': [0.1, 0.5, 1.0], 'normalize': [True, False]}]
 ridgeConfig = mlutilities.types.ModelCreationConfiguration('Ridge regression scored by mean_squared_error',
@@ -28,3 +29,5 @@ print(ridgeConfig)
 print()
 tunedRidgeConfig = mlutilities.modeling.tuneModel(trainDataSet, ridgeConfig)
 print(tunedRidgeConfig)
+print()
+print(tunedRidgeConfig.parameters)
