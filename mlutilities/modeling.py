@@ -56,7 +56,7 @@ def tuneModels(dataSets, tuneModelConfigurations):
     return tuneModelResults
 
 
-def applyModel(modelMethod, modelParameters, trainDataSet, testDataSet):
+def applyModel(applyModelConfiguration):
     """
 
     :param tunedModelConfig:
@@ -65,15 +65,35 @@ def applyModel(modelMethod, modelParameters, trainDataSet, testDataSet):
     :return:
     """
     # Get features and label from dataSet
-    trainFeatures = trainDataSet.featuresDataFrame
-    trainLabel = trainDataSet.labelSeries
-    testFeatures = testDataSet.featuresDataFrame
-    testLabel = testDataSet.labelSeries
+    trainFeatures = applyModelConfiguration.trainDataSet.featuresDataFrame
+    trainLabel = applyModelConfiguration.trainDataSet.labelSeries
+    testFeatures = applyModelConfiguration.testDataSet.featuresDataFrame
+    testLabel = applyModelConfiguration.testDataSet.labelSeries
 
     # Train model
-    predictor = modelMethod(**modelParameters)
+    predictor = applyModelConfiguration.modelMethod(**applyModelConfiguration.parameters)
     predictor.fit(trainFeatures, trainLabel)
 
     # Predict
     testPredictions = predictor.predict(testFeatures)
 
+    # Build ApplyModelResult
+    applyModelResult = mlutilities.types.ApplyModelResult(applyModelConfiguration.description + ' Result',
+                                                          testPredictions,
+                                                          applyModelConfiguration.testDataSet,
+                                                          applyModelConfiguration.modelMethod,
+                                                          applyModelConfiguration.parameters)
+    return applyModelResult
+
+
+def applyModels(applyModelConfigurations):
+    """
+    Wrapper function to loop through multiple ApplyModelConfigurations
+    :param applyModelConfigurations:
+    :return:
+    """
+    applyModelResults = []
+    for applyModelConfiguration in applyModelConfigurations:
+        applyModelResult = applyModel(applyModelConfiguration)
+        applyModelResults.append(applyModelResult)
+    return applyModelResults
