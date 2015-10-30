@@ -30,6 +30,16 @@ class DataSet:
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + ', Path: \'' + self.path + '\''
 
+    def __eq__(self, other):
+        """
+        Compares two data sets on the basis of their paths
+        """
+        return (isinstance(other, self.__class__)
+            and self.path == other.path)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 class SplitDataSet:
     """
@@ -122,12 +132,13 @@ class ApplyModelResult:
     """
 
     """
-    def __init__(self, description, testPredictions, testDataSet, modelMethod, parameters):
+    def __init__(self, description, testPredictions, testDataSet, modelMethod, parameters, score):
         self.description = description
         self.testPredictions = testPredictions
         self.testDataSet = testDataSet
         self.modelMethod = modelMethod
         self.parameters = parameters
+        self.score = score
 
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
