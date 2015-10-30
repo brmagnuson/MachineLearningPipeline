@@ -70,9 +70,8 @@ class TunedModelConfiguration:
     def __init__(self, description, dataSet, modelMethod, parameters, scoreMethod, bestScore, gridScores):
         self.description = description
         self.dataSet = dataSet
-        self.modelMethod = modelMethod,
-        # Makes sure self.parameters is a dictionary rather than a tuple containing a dictionary
-        self.parameters = copy.deepcopy(parameters)
+        self.modelMethod = modelMethod
+        self.parameters = parameters
         self.scoreMethod = scoreMethod
         self.bestScore = bestScore
         self.gridScores = gridScores

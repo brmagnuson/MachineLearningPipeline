@@ -10,8 +10,8 @@ def tuneModel(dataSet, modelCreationConfiguration):
     :return:
     """
     # Get features and label from dataSet
-    X = dataSet.featuresDataFrame
-    y = dataSet.labelSeries
+    features = dataSet.featuresDataFrame
+    label = dataSet.labelSeries
 
     # Grid search to find best parameters.
     gridSearchPredictor = sklearn.grid_search.GridSearchCV(modelCreationConfiguration.modelMethod(),
@@ -19,7 +19,7 @@ def tuneModel(dataSet, modelCreationConfiguration):
                                                            scoring=modelCreationConfiguration.scoreMethod,
                                                            cv=5,
                                                            refit=False)
-    gridSearchPredictor.fit(X, y)
+    gridSearchPredictor.fit(features, label)
 
     # GridSearchCV returns negative scores for loss functions (like MSE) so that highest score is best, so this
     # must be corrected for reporting
@@ -71,5 +71,7 @@ def applyModel(tunedModelConfiguration, trainDataSet, testDataSet):
 
     # Train model
     predictor = tunedModelConfiguration.modelMethod(**tunedModelConfiguration.parameters)
+    predictor.fit(trainFeatures, trainLabel)
 
+    print()
 
