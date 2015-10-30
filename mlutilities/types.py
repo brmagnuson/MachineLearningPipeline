@@ -1,5 +1,5 @@
 import pandas
-import copy
+
 
 class DataSet:
     """
@@ -45,7 +45,7 @@ class FeatureEngineeringConfiguration:
         return self.__class__.__name__ + ' Description: ' + self.description
 
 
-class ModelCreationConfiguration:
+class TuneModelConfiguration:
     """
     Note: scoreMethod can be a callable object/function or a string ('r2', 'mean_absolute_error',
     'mean_squared_error', or 'median_absolute_error')
@@ -63,7 +63,7 @@ class ModelCreationConfiguration:
                'Scoring Method: ' + self.scoreMethod
 
 
-class TunedModelConfiguration:
+class TuneModelResult:
     """
 
     """

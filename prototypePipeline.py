@@ -69,29 +69,29 @@ scoreMethod = 'mean_squared_error'
 # scoreMethod = 'r2'
 ridgeParameters = [{'alpha': [0.1, 0.5, 1.0],
                     'normalize': [True, False]}]
-ridgeConfig = mlutilities.types.ModelCreationConfiguration('Ridge regression scored by mean_squared_error',
+ridgeConfig = mlutilities.types.TuneModelConfiguration('Ridge regression scored by mean_squared_error',
                                                            sklearn.linear_model.Ridge,
                                                            ridgeParameters,
                                                            scoreMethod)
 randomForestParameters = [{'n_estimators': [10, 20],
                            'max_features': [10, 'sqrt']}]
-randomForestConfig = mlutilities.types.ModelCreationConfiguration('Random Forest scored by mean_squared_error',
+randomForestConfig = mlutilities.types.TuneModelConfiguration('Random Forest scored by mean_squared_error',
                                                                   sklearn.ensemble.RandomForestRegressor,
                                                                   randomForestParameters,
                                                                   scoreMethod)
-modelCreationConfigs = [ridgeConfig, randomForestConfig]
+tuneModelConfigs = [ridgeConfig, randomForestConfig]
 
-# tunedModelConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
-#
-# pickle.dump(tunedModelConfigs, open(picklePath + 'tunedModelConfigs.p', 'wb'))
-tunedModelConfigs = pickle.load(open(picklePath + 'tunedModelConfigs.p', 'rb'))
+tuneModelResults = mlutilities.modeling.tuneModels(trainDataSets, tuneModelConfigs)
+
+pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
+tuneModelResults = pickle.load(open(picklePath + 'tuneModelResults.p', 'rb'))
 
 # Model tuning result reporting
 if scoreMethod == 'mean_squared_error':
-    sortedTunedModelConfigs = sorted(tunedModelConfigs, key=lambda x: x.bestScore)
+    sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
 else:
-    sortedTunedModelConfigs = sorted(tunedModelConfigs, key=lambda x: -x.bestScore)
-for item in sortedTunedModelConfigs:
+    sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
+for item in sortedTuneModelResults:
     print('Entry:')
     print(item.description)
     print(item.parameters)
