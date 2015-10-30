@@ -31,6 +31,20 @@ class DataSet:
         return self.__class__.__name__ + ' Description: ' + self.description + ', Path: \'' + self.path + '\''
 
 
+class SplitDataSet:
+    """
+
+    """
+    def __init__(self, trainDataSet, testDataSet):
+        self.trainDataSet = trainDataSet
+        self.testDataSet = testDataSet
+
+    def __str__(self):
+        return self.__class__.__name__ + '\n' + \
+               'Training: ' + self.trainDataSet + '\n' + \
+               'Testing: ' + self.testDataSet
+
+
 class FeatureEngineeringConfiguration:
     """
     Everything we need to know to perform a specific type of feature selection on a DataSet.
@@ -86,16 +100,39 @@ class TuneModelResult:
                'Grid Scores: ' + str(self.gridScores)
 
 
-class SplitDataSet:
+class ApplyModelConfiguration:
     """
 
     """
-    def __init__(self, trainDataSet, testDataSet):
+    def __init__(self, description, modelMethod, parameters, trainDataSet, testDataSet):
+        self.description = description
+        self.modelMethod = modelMethod
+        self.parameters = parameters
         self.trainDataSet = trainDataSet
         self.testDataSet = testDataSet
 
     def __str__(self):
-        return self.__class__.__name__ + '\n' + \
-               'Training: ' + self.trainDataSet + '\n' + \
-               'Testing: ' + self.testDataSet
+        return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
+               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Parameters: ' + str(self.parameters) + '\n' + \
+               'Training Data Set: ' + str(self.trainDataSet) + '\n' + \
+               'Testing Data Set: ' + str(self.testDataSet)
+
+class ApplyModelResult:
+    """
+
+    """
+    def __init__(self, description, testPredictions, testDataSet, modelMethod, parameters):
+        self.description = description
+        self.testPredictions = testPredictions
+        self.testDataSet = testDataSet
+        self.modelMethod = modelMethod
+        self.parameters = parameters
+
+    def __str__(self):
+        return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
+               'Testing Data Set: ' + str(self.testDataSet) + '\n' + \
+               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Parameters: ' + str(self.parameters)
+
 

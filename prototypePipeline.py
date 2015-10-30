@@ -86,6 +86,12 @@ tuneModelResults = mlutilities.modeling.tuneModels(trainDataSets, tuneModelConfi
 pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
 tuneModelResults = pickle.load(open(picklePath + 'tuneModelResults.p', 'rb'))
 
+# Create ApplyModelConfigurations
+
+
+# Apply models
+
+
 # Model tuning result reporting
 if scoreMethod == 'mean_squared_error':
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
@@ -97,6 +103,3 @@ for item in sortedTuneModelResults:
     print(item.parameters)
     print('Training score:', item.bestScore)
     print()
-
-# Apply models
-

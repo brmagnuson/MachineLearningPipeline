@@ -19,12 +19,26 @@ splitDataSet = mlutilities.dataTransformation.splitDataSet(allYearsDataSet, test
 trainDataSet = splitDataSet.trainDataSet
 testDataSet = splitDataSet.testDataSet
 
+# Tune model
 parameters = [{'alpha': [0.1, 0.5, 1.0], 'normalize': [True, False]}]
 ridgeConfig = mlutilities.types.TuneModelConfiguration('Ridge regression scored by mean_squared_error',
-                                                           sklearn.linear_model.Ridge,
-                                                           parameterGrid=parameters,
-                                                           scoreMethod='mean_squared_error')
+                                                       sklearn.linear_model.Ridge,
+                                                       parameterGrid=parameters,
+                                                       scoreMethod='mean_squared_error')
 
 tuneModelResult = mlutilities.modeling.tuneModel(trainDataSet, ridgeConfig)
+print(tuneModelResult)
+print()
 
-mlutilities.modeling.applyModel(tuneModelResult.modelMethod, tuneModelResult.parameters, trainDataSet, testDataSet)
+# Apply model
+applyRidgeConfig = mlutilities.types.ApplyModelConfiguration(tuneModelResult.description.replace('Training Set', 'Testing Set'),
+                                                             tuneModelResult.modelMethod,
+                                                             tuneModelResult.parameters,
+                                                             trainDataSet,
+                                                             testDataSet)
+print(applyRidgeConfig)
+print()
+
+applyRidgeResult = mlutilities.modeling.applyModel(applyRidgeConfig)
+print(applyRidgeResult)
+print()
