@@ -1,4 +1,5 @@
 import pandas
+import copy
 
 class DataSet:
     """
@@ -70,7 +71,8 @@ class TunedModelConfiguration:
         self.description = description
         self.dataSet = dataSet
         self.modelMethod = modelMethod,
-        self.parameters = parameters,
+        # Makes sure self.parameters is a dictionary rather than a tuple containing a dictionary
+        self.parameters = copy.deepcopy(parameters)
         self.scoreMethod = scoreMethod
         self.bestScore = bestScore
         self.gridScores = gridScores

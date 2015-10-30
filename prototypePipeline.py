@@ -81,9 +81,9 @@ randomForestConfig = mlutilities.types.ModelCreationConfiguration('Random Forest
                                                                   scoreMethod)
 modelCreationConfigs = [ridgeConfig, randomForestConfig]
 
-tunedModelConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
-
-pickle.dump(tunedModelConfigs, open(picklePath + 'tunedModelConfigs.p', 'wb'))
+# tunedModelConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
+#
+# pickle.dump(tunedModelConfigs, open(picklePath + 'tunedModelConfigs.p', 'wb'))
 tunedModelConfigs = pickle.load(open(picklePath + 'tunedModelConfigs.p', 'rb'))
 
 # Model tuning result reporting
@@ -97,4 +97,6 @@ for item in sortedTunedModelConfigs:
     print(item.parameters)
     print('Training score:', item.bestScore)
     print()
+
+# Apply models
 
