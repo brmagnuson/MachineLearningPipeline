@@ -1,8 +1,9 @@
-import copy
 import sklearn.grid_search
+import sklearn.metrics
 import mlutilities.types
 
-def tuneModel(dataSet, modelCreationConfiguration):
+
+def tuneModel(dataSet, tuneModelConfiguration):
     """
 
     :param dataSet: Presumes that the last column in nonFeaturesDataFrame is the label.
@@ -14,48 +15,48 @@ def tuneModel(dataSet, modelCreationConfiguration):
     label = dataSet.labelSeries
 
     # Grid search to find best parameters.
-    gridSearchPredictor = sklearn.grid_search.GridSearchCV(modelCreationConfiguration.modelMethod(),
-                                                           modelCreationConfiguration.parameterGrid,
-                                                           scoring=modelCreationConfiguration.scoreMethod,
+    gridSearchPredictor = sklearn.grid_search.GridSearchCV(tuneModelConfiguration.modelMethod(),
+                                                           tuneModelConfiguration.parameterGrid,
+                                                           scoring=tuneModelConfiguration.scoreMethod,
                                                            cv=5,
                                                            refit=False)
     gridSearchPredictor.fit(features, label)
 
     # GridSearchCV returns negative scores for loss functions (like MSE) so that highest score is best, so this
     # must be corrected for reporting
-    if modelCreationConfiguration.scoreMethod == 'mean_squared_error':
+    if tuneModelConfiguration.scoreMethod == 'mean_squared_error':
         bestScore = -gridSearchPredictor.best_score_
     else:
         bestScore = gridSearchPredictor.best_score_
 
     # Create new TunedModelConfiguration object
-    tunedModelConfiguration = mlutilities.types.TunedModelConfiguration('Tuned ' + modelCreationConfiguration.description \
-                                                                            + ' for DataSet: ' + dataSet.description,
-                                                                        dataSet,
-                                                                        modelCreationConfiguration.modelMethod,
-                                                                        gridSearchPredictor.best_params_,
-                                                                        modelCreationConfiguration.scoreMethod,
-                                                                        bestScore,
-                                                                        gridSearchPredictor.grid_scores_)
-    return tunedModelConfiguration
+    tuneModelResult = mlutilities.types.TuneModelResult('Tuned ' + tuneModelConfiguration.description \
+                                                                    + ' for DataSet: ' + dataSet.description,
+                                                                 dataSet,
+                                                                 tuneModelConfiguration.modelMethod,
+                                                                 gridSearchPredictor.best_params_,
+                                                                 tuneModelConfiguration.scoreMethod,
+                                                                 bestScore,
+                                                                 gridSearchPredictor.grid_scores_)
+    return tuneModelResult
 
 
-def tuneModels(dataSets, modelCreationConfigurations):
+def tuneModels(dataSets, tuneModelConfigurations):
     """
     Wrapper function to loop through multiple data sets and model creation configurations
     :param dataSets:
     :param modelCreationConfigurations:
     :return:
     """
-    tunedModelConfigurations = []
+    tuneModelResults = []
     for dataSet in dataSets:
-        for modelCreationConfiguration in modelCreationConfigurations:
-            tunedModelConfiguration = tuneModel(dataSet, modelCreationConfiguration)
-            tunedModelConfigurations.append(tunedModelConfiguration)
-    return tunedModelConfigurations
+        for tuneModelConfiguration in tuneModelConfigurations:
+            tuneModelResult = tuneModel(dataSet, tuneModelConfiguration)
+            tuneModelResults.append(tuneModelResult)
+    return tuneModelResults
 
 
-def applyModel(tunedModelConfiguration, trainDataSet, testDataSet):
+def applyModel(modelMethod, modelParameters, trainDataSet, testDataSet):
     """
 
     :param tunedModelConfig:
@@ -70,8 +71,9 @@ def applyModel(tunedModelConfiguration, trainDataSet, testDataSet):
     testLabel = testDataSet.labelSeries
 
     # Train model
-    predictor = tunedModelConfiguration.modelMethod(**tunedModelConfiguration.parameters)
+    predictor = modelMethod(**modelParameters)
     predictor.fit(trainFeatures, trainLabel)
 
-    print()
+    # Predict
+    testPredictions = predictor.predict(testFeatures)
 
