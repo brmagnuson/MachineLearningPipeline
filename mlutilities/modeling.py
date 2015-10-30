@@ -56,7 +56,7 @@ def tuneModels(dataSets, tuneModelConfigurations):
     return tuneModelResults
 
 
-def applyModel(applyModelConfiguration):
+def applyModel(applyModelConfiguration, scoringFunction):
     """
 
     :param tunedModelConfig:
@@ -77,16 +77,20 @@ def applyModel(applyModelConfiguration):
     # Predict
     testPredictions = predictor.predict(testFeatures)
 
+    # Score
+    score = scoringFunction(testLabel, testPredictions)
+
     # Build ApplyModelResult
-    applyModelResult = mlutilities.types.ApplyModelResult(applyModelConfiguration.description + ' Result',
+    applyModelResult = mlutilities.types.ApplyModelResult(applyModelConfiguration.description.replace('Apply', 'Result:'),
                                                           testPredictions,
                                                           applyModelConfiguration.testDataSet,
                                                           applyModelConfiguration.modelMethod,
-                                                          applyModelConfiguration.parameters)
+                                                          applyModelConfiguration.parameters,
+                                                          score)
     return applyModelResult
 
 
-def applyModels(applyModelConfigurations):
+def applyModels(applyModelConfigurations, scoringFunction):
     """
     Wrapper function to loop through multiple ApplyModelConfigurations
     :param applyModelConfigurations:
@@ -94,6 +98,7 @@ def applyModels(applyModelConfigurations):
     """
     applyModelResults = []
     for applyModelConfiguration in applyModelConfigurations:
-        applyModelResult = applyModel(applyModelConfiguration)
+        applyModelResult = applyModel(applyModelConfiguration, scoringFunction)
         applyModelResults.append(applyModelResult)
     return applyModelResults
+

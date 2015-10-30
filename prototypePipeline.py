@@ -3,6 +3,7 @@ import sklearn.feature_selection
 import sklearn.decomposition
 import sklearn.linear_model
 import sklearn.ensemble
+import sklearn.metrics
 import mlutilities.types
 import mlutilities.dataTransformation
 import mlutilities.modeling
@@ -81,16 +82,10 @@ randomForestConfig = mlutilities.types.TuneModelConfiguration('Random Forest sco
                                                                   scoreMethod)
 tuneModelConfigs = [ridgeConfig, randomForestConfig]
 
-tuneModelResults = mlutilities.modeling.tuneModels(trainDataSets, tuneModelConfigs)
-
-pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
+# tuneModelResults = mlutilities.modeling.tuneModels(trainDataSets, tuneModelConfigs)
+#
+# pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
 tuneModelResults = pickle.load(open(picklePath + 'tuneModelResults.p', 'rb'))
-
-# Create ApplyModelConfigurations
-
-
-# Apply models
-
 
 # Model tuning result reporting
 if scoreMethod == 'mean_squared_error':
@@ -102,4 +97,48 @@ for item in sortedTuneModelResults:
     print(item.description)
     print(item.parameters)
     print('Training score:', item.bestScore)
+    print()
+
+# Create ApplyModelConfigurations
+# applyModelConfigs = []
+# for tuneModelResult in tuneModelResults:
+#
+#     trainDataSet = tuneModelResult.dataSet
+#     testDataSet = None
+#     for splitDataSet in splitDataSets:
+#         if splitDataSet.trainDataSet == trainDataSet:
+#             testDataSet = splitDataSet.testDataSet
+#
+#     # Make sure we found a match
+#     if testDataSet == None:
+#         raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
+#
+#     applyModelConfig = mlutilities.types.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
+#                                                                  tuneModelResult.modelMethod,
+#                                                                  tuneModelResult.parameters,
+#                                                                  trainDataSet,
+#                                                                  testDataSet)
+#     applyModelConfigs.append(applyModelConfig)
+#
+# pickle.dump(applyModelConfigs, open(picklePath + 'applyModelConfigs.p', 'wb'))
+applyModelConfigs = pickle.load(open(picklePath + 'applyModelConfigs.p', 'rb'))
+
+# Apply models
+print('Applying models to test data.')
+testScoreMethod = sklearn.metrics.mean_squared_error
+applyModelResults = mlutilities.modeling.applyModels(applyModelConfigs, testScoreMethod)
+
+# for item in applyModelResults:
+#     print(item.description)
+#     print(item.score)
+
+# Model testing result reporting
+if testScoreMethod == sklearn.metrics.mean_squared_error:
+    sortedApplyModelResults = sorted(applyModelResults, key=lambda x: x.score)
+else:
+    sortedApplyModelResults = sorted(applyModelResults, key=lambda x: -x.score)
+for item in sortedApplyModelResults:
+    print(item.description)
+    print(item.parameters)
+    print('Testing score:', item.score)
     print()
