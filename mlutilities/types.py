@@ -56,8 +56,10 @@ class ModelCreationConfiguration:
         self.scoreMethod = scoreMethod
 
     def __str__(self):
-        return self.__class__.__name__ + ' Description: ' + self.description + '\nModel: ' + str(self.modelMethod) + \
-                      '\nParameter Grid: ' + str(self.parameterGrid) + '\nScoring Method: ' + self.scoreMethod
+        return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
+               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Parameter Grid: ' + str(self.parameterGrid) + '\n' + \
+               'Scoring Method: ' + self.scoreMethod
 
 
 class TunedModelConfiguration:
@@ -74,7 +76,25 @@ class TunedModelConfiguration:
         self.gridScores = gridScores
 
     def __str__(self):
-        return self.__class__.__name__ + ' Description: ' + self.description + '\nDataset: ' + str(self.dataSet) \
-                      + '\nModel: ' + str(self.modelMethod) + '\nTuned Parameters: ' + str(self.parameters) + \
-                      '\nScoring Method: ' + self.scoreMethod + '\nTuned Training Score: ' + str(self.bestScore) + \
-                      '\nGrid Scores: ' + str(self.gridScores)
+        return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
+               'Dataset: ' + str(self.dataSet) + '\n' + \
+               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Tuned Parameters: ' + str(self.parameters) + '\n' + \
+               'Scoring Method: ' + self.scoreMethod + '\n' + \
+               'Tuned Training Score: ' + str(self.bestScore) + '\n' + \
+               'Grid Scores: ' + str(self.gridScores)
+
+
+class SplitDataSet:
+    """
+
+    """
+    def __init__(self, trainDataSet, testDataSet):
+        self.trainDataSet = trainDataSet
+        self.testDataSet = testDataSet
+
+    def __str__(self):
+        return self.__class__.__name__ + '\n' + \
+               'Training: ' + self.trainDataSet + '\n' + \
+               'Testing: ' + self.testDataSet
+

@@ -56,13 +56,12 @@ allDataSets = pickle.load(open(picklePath + 'allDataSets.p', 'rb'))
 # Train/test split
 print('Splitting into testing & training data.')
 testProportion = 0.25
-# trainDataSets, testDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion)
+# splitDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion)
 #
-# pickle.dump(trainDataSets, open(picklePath + 'trainDataSets.p', 'wb'))
-# pickle.dump(testDataSets, open(picklePath + 'testDataSets.p', 'wb'))
+# pickle.dump(splitDataSets, open(picklePath + 'splitDataSets.p', 'wb'))
+splitDataSets = pickle.load(open(picklePath + 'splitDataSets.p', 'rb'))
 
-trainDataSets = pickle.load(open(picklePath + 'trainDataSets.p', 'rb'))
-testDataSets = pickle.load(open(picklePath + 'testDataSets.p', 'rb'))
+trainDataSets = [splitDataSet.trainDataSet for splitDataSet in splitDataSets]
 
 # Tune models
 print('Tuning models.')
@@ -82,9 +81,9 @@ randomForestConfig = mlutilities.types.ModelCreationConfiguration('Random Forest
                                                                   scoreMethod)
 modelCreationConfigs = [ridgeConfig, randomForestConfig]
 
-# tunedModelConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
-#
-# pickle.dump(tunedModelConfigs, open(picklePath + 'tunedModelConfigs.p', 'wb'))
+tunedModelConfigs = mlutilities.modeling.tuneModels(trainDataSets, modelCreationConfigs)
+
+pickle.dump(tunedModelConfigs, open(picklePath + 'tunedModelConfigs.p', 'wb'))
 tunedModelConfigs = pickle.load(open(picklePath + 'tunedModelConfigs.p', 'rb'))
 
 # Model tuning result reporting
