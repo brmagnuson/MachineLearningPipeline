@@ -12,22 +12,19 @@ allYearsDataSet = mlutilities.types.DataSet('All Years',
                                             basePath + 'jul_IntMnt_ref.csv',
                                             featuresIndex=myfeaturesIndex,
                                             labelIndex=myLabelIndex)
-print(allYearsDataSet)
 
 # Train/test split
 testProportion = 0.25
 splitDataSet = mlutilities.dataTransformation.splitDataSet(allYearsDataSet, testProportion)
 trainDataSet = splitDataSet.trainDataSet
+testDataSet = splitDataSet.testDataSet
 
 parameters = [{'alpha': [0.1, 0.5, 1.0], 'normalize': [True, False]}]
 ridgeConfig = mlutilities.types.ModelCreationConfiguration('Ridge regression scored by mean_squared_error',
                                                            sklearn.linear_model.Ridge,
                                                            parameterGrid=parameters,
                                                            scoreMethod='mean_squared_error')
-print(ridgeConfig)
 
-print()
 tunedRidgeConfig = mlutilities.modeling.tuneModel(trainDataSet, ridgeConfig)
-print(tunedRidgeConfig)
-print()
-print(tunedRidgeConfig.parameters)
+
+mlutilities.modeling.applyModel(tunedRidgeConfig, trainDataSet, testDataSet)
