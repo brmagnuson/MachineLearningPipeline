@@ -111,7 +111,7 @@ def splitDataSet(dataSet, testProportion):
     trainDataFrame, testDataFrame = sklearn.cross_validation.train_test_split(originalDataFrame,
                                                                               test_size=testProportion,
                                                                               random_state=1000)
-    # Assign values to new DataSet objects
+    # Assign values to new DataSets
     baseNewDescription = dataSet.description + ', '
     baseNewPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + '_'
     trainDataSet = mlutilities.types.DataSet(baseNewDescription + 'Training Set',
@@ -127,7 +127,10 @@ def splitDataSet(dataSet, testProportion):
                                             dataSet.featuresIndex,
                                             dataSet.labelIndex)
 
-    return (trainDataSet, testDataSet)
+    # Join into new SplitDataSet
+    theSplitDataSet = mlutilities.types.SplitDataSet(trainDataSet, testDataSet)
+
+    return theSplitDataSet
 
 
 def splitDataSets(dataSets, testProportion):
@@ -137,10 +140,8 @@ def splitDataSets(dataSets, testProportion):
     :param testProportion: float between 0 and 1; proportion that will be held back in the test set
     :return: tuple of lists of training DataSets and testing DataSets
     """
-    trainDataSets = []
-    testDataSets = []
+    theSplitDataSets = []
     for dataSet in dataSets:
-        trainDataSet, testDataSet = splitDataSet(dataSet, testProportion)
-        trainDataSets.append(trainDataSet)
-        testDataSets.append(testDataSets)
-    return (trainDataSets, testDataSets)
+        theSplitDataSet = splitDataSet(dataSet, testProportion)
+        theSplitDataSets.append(theSplitDataSet)
+    return theSplitDataSets
