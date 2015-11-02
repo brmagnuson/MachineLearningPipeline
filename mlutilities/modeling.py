@@ -1,5 +1,4 @@
 import sklearn.grid_search
-import sklearn.metrics
 import mlutilities.types
 
 
@@ -56,7 +55,7 @@ def tuneModels(dataSets, tuneModelConfigurations):
     return tuneModelResults
 
 
-def applyModel(applyModelConfiguration, scoringFunction):
+def applyModel(applyModelConfiguration):
     """
 
     :param tunedModelConfig:
@@ -68,7 +67,6 @@ def applyModel(applyModelConfiguration, scoringFunction):
     trainFeatures = applyModelConfiguration.trainDataSet.featuresDataFrame
     trainLabel = applyModelConfiguration.trainDataSet.labelSeries
     testFeatures = applyModelConfiguration.testDataSet.featuresDataFrame
-    testLabel = applyModelConfiguration.testDataSet.labelSeries
 
     # Train model
     predictor = applyModelConfiguration.modelMethod(**applyModelConfiguration.parameters)
@@ -77,20 +75,16 @@ def applyModel(applyModelConfiguration, scoringFunction):
     # Predict
     testPredictions = predictor.predict(testFeatures)
 
-    # Score
-    score = scoringFunction(testLabel, testPredictions)
-
     # Build ApplyModelResult
     applyModelResult = mlutilities.types.ApplyModelResult(applyModelConfiguration.description.replace('Apply', 'Result:'),
                                                           testPredictions,
                                                           applyModelConfiguration.testDataSet,
                                                           applyModelConfiguration.modelMethod,
-                                                          applyModelConfiguration.parameters,
-                                                          score)
+                                                          applyModelConfiguration.parameters)
     return applyModelResult
 
 
-def applyModels(applyModelConfigurations, scoringFunction):
+def applyModels(applyModelConfigurations):
     """
     Wrapper function to loop through multiple ApplyModelConfigurations
     :param applyModelConfigurations:
@@ -98,7 +92,40 @@ def applyModels(applyModelConfigurations, scoringFunction):
     """
     applyModelResults = []
     for applyModelConfiguration in applyModelConfigurations:
-        applyModelResult = applyModel(applyModelConfiguration, scoringFunction)
+        applyModelResult = applyModel(applyModelConfiguration)
         applyModelResults.append(applyModelResult)
     return applyModelResults
 
+
+def scoreModel(applyModelResult, scoringFunction):
+    """
+
+    :param applyModelResult:
+    :param scoringFunction:
+    :return:
+    """
+    testLabel = applyModelResult.testDataSet.labelSeries
+    testPredictions = applyModelResult.testPredictions
+
+    score = scoringFunction(testLabel, testPredictions)
+
+    scoreModelResult = mlutilities.types.ScoreModelResult(applyModelResult.description + ', Test Score',
+                                                          applyModelResult.modelMethod,
+                                                          applyModelResult.parameters,
+                                                          score,
+                                                          scoringFunction)
+    return scoreModelResult
+
+
+def scoreModels(applyModelResults, scoringFunction):
+    """
+    Wrapper function to loop through multiple ApplyModelResult objects
+    :param applyModelResults:
+    :param scoringFunction:
+    :return:
+    """
+    scoreModelResults = []
+    for applyModelResult in applyModelResults:
+        scoreModelResult = scoreModel(applyModelResult, scoringFunction)
+        scoreModelResults.append(scoreModelResult)
+    return scoreModelResults

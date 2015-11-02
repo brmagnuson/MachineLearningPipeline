@@ -93,10 +93,7 @@ if scoreMethod == 'mean_squared_error':
 else:
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
 for item in sortedTuneModelResults:
-    print('Entry:')
-    print(item.description)
-    print(item.parameters)
-    print('Training score:', item.bestScore)
+    print(item)
     print()
 
 # Create ApplyModelConfigurations
@@ -125,20 +122,18 @@ applyModelConfigs = pickle.load(open(picklePath + 'applyModelConfigs.p', 'rb'))
 
 # Apply models
 print('Applying models to test data.')
-testScoreMethod = sklearn.metrics.mean_squared_error
-applyModelResults = mlutilities.modeling.applyModels(applyModelConfigs, testScoreMethod)
+applyModelResults = mlutilities.modeling.applyModels(applyModelConfigs)
 
-# for item in applyModelResults:
-#     print(item.description)
-#     print(item.score)
+# Score models
+# testScoreMethod = sklearn.metrics.mean_squared_error
+testScoreMethod = sklearn.metrics.r2_score
+scoreModelResults = mlutilities.modeling.scoreModels(applyModelResults, testScoreMethod)
 
 # Model testing result reporting
 if testScoreMethod == sklearn.metrics.mean_squared_error:
-    sortedApplyModelResults = sorted(applyModelResults, key=lambda x: x.score)
+    sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: x.score)
 else:
-    sortedApplyModelResults = sorted(applyModelResults, key=lambda x: -x.score)
-for item in sortedApplyModelResults:
-    print(item.description)
-    print(item.parameters)
-    print('Testing score:', item.score)
+    sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: -x.score)
+for item in sortedScoreModelResults:
+    print(item)
     print()

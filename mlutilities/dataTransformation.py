@@ -112,15 +112,15 @@ def splitDataSet(dataSet, testProportion):
                                                                               test_size=testProportion,
                                                                               random_state=1000)
     # Assign values to new DataSets
-    baseNewDescription = dataSet.description + ', '
+    baseNewDescription = dataSet.description
     baseNewPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + '_'
-    trainDataSet = mlutilities.types.DataSet(baseNewDescription + 'Training Set',
+    trainDataSet = mlutilities.types.DataSet(baseNewDescription + ' Training Set',
                                              baseNewPath + 'train.csv',
                                              'w',
                                              trainDataFrame,
                                              dataSet.featuresIndex,
                                              dataSet.labelIndex)
-    testDataSet = mlutilities.types.DataSet(baseNewDescription + 'Testing Set',
+    testDataSet = mlutilities.types.DataSet(baseNewDescription + ' Testing Set',
                                             baseNewPath + 'test.csv',
                                             'w',
                                             testDataFrame,
