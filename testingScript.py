@@ -1,4 +1,5 @@
 import sklearn.linear_model
+import sklearn.metrics
 import mlutilities.types
 import mlutilities.dataTransformation
 import mlutilities.modeling
@@ -42,3 +43,7 @@ print()
 applyRidgeResult = mlutilities.modeling.applyModel(applyRidgeConfig)
 print(applyRidgeResult)
 print()
+
+testScoreMethod = sklearn.metrics.mean_squared_error
+applyModelResult = mlutilities.modeling.scoreModel(applyRidgeResult, testScoreMethod)
+print(applyModelResult)

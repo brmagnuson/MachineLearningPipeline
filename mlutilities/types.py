@@ -132,13 +132,12 @@ class ApplyModelResult:
     """
 
     """
-    def __init__(self, description, testPredictions, testDataSet, modelMethod, parameters, score):
+    def __init__(self, description, testPredictions, testDataSet, modelMethod, parameters):
         self.description = description
         self.testPredictions = testPredictions
         self.testDataSet = testDataSet
         self.modelMethod = modelMethod
         self.parameters = parameters
-        self.score = score
 
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
@@ -146,4 +145,22 @@ class ApplyModelResult:
                'Model: ' + str(self.modelMethod) + '\n' + \
                'Parameters: ' + str(self.parameters)
 
+
+class ScoreModelResult:
+    """
+
+    """
+    def __init__(self, description, modelMethod, parameters, score, scoringFunction):
+        self.description = description
+        self.modelMethod = modelMethod
+        self.parameters = parameters
+        self.score = score
+        self.scoringFunction = scoringFunction
+
+    def __str__(self):
+        return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
+               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Parameters: ' + str(self.parameters) + '\n' + \
+               'Scoring Function: ' + str(self.scoringFunction) + '\n' + \
+               'Score: ' + str(self.score)
 
