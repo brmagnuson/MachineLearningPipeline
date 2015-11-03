@@ -97,7 +97,7 @@ def applyModels(applyModelConfigurations):
     return applyModelResults
 
 
-def scoreModel(applyModelResult, scoringFunction):
+def scoreModel(applyModelResult, scoringFunctions):
     """
 
     :param applyModelResult:
@@ -107,17 +107,20 @@ def scoreModel(applyModelResult, scoringFunction):
     testLabel = applyModelResult.testDataSet.labelSeries
     testPredictions = applyModelResult.testPredictions
 
-    score = scoringFunction(testLabel, testPredictions)
+    modelScores = []
+    for scoringFunction in scoringFunctions:
+        score = scoringFunction(testLabel, testPredictions)
+        modelScore = mlutilities.types.ModelScore(score, scoringFunction)
+        modelScores.append(modelScore)
 
     scoreModelResult = mlutilities.types.ScoreModelResult(applyModelResult.description + ', Test Score',
                                                           applyModelResult.modelMethod,
                                                           applyModelResult.parameters,
-                                                          score,
-                                                          scoringFunction)
+                                                          modelScores)
     return scoreModelResult
 
 
-def scoreModels(applyModelResults, scoringFunction):
+def scoreModels(applyModelResults, scoringFunctions):
     """
     Wrapper function to loop through multiple ApplyModelResult objects
     :param applyModelResults:
@@ -126,6 +129,6 @@ def scoreModels(applyModelResults, scoringFunction):
     """
     scoreModelResults = []
     for applyModelResult in applyModelResults:
-        scoreModelResult = scoreModel(applyModelResult, scoringFunction)
+        scoreModelResult = scoreModel(applyModelResult, scoringFunctions)
         scoreModelResults.append(scoreModelResult)
     return scoreModelResults

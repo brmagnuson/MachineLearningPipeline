@@ -150,17 +150,27 @@ class ScoreModelResult:
     """
 
     """
-    def __init__(self, description, modelMethod, parameters, score, scoringFunction):
+    def __init__(self, description, modelMethod, parameters, modelScores):
         self.description = description
         self.modelMethod = modelMethod
         self.parameters = parameters
-        self.score = score
-        self.scoringFunction = scoringFunction
+        self.modelScores = modelScores
 
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
                'Model: ' + str(self.modelMethod) + '\n' + \
                'Parameters: ' + str(self.parameters) + '\n' + \
-               'Scoring Function: ' + str(self.scoringFunction) + '\n' + \
-               'Score: ' + str(self.score)
+               'Model Scores:\n' + '\n'.join(map(str, self.modelScores)) + '\n'
+
+
+class ModelScore:
+    """
+
+    """
+    def __init__(self, score, scoringFunction):
+        self.score = score
+        self.scoringFunction = scoringFunction
+
+    def __str__(self):
+        return self.__class__.__name__ + ' Scoring Function: ' + str(self.scoringFunction) + ' Score: ' + str(self.score)
 
