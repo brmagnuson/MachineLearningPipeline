@@ -72,7 +72,7 @@ def engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration):
         completeDataFrame = pandas.concat([dataSet.nonFeaturesDataFrame, extractedFeaturesDataFrame], axis=1)
 
     # Assign values to new DataSet object
-    newDescription = dataSet.description + ', features selected via ' + featureEngineeringConfiguration.description
+    newDescription = dataSet.description + ' features selected via ' + featureEngineeringConfiguration.description
     newPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + \
               '_' + featureEngineeringConfiguration.description.replace(' ', '_') + '.csv'
     selectedFeaturesDataSet = mlutilities.types.DataSet(newDescription,
