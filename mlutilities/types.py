@@ -69,20 +69,32 @@ class FeatureEngineeringConfiguration:
         return self.__class__.__name__ + ' Description: ' + self.description
 
 
+class ModellingMethod:
+    """
+
+    """
+    def __init__(self, description, function):
+        self.description = description
+        self.function = function
+
+    def __str__(self):
+        return self.__class__.__name__ + ' ' + self.description
+
+
 class TuneModelConfiguration:
     """
     Note: scoreMethod can be a callable object/function or a string ('r2', 'mean_absolute_error',
     'mean_squared_error', or 'median_absolute_error')
     """
-    def __init__(self, description, modelMethod, parameterGrid, scoreMethod):
+    def __init__(self, description, modellingMethod, parameterGrid, scoreMethod):
         self.description = description
-        self.modelMethod = modelMethod
+        self.modellingMethod = modellingMethod
         self.parameterGrid = parameterGrid
         self.scoreMethod = scoreMethod
 
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
-               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Model: ' + str(self.modellingMethod) + '\n' + \
                'Parameter Grid: ' + str(self.parameterGrid) + '\n' + \
                'Scoring Method: ' + self.scoreMethod
 
@@ -91,10 +103,10 @@ class TuneModelResult:
     """
 
     """
-    def __init__(self, description, dataSet, modelMethod, parameters, scoreMethod, bestScore, gridScores):
+    def __init__(self, description, dataSet, modellingMethod, parameters, scoreMethod, bestScore, gridScores):
         self.description = description
         self.dataSet = dataSet
-        self.modelMethod = modelMethod
+        self.modellingMethod = modellingMethod
         self.parameters = parameters
         self.scoreMethod = scoreMethod
         self.bestScore = bestScore
@@ -103,7 +115,7 @@ class TuneModelResult:
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
                'Dataset: ' + str(self.dataSet) + '\n' + \
-               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Model: ' + str(self.modellingMethod) + '\n' + \
                'Tuned Parameters: ' + str(self.parameters) + '\n' + \
                'Scoring Method: ' + self.scoreMethod + '\n' + \
                'Tuned Training Score: ' + str(self.bestScore) + '\n' + \
@@ -114,16 +126,16 @@ class ApplyModelConfiguration:
     """
 
     """
-    def __init__(self, description, modelMethod, parameters, trainDataSet, testDataSet):
+    def __init__(self, description, modellingMethod, parameters, trainDataSet, testDataSet):
         self.description = description
-        self.modelMethod = modelMethod
+        self.modellingMethod = modellingMethod
         self.parameters = parameters
         self.trainDataSet = trainDataSet
         self.testDataSet = testDataSet
 
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
-               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Model: ' + str(self.modellingMethod) + '\n' + \
                'Parameters: ' + str(self.parameters) + '\n' + \
                'Training Data Set: ' + str(self.trainDataSet) + '\n' + \
                'Testing Data Set: ' + str(self.testDataSet)
@@ -132,17 +144,17 @@ class ApplyModelResult:
     """
 
     """
-    def __init__(self, description, testPredictions, testDataSet, modelMethod, parameters):
+    def __init__(self, description, testPredictions, testDataSet, modellingMethod, parameters):
         self.description = description
         self.testPredictions = testPredictions
         self.testDataSet = testDataSet
-        self.modelMethod = modelMethod
+        self.modellingMethod = modellingMethod
         self.parameters = parameters
 
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
                'Testing Data Set: ' + str(self.testDataSet) + '\n' + \
-               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Model: ' + str(self.modellingMethod) + '\n' + \
                'Parameters: ' + str(self.parameters)
 
 
@@ -150,15 +162,15 @@ class ScoreModelResult:
     """
 
     """
-    def __init__(self, description, modelMethod, parameters, modelScores):
+    def __init__(self, description, modellingMethod, parameters, modelScores):
         self.description = description
-        self.modelMethod = modelMethod
+        self.modellingMethod = modellingMethod
         self.parameters = parameters
         self.modelScores = modelScores
 
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
-               'Model: ' + str(self.modelMethod) + '\n' + \
+               'Model: ' + str(self.modellingMethod) + '\n' + \
                'Parameters: ' + str(self.parameters) + '\n' + \
                'Model Scores:\n' + '\n'.join(map(str, self.modelScores)) + '\n'
 
@@ -167,10 +179,22 @@ class ModelScore:
     """
 
     """
-    def __init__(self, score, scoringFunction):
+    def __init__(self, score, modelScoreMethod):
         self.score = score
-        self.scoringFunction = scoringFunction
+        self.modelScoreMethod = modelScoreMethod
 
     def __str__(self):
         return self.__class__.__name__ + ' Scoring Function: ' + str(self.scoringFunction) + ' Score: ' + str(self.score)
+
+
+class ModelScoreMethod:
+    """
+
+    """
+    def __init__(self, description, function):
+        self.description = description
+        self.function = function
+
+    def __str__(self):
+        return self.__class__.__name__ + ' ' + self.description
 
