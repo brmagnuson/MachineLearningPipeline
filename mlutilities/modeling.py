@@ -14,7 +14,7 @@ def tuneModel(dataSet, tuneModelConfiguration):
     label = dataSet.labelSeries
 
     # Grid search to find best parameters.
-    gridSearchPredictor = sklearn.grid_search.GridSearchCV(tuneModelConfiguration.modelMethod(),
+    gridSearchPredictor = sklearn.grid_search.GridSearchCV(tuneModelConfiguration.modellingMethod.function(),
                                                            tuneModelConfiguration.parameterGrid,
                                                            scoring=tuneModelConfiguration.scoreMethod,
                                                            cv=5,
@@ -30,13 +30,13 @@ def tuneModel(dataSet, tuneModelConfiguration):
 
     # Create new TunedModelConfiguration object
     tuneModelResult = mlutilities.types.TuneModelResult('Tuned ' + tuneModelConfiguration.description \
-                                                                    + ' for DataSet: ' + dataSet.description,
-                                                                 dataSet,
-                                                                 tuneModelConfiguration.modelMethod,
-                                                                 gridSearchPredictor.best_params_,
-                                                                 tuneModelConfiguration.scoreMethod,
-                                                                 bestScore,
-                                                                 gridSearchPredictor.grid_scores_)
+                                                            + ' for DataSet: ' + dataSet.description,
+                                                        dataSet,
+                                                        tuneModelConfiguration.modellingMethod,
+                                                        gridSearchPredictor.best_params_,
+                                                        tuneModelConfiguration.scoreMethod,
+                                                        bestScore,
+                                                        gridSearchPredictor.grid_scores_)
     return tuneModelResult
 
 
@@ -69,7 +69,7 @@ def applyModel(applyModelConfiguration):
     testFeatures = applyModelConfiguration.testDataSet.featuresDataFrame
 
     # Train model
-    predictor = applyModelConfiguration.modelMethod(**applyModelConfiguration.parameters)
+    predictor = applyModelConfiguration.modellingMethod.function(**applyModelConfiguration.parameters)
     predictor.fit(trainFeatures, trainLabel)
 
     # Predict
@@ -79,7 +79,7 @@ def applyModel(applyModelConfiguration):
     applyModelResult = mlutilities.types.ApplyModelResult(applyModelConfiguration.description.replace('Apply', 'Result:'),
                                                           testPredictions,
                                                           applyModelConfiguration.testDataSet,
-                                                          applyModelConfiguration.modelMethod,
+                                                          applyModelConfiguration.modellingMethod,
                                                           applyModelConfiguration.parameters)
     return applyModelResult
 
@@ -97,7 +97,7 @@ def applyModels(applyModelConfigurations):
     return applyModelResults
 
 
-def scoreModel(applyModelResult, scoringFunctions):
+def scoreModel(applyModelResult, modelScoreMethods):
     """
 
     :param applyModelResult:
@@ -108,19 +108,19 @@ def scoreModel(applyModelResult, scoringFunctions):
     testPredictions = applyModelResult.testPredictions
 
     modelScores = []
-    for scoringFunction in scoringFunctions:
-        score = scoringFunction(testLabel, testPredictions)
-        modelScore = mlutilities.types.ModelScore(score, scoringFunction)
+    for modelScoreMethod in modelScoreMethods:
+        score = modelScoreMethod.function(testLabel, testPredictions)
+        modelScore = mlutilities.types.ModelScore(score, modelScoreMethod)
         modelScores.append(modelScore)
 
     scoreModelResult = mlutilities.types.ScoreModelResult(applyModelResult.description + ', Test Score',
-                                                          applyModelResult.modelMethod,
+                                                          applyModelResult.modellingMethod,
                                                           applyModelResult.parameters,
                                                           modelScores)
     return scoreModelResult
 
 
-def scoreModels(applyModelResults, scoringFunctions):
+def scoreModels(applyModelResults, modelScoreMethods):
     """
     Wrapper function to loop through multiple ApplyModelResult objects
     :param applyModelResults:
@@ -129,6 +129,6 @@ def scoreModels(applyModelResults, scoringFunctions):
     """
     scoreModelResults = []
     for applyModelResult in applyModelResults:
-        scoreModelResult = scoreModel(applyModelResult, scoringFunctions)
+        scoreModelResult = scoreModel(applyModelResult, modelScoreMethods)
         scoreModelResults.append(scoreModelResult)
     return scoreModelResults

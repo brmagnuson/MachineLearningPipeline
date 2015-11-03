@@ -7,18 +7,21 @@ import sklearn.metrics
 import mlutilities.types
 import mlutilities.dataTransformation
 import mlutilities.modeling
+import mlutilities.utilities
 
 # Parameters
 runPrepareDatasets = False
 runScaleDatasets = False
 runFeatureEngineering = False
 runTestTrainSplit = False
-runTuneModels = False
-runApplyModels = False
+runTuneModels = True
+runApplyModels = True
 
 # tuneScoreMethod = 'r2'
 tuneScoreMethod = 'mean_squared_error'
-testScoreMethods = [sklearn.metrics.r2_score, sklearn.metrics.mean_squared_error]
+r2Method = mlutilities.types.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
+mseMethod = mlutilities.types.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
+testScoreMethods = [mseMethod, r2Method]
 
 # Get list of data sets.
 picklePath = 'Pickles/'
@@ -87,16 +90,20 @@ if runTuneModels:
 
     ridgeParameters = [{'alpha': [0.1, 0.5, 1.0],
                         'normalize': [True, False]}]
-    ridgeConfig = mlutilities.types.TuneModelConfiguration('Ridge regression scored by mean_squared_error',
-                                                               sklearn.linear_model.Ridge,
-                                                               ridgeParameters,
-                                                               tuneScoreMethod)
+    ridgeMethod = mlutilities.types.ModellingMethod('Ridge Regression',
+                                                    sklearn.linear_model.Ridge)
+    ridgeConfig = mlutilities.types.TuneModelConfiguration('Ridge Regression',
+                                                           ridgeMethod,
+                                                           ridgeParameters,
+                                                           tuneScoreMethod)
     randomForestParameters = [{'n_estimators': [10, 20],
                                'max_features': [10, 'sqrt']}]
-    randomForestConfig = mlutilities.types.TuneModelConfiguration('Random Forest scored by mean_squared_error',
-                                                                      sklearn.ensemble.RandomForestRegressor,
-                                                                      randomForestParameters,
-                                                                      tuneScoreMethod)
+    randomForestMethod = mlutilities.types.ModellingMethod('Random Forest',
+                                                           sklearn.ensemble.RandomForestRegressor)
+    randomForestConfig = mlutilities.types.TuneModelConfiguration('Random Forest',
+                                                                  randomForestMethod,
+                                                                  randomForestParameters,
+                                                                  tuneScoreMethod)
     tuneModelConfigs = [ridgeConfig, randomForestConfig]
 
     tuneModelResults = mlutilities.modeling.tuneModels(trainDataSets, tuneModelConfigs)
@@ -109,9 +116,9 @@ if tuneScoreMethod == 'mean_squared_error':
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
 else:
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
-for item in sortedTuneModelResults:
-    print(item)
-    print()
+# for item in sortedTuneModelResults:
+#     print(item)
+#     print()
 
 # Create ApplyModelConfigurations
 if runApplyModels:
@@ -130,7 +137,7 @@ if runApplyModels:
             raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
 
         applyModelConfig = mlutilities.types.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
-                                                                     tuneModelResult.modelMethod,
+                                                                     tuneModelResult.modellingMethod,
                                                                      tuneModelResult.parameters,
                                                                      trainDataSet,
                                                                      testDataSet)
@@ -148,10 +155,15 @@ applyModelResults = mlutilities.modeling.applyModels(applyModelConfigs)
 scoreModelResults = mlutilities.modeling.scoreModels(applyModelResults, testScoreMethods)
 
 # Model testing result reporting
-if testScoreMethods[0] == sklearn.metrics.mean_squared_error:
+if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:
     sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: x.modelScores[0].score)
 else:
     sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: -x.modelScores[0].score)
-for item in sortedScoreModelResults:
-    print(item)
-    print()
+# for item in sortedScoreModelResults:
+#     print(item)
+#     print()
+
+# Convert to data frame for tabulation and visualization
+scoreModelResultsDF = mlutilities.utilities.createScoreDataFrame(sortedScoreModelResults)
+scoreModelResultsDF.to_csv('Output/scoreModelResults.csv', index=False)
+
