@@ -8,6 +8,8 @@ import mlutilities.types
 import mlutilities.dataTransformation
 import mlutilities.modeling
 
+# True to run all steps, False to just use previously pickled output
+pickling = False
 
 # Get list of data sets.
 print('Reading input data sets.')
@@ -23,16 +25,18 @@ dryYearsDataSet = mlutilities.types.DataSet('Dry Years',
                                             basePath + 'jul_IntMnt_driest31.csv',
                                             featuresIndex=myfeaturesIndex,
                                             labelIndex=myLabelIndex)
-# regularDataSets = [allYearsDataSet, dryYearsDataSet]
 
-# pickle.dump(regularDataSets, open(picklePath + 'regularDataSets.p', 'wb'))
+if pickling:
+    regularDataSets = [allYearsDataSet, dryYearsDataSet]
+    pickle.dump(regularDataSets, open(picklePath + 'regularDataSets.p', 'wb'))
 regularDataSets = pickle.load(open(picklePath + 'regularDataSets.p', 'rb'))
 
 # Get scaled data sets
 print('Scaling data sets.')
-# scaledDataSets = mlutilities.dataTransformation.scaleDataSets(regularDataSets)
-#
-# pickle.dump(scaledDataSets, open(picklePath + 'scaledDataSets.p', 'wb'))
+
+if pickling:
+    scaledDataSets = mlutilities.dataTransformation.scaleDataSets(regularDataSets)
+    pickle.dump(scaledDataSets, open(picklePath + 'scaledDataSets.p', 'wb'))
 scaledDataSets = pickle.load(open(picklePath + 'scaledDataSets.p', 'rb'))
 
 allDataSets = regularDataSets + scaledDataSets
@@ -48,26 +52,29 @@ pcaConfiguration = mlutilities.types.FeatureEngineeringConfiguration('PCA n10',
                                                                      sklearn.decomposition.PCA,
                                                                      {'n_components':10})
 featureEngineeringConfigurations = [varianceThresholdConfiguration, pcaConfiguration]
-# featureEngineeredDatasets = mlutilities.dataTransformation.engineerFeaturesForDataSets(allDataSets, featureEngineeringConfigurations)
-# allDataSets += featureEngineeredDatasets
-#
-# pickle.dump(allDataSets, open(picklePath + 'allDataSets.p', 'wb'))
+
+if pickling:
+    featureEngineeredDatasets = mlutilities.dataTransformation.engineerFeaturesForDataSets(allDataSets, featureEngineeringConfigurations)
+    allDataSets += featureEngineeredDatasets
+    pickle.dump(allDataSets, open(picklePath + 'allDataSets.p', 'wb'))
 allDataSets = pickle.load(open(picklePath + 'allDataSets.p', 'rb'))
 
 # Train/test split
 print('Splitting into testing & training data.')
 testProportion = 0.25
-# splitDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion)
-#
-# pickle.dump(splitDataSets, open(picklePath + 'splitDataSets.p', 'wb'))
+
+if pickling:
+    splitDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion)
+    pickle.dump(splitDataSets, open(picklePath + 'splitDataSets.p', 'wb'))
 splitDataSets = pickle.load(open(picklePath + 'splitDataSets.p', 'rb'))
 
 trainDataSets = [splitDataSet.trainDataSet for splitDataSet in splitDataSets]
 
 # Tune models
 print('Tuning models.')
-scoreMethod = 'mean_squared_error'
+
 # scoreMethod = 'r2'
+scoreMethod = 'mean_squared_error'
 ridgeParameters = [{'alpha': [0.1, 0.5, 1.0],
                     'normalize': [True, False]}]
 ridgeConfig = mlutilities.types.TuneModelConfiguration('Ridge regression scored by mean_squared_error',
@@ -82,9 +89,9 @@ randomForestConfig = mlutilities.types.TuneModelConfiguration('Random Forest sco
                                                                   scoreMethod)
 tuneModelConfigs = [ridgeConfig, randomForestConfig]
 
-# tuneModelResults = mlutilities.modeling.tuneModels(trainDataSets, tuneModelConfigs)
-#
-# pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
+if pickling:
+    tuneModelResults = mlutilities.modeling.tuneModels(trainDataSets, tuneModelConfigs)
+    pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
 tuneModelResults = pickle.load(open(picklePath + 'tuneModelResults.p', 'rb'))
 
 # Model tuning result reporting
@@ -97,27 +104,29 @@ for item in sortedTuneModelResults:
     print()
 
 # Create ApplyModelConfigurations
-# applyModelConfigs = []
-# for tuneModelResult in tuneModelResults:
-#
-#     trainDataSet = tuneModelResult.dataSet
-#     testDataSet = None
-#     for splitDataSet in splitDataSets:
-#         if splitDataSet.trainDataSet == trainDataSet:
-#             testDataSet = splitDataSet.testDataSet
-#
-#     # Make sure we found a match
-#     if testDataSet == None:
-#         raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
-#
-#     applyModelConfig = mlutilities.types.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
-#                                                                  tuneModelResult.modelMethod,
-#                                                                  tuneModelResult.parameters,
-#                                                                  trainDataSet,
-#                                                                  testDataSet)
-#     applyModelConfigs.append(applyModelConfig)
-#
-# pickle.dump(applyModelConfigs, open(picklePath + 'applyModelConfigs.p', 'wb'))
+if pickling:
+
+    applyModelConfigs = []
+    for tuneModelResult in tuneModelResults:
+
+        trainDataSet = tuneModelResult.dataSet
+        testDataSet = None
+        for splitDataSet in splitDataSets:
+            if splitDataSet.trainDataSet == trainDataSet:
+                testDataSet = splitDataSet.testDataSet
+
+        # Make sure we found a match
+        if testDataSet == None:
+            raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
+
+        applyModelConfig = mlutilities.types.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
+                                                                     tuneModelResult.modelMethod,
+                                                                     tuneModelResult.parameters,
+                                                                     trainDataSet,
+                                                                     testDataSet)
+        applyModelConfigs.append(applyModelConfig)
+
+    pickle.dump(applyModelConfigs, open(picklePath + 'applyModelConfigs.p', 'wb'))
 applyModelConfigs = pickle.load(open(picklePath + 'applyModelConfigs.p', 'rb'))
 
 # Apply models
@@ -125,8 +134,8 @@ print('Applying models to test data.')
 applyModelResults = mlutilities.modeling.applyModels(applyModelConfigs)
 
 # Score models
-# testScoreMethod = sklearn.metrics.mean_squared_error
-testScoreMethod = sklearn.metrics.r2_score
+# testScoreMethod = sklearn.metrics.r2_score
+testScoreMethod = sklearn.metrics.mean_squared_error
 scoreModelResults = mlutilities.modeling.scoreModels(applyModelResults, testScoreMethod)
 
 # Model testing result reporting
