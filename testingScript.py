@@ -1,8 +1,10 @@
+import pandas
 import sklearn.linear_model
 import sklearn.metrics
 import mlutilities.types
 import mlutilities.dataTransformation
 import mlutilities.modeling
+import mlutilities.utilities
 
 
 # Get list of data sets.
@@ -22,8 +24,10 @@ testDataSet = splitDataSet.testDataSet
 
 # Tune model
 parameters = [{'alpha': [0.1, 0.5, 1.0], 'normalize': [True, False]}]
+ridgeMethod = mlutilities.types.ModellingMethod('Ridge Regression',
+                                                sklearn.linear_model.Ridge)
 ridgeConfig = mlutilities.types.TuneModelConfiguration('Ridge regression scored by mean_squared_error',
-                                                       sklearn.linear_model.Ridge,
+                                                       ridgeMethod,
                                                        parameterGrid=parameters,
                                                        scoreMethod='mean_squared_error')
 
@@ -32,8 +36,8 @@ print(tuneModelResult)
 print()
 
 # Apply model
-applyRidgeConfig = mlutilities.types.ApplyModelConfiguration(tuneModelResult.description.replace('Training Set', 'Testing Set'),
-                                                             tuneModelResult.modelMethod,
+applyRidgeConfig = mlutilities.types.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
+                                                             tuneModelResult.modellingMethod,
                                                              tuneModelResult.parameters,
                                                              trainDataSet,
                                                              testDataSet)
@@ -44,6 +48,7 @@ applyRidgeResult = mlutilities.modeling.applyModel(applyRidgeConfig)
 print(applyRidgeResult)
 print()
 
-testScoreMethod = sklearn.metrics.mean_squared_error
-applyModelResult = mlutilities.modeling.scoreModel(applyRidgeResult, testScoreMethod)
+mseMethod = mlutilities.types.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
+testScoreMethods = [mseMethod]
+applyModelResult = mlutilities.modeling.scoreModel(applyRidgeResult, testScoreMethods)
 print(applyModelResult)
