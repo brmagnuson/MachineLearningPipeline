@@ -184,7 +184,7 @@ class ModelScore:
         self.modelScoreMethod = modelScoreMethod
 
     def __str__(self):
-        return self.__class__.__name__ + ' Scoring Function: ' + str(self.scoringFunction) + ' Score: ' + str(self.score)
+        return self.__class__.__name__ + ' Scoring Function: ' + str(self.modelScoreMethod) + ' Score: ' + str(self.score)
 
 
 class ModelScoreMethod:
