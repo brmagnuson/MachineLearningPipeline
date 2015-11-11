@@ -17,6 +17,8 @@ runFeatureEngineering = False
 runTestTrainSplit = False
 runTuneModels = False
 runApplyModels = False
+runScoreModels = False
+runVisualization = False
 
 # tuneScoreMethod = 'r2'
 tuneScoreMethod = 'mean_squared_error'
@@ -112,11 +114,15 @@ if runTuneModels:
 
 tuneModelResults = pickle.load(open(picklePath + 'tuneModelResults.p', 'rb'))
 
+
 # Model tuning result reporting
 if tuneScoreMethod == 'mean_squared_error':
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
 else:
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
+for item in sortedTuneModelResults:
+    print(item)
+    print()
 
 
 # Create ApplyModelConfigurations
@@ -151,7 +157,11 @@ print('Applying models to test data.')
 applyModelResults = mlutilities.modeling.applyModels(applyModelConfigs)
 
 # Score models
-scoreModelResults = mlutilities.modeling.scoreModels(applyModelResults, testScoreMethods)
+if runScoreModels:
+    scoreModelResults = mlutilities.modeling.scoreModels(applyModelResults, testScoreMethods)
+    pickle.dump(scoreModelResults, open(picklePath + 'scoreModelResults.p', 'wb'))
+
+scoreModelResults = pickle.load(open(picklePath + 'scoreModelResults.p', 'rb'))
 
 # Model testing result reporting
 if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:
@@ -167,37 +177,38 @@ scoreModelResultsDF.to_csv('Output/scoreModelResults.csv', index=False)
 scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x**(1/2))
 dryYearScoreModelResultsDF = scoreModelResultsDF[scoreModelResultsDF['Base DataSet'].str.contains('Dry')]
 
-mlutilities.utilities.scatterPlot(scoreModelResultsDF,
-                                  'Mean Squared Error',
-                                  'R Squared',
-                                  'MSE by R Squared for Each Model',
-                                  'Output/mseByR2AllModels.png')
-mlutilities.utilities.scatterPlot(dryYearScoreModelResultsDF,
-                                  'Mean Squared Error',
-                                  'R Squared',
-                                  'MSE by R Squared for Each Model (Dry Year Models Only',
-                                  'Output/mseByR2DryModels.png')
-mlutilities.utilities.scatterPlot(scoreModelResultsDF,
-                                  'RMSE',
-                                  'R Squared',
-                                  'RMSE by R Squared for Each Model',
-                                  'Output/rmseByR2AllModels.png')
-mlutilities.utilities.scatterPlot(dryYearScoreModelResultsDF,
-                                  'RMSE',
-                                  'R Squared',
-                                  'RMSE by R Squared for Each Model (Dry Year Models Only',
-                                  'Output/rmseByR2DryModels.png')
+if runVisualization:
+    mlutilities.utilities.scatterPlot(scoreModelResultsDF,
+                                      'Mean Squared Error',
+                                      'R Squared',
+                                      'MSE by R Squared for Each Model',
+                                      'Output/mseByR2AllModels.png')
+    mlutilities.utilities.scatterPlot(dryYearScoreModelResultsDF,
+                                      'Mean Squared Error',
+                                      'R Squared',
+                                      'MSE by R Squared for Each Model (Dry Year Models Only',
+                                      'Output/mseByR2DryModels.png')
+    mlutilities.utilities.scatterPlot(scoreModelResultsDF,
+                                      'RMSE',
+                                      'R Squared',
+                                      'RMSE by R Squared for Each Model',
+                                      'Output/rmseByR2AllModels.png')
+    mlutilities.utilities.scatterPlot(dryYearScoreModelResultsDF,
+                                      'RMSE',
+                                      'R Squared',
+                                      'RMSE by R Squared for Each Model (Dry Year Models Only',
+                                      'Output/rmseByR2DryModels.png')
 
-mlutilities.utilities.barChart(scoreModelResultsDF,
-                               'Mean Squared Error',
-                               'MSE for Each Model',
-                               'Output/meanSquaredError.png')
-mlutilities.utilities.barChart(scoreModelResultsDF,
-                               'RMSE',
-                               'Root Mean Squared Error for Each Model',
-                               'Output/rootMeanSquaredError.png')
-mlutilities.utilities.barChart(scoreModelResultsDF,
-                               'R Squared',
-                               'R Squared for Each Model',
-                               'Output/rSquared.png')
+    mlutilities.utilities.barChart(scoreModelResultsDF,
+                                   'Mean Squared Error',
+                                   'MSE for Each Model',
+                                   'Output/meanSquaredError.png')
+    mlutilities.utilities.barChart(scoreModelResultsDF,
+                                   'RMSE',
+                                   'Root Mean Squared Error for Each Model',
+                                   'Output/rootMeanSquaredError.png')
+    mlutilities.utilities.barChart(scoreModelResultsDF,
+                                   'R Squared',
+                                   'R Squared for Each Model',
+                                   'Output/rSquared.png')
 

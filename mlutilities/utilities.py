@@ -32,7 +32,7 @@ def createScoreDataFrame(scoreModelResults):
     return pandas.DataFrame(rows, columns=columnNames)
 
 
-def barChart(originalDataFrame, column, title, outputPath=None):
+def barChart(dataFrame, column, title, outputPath=None):
     """
     Creates a simple bar chart
     :param dataframe:
@@ -45,7 +45,7 @@ def barChart(originalDataFrame, column, title, outputPath=None):
         ascendingBoolean = False
     else:
         ascendingBoolean = True
-    plotDataFrame = originalDataFrame[[column]].sort(columns=column, ascending=ascendingBoolean)
+    plotDataFrame = dataFrame[[column]].sort(columns=column, ascending=ascendingBoolean)
 
     # Create graphic
     plotDataFrame[column].plot(kind='bar', edgecolor='w')
