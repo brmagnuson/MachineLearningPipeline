@@ -132,7 +132,7 @@ def engineerFeaturesForDataSets(dataSets, featureEngineeringConfigurations):
     return featureEngineeredDatasets
 
 
-def splitDataSet(dataSet, testProportion, seed=None):
+def splitDataSet(dataSet, testProportion, seed=None, trainPath=None, testPath=None):
     """
     Splits a DataSet's data frame into a test set and a training set based on the given proportion
     :param dataSet: input DataSet
@@ -143,17 +143,22 @@ def splitDataSet(dataSet, testProportion, seed=None):
     trainDataFrame, testDataFrame = sklearn.cross_validation.train_test_split(originalDataFrame,
                                                                               test_size=testProportion,
                                                                               random_state=seed)
-    # Assign values to new DataSets
+
+    # Assign values to new DataSets, using default path option if none was specified
     baseNewDescription = dataSet.description
     baseNewPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + '_'
+    if trainPath == None:
+        trainPath = baseNewPath + 'train.csv'
+    if testPath == None:
+        testPath = baseNewPath + 'test.csv'
     trainDataSet = mlutilities.types.DataSet(baseNewDescription + ' Training Set',
-                                             baseNewPath + 'train.csv',
+                                             trainPath,
                                              'w',
                                              trainDataFrame,
                                              dataSet.featuresIndex,
                                              dataSet.labelIndex)
     testDataSet = mlutilities.types.DataSet(baseNewDescription + ' Testing Set',
-                                            baseNewPath + 'test.csv',
+                                            testPath,
                                             'w',
                                             testDataFrame,
                                             dataSet.featuresIndex,

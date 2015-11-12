@@ -29,8 +29,8 @@ testScoreMethods = [mseMethod, r2Method]
 # Get list of data sets.
 picklePath = 'Pickles/'
 basePath = 'Data/'
-myfeaturesIndex = 5
-myLabelIndex = 4
+myfeaturesIndex = 6
+myLabelIndex = 5
 
 if runPrepareDatasets:
     print('Preparing input data sets.')
