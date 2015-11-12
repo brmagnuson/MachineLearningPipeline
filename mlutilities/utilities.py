@@ -1,6 +1,7 @@
 import pandas
 import matplotlib.pyplot
 
+
 def createScoreDataFrame(scoreModelResults):
     """
 
@@ -86,5 +87,4 @@ def scatterPlot(dataFrame, xColumn, yColumn, title, outputPath=None):
 
     # Close window
     matplotlib.pyplot.close()
-
 
