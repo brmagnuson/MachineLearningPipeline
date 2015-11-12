@@ -40,7 +40,7 @@ for testDataSet in testDataSets:
     # Find associated scaler
     matchingScaler = None
     for scaler in scalers:
-        if scaler.scaledDataSet == trainDataSet:
+        if scaler.dataSetUsedToFit == trainDataSet:
             matchingScaler = scaler
             break
 
