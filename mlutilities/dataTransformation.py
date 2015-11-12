@@ -9,8 +9,8 @@ import mlutilities.types
 def scaleDataSet(dataSet):
     """
     Scale columns of data set from 0 to 1
-    :param dataSet:
-    :return:
+    :param dataSet: DataSet object
+    :return: a tuple containing the scaled data set and the scaling object for use on another data set, if desired
     """
     # Scale dataset from 0 to 1 using sklearn
     minMaxScaler = sklearn.preprocessing.MinMaxScaler()
@@ -32,7 +32,10 @@ def scaleDataSet(dataSet):
                                               dataSet.featuresIndex,
                                               dataSet.labelIndex)
 
-    return scaledDataSet
+    # Create Scaler object to associate original dataSet and minMaxScaler
+    scaler = mlutilities.types.Scaler(dataSet, minMaxScaler)
+
+    return scaledDataSet, scaler
 
 
 def scaleDataSets(dataSets):
@@ -42,10 +45,39 @@ def scaleDataSets(dataSets):
     :return: list of scaled DataSet objects
     """
     scaledDataSets = []
+    scalers = []
     for dataSet in dataSets:
-        scaledDataSet = scaleDataSet(dataSet)
+        scaledDataSet, scaler = scaleDataSet(dataSet)
         scaledDataSets.append(scaledDataSet)
-    return scaledDataSets
+        scalers.append(scaler)
+    return scaledDataSets, scalers
+
+
+def scaleDataSetByScaler(dataSet, scaler):
+    """
+    Scales columns of data according to a scaler already fit on another (usually associated) DataSet
+    :param dataSet: DataSet object
+    :param scaler: Scaler, which consists of the original DataSet used for fitting and the scaling function
+    :return: scaled dataSet and the scaler used to scale it
+    """
+    scaledValues = scaler.scalingFunction.transform(dataSet.featuresDataFrame)
+
+    # Translate values back into pandas data frame
+    scaledValuesDataFrame = pandas.DataFrame(scaledValues, columns=dataSet.featuresDataFrame.columns)
+
+    # Concatenate values and ids into new pandas data frame
+    completeDataFrame = pandas.concat([dataSet.nonFeaturesDataFrame, scaledValuesDataFrame], axis=1)
+
+    # Assign values to new DataSet object
+    newDescription = dataSet.description + ' Scaled'
+    newPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + '_scaled.csv'
+    scaledDataSet = mlutilities.types.DataSet(newDescription,
+                                              newPath,
+                                              'w',
+                                              completeDataFrame,
+                                              dataSet.featuresIndex,
+                                              dataSet.labelIndex)
+    return scaledDataSet, scaler
 
 
 def engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration):
@@ -100,7 +132,7 @@ def engineerFeaturesForDataSets(dataSets, featureEngineeringConfigurations):
     return featureEngineeredDatasets
 
 
-def splitDataSet(dataSet, testProportion):
+def splitDataSet(dataSet, testProportion, seed=None):
     """
     Splits a DataSet's data frame into a test set and a training set based on the given proportion
     :param dataSet: input DataSet
@@ -110,7 +142,7 @@ def splitDataSet(dataSet, testProportion):
     originalDataFrame = dataSet.dataFrame
     trainDataFrame, testDataFrame = sklearn.cross_validation.train_test_split(originalDataFrame,
                                                                               test_size=testProportion,
-                                                                              random_state=1000)
+                                                                              random_state=seed)
     # Assign values to new DataSets
     baseNewDescription = dataSet.description
     baseNewPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + '_'
@@ -133,7 +165,7 @@ def splitDataSet(dataSet, testProportion):
     return theSplitDataSet
 
 
-def splitDataSets(dataSets, testProportion):
+def splitDataSets(dataSets, testProportion, seed=None):
     """
     Wrapper function to loop through multiple data sets and split them into train/test data
     :param dataSets: list of DataSet objects
@@ -142,6 +174,6 @@ def splitDataSets(dataSets, testProportion):
     """
     theSplitDataSets = []
     for dataSet in dataSets:
-        theSplitDataSet = splitDataSet(dataSet, testProportion)
+        theSplitDataSet = splitDataSet(dataSet, testProportion, seed)
         theSplitDataSets.append(theSplitDataSet)
     return theSplitDataSets

@@ -43,7 +43,7 @@ class DataSet:
 
 class SplitDataSet:
     """
-
+    This associates both pieces of a DataSet split into testing and training.
     """
     def __init__(self, trainDataSet, testDataSet):
         self.trainDataSet = trainDataSet
@@ -53,6 +53,18 @@ class SplitDataSet:
         return self.__class__.__name__ + '\n' + \
                'Training: ' + self.trainDataSet + '\n' + \
                'Testing: ' + self.testDataSet
+
+
+class Scaler:
+    """
+    This associates a MinMaxScaler object with the original, unscaled DataSet used for fitting it.
+    """
+    def __init__(self, dataSetUsedToFit, scalingFunction):
+        self.dataSetUsedToFit = dataSetUsedToFit
+        self.scalingFunction = scalingFunction
+
+    def __str__(self):
+        return self.__class__.__name__ + ' for ' + self.dataSet
 
 
 class FeatureEngineeringConfiguration:
