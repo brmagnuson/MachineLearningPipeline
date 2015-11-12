@@ -80,7 +80,7 @@ allDataSets = pickle.load(open(picklePath + 'allDataSets.p', 'rb'))
 if runTestTrainSplit:
     print('Splitting into testing & training data.')
     testProportion = 0.25
-    splitDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion)
+    splitDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion, seed=1000)
     pickle.dump(splitDataSets, open(picklePath + 'splitDataSets.p', 'wb'))
 
 splitDataSets = pickle.load(open(picklePath + 'splitDataSets.p', 'rb'))
@@ -136,6 +136,7 @@ if runApplyModels:
         for splitDataSet in splitDataSets:
             if splitDataSet.trainDataSet == trainDataSet:
                 testDataSet = splitDataSet.testDataSet
+                break
 
         # Make sure we found a match
         if testDataSet == None:
