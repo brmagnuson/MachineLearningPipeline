@@ -40,9 +40,9 @@ def scaleDataSet(dataSet):
 
 def scaleDataSets(dataSets):
     """
-    Wrapper function to loop through scaling multiple data sets
+    Wrapper function to loop through scaling multiple DataSets
     :param dataSets: list of DataSet objects
-    :return: list of scaled DataSet objects
+    :return: list of scaled DataSet objects and list of Scaler objects
     """
     scaledDataSets = []
     scalers = []
@@ -58,9 +58,9 @@ def scaleDataSetByScaler(dataSet, scaler):
     Scales columns of data according to a scaler already fit on another (usually associated) DataSet
     :param dataSet: DataSet object
     :param scaler: Scaler, which consists of the original DataSet used for fitting and the scaling function
-    :return: scaled dataSet and the scaler used to scale it
+    :return: scaled DataSet
     """
-    scaledValues = scaler.scalingFunction.transform(dataSet.featuresDataFrame)
+    scaledValues = scaler.scalingObject.transform(dataSet.featuresDataFrame)
 
     # Translate values back into pandas data frame
     scaledValuesDataFrame = pandas.DataFrame(scaledValues, columns=dataSet.featuresDataFrame.columns)
@@ -82,10 +82,10 @@ def scaleDataSetByScaler(dataSet, scaler):
 
 def engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration):
     """
-
+    Transforms a DataSet according to a FeatureEngineeringConfiguration's parameters.
     :param dataSet:
-    :param featureEngineeringConfiguration:
-    :return:
+    :param featureEngineeringConfiguration: Can be either a selection or a decomposition config
+    :return: the transformed DataSet and a Transformer available for use on other DataSets
     """
     # Create feature selector using method function and unpacking parameters
     selector = featureEngineeringConfiguration.method(**featureEngineeringConfiguration.parameters)
@@ -114,7 +114,13 @@ def engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration):
                                                         dataSet.featuresIndex,
                                                         dataSet.labelIndex)
 
-    return selectedFeaturesDataSet
+    # Create Transformer to associate original dataSet and selector
+    transformer = mlutilities.types.Transformer(featureEngineeringConfiguration.description,
+                                                featureEngineeringConfiguration.selectionOrExtraction,
+                                                dataSet,
+                                                selector)
+
+    return selectedFeaturesDataSet, transformer
 
 
 def engineerFeaturesForDataSets(dataSets, featureEngineeringConfigurations):
@@ -125,11 +131,47 @@ def engineerFeaturesForDataSets(dataSets, featureEngineeringConfigurations):
     :return: list of feature engineered DataSet objects
     """
     featureEngineeredDatasets = []
+    transformers = []
     for dataSet in dataSets:
         for featureEngineeringConfiguration in featureEngineeringConfigurations:
-            featureEngineeredDataset = engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration)
+            featureEngineeredDataset, transformer = engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration)
             featureEngineeredDatasets.append(featureEngineeredDataset)
-    return featureEngineeredDatasets
+            transformers.append(transformer)
+    return featureEngineeredDatasets, transformers
+
+
+def engineerFeaturesByTransformer(dataSet, transformer):
+    """
+    Transforms a DataSet's features according to transformer (either a selector or decomposer) already fit on
+    another (usually associated) DataSet
+    :param dataSet: DataSet object
+    :param transformer: Transformer, which consists of the original DataSet used for fitting and the selector or
+    decomposer created on it
+    :return: feature engineered DataSet
+    """
+    transformedValues = transformer.transformingObject.transform(dataSet.featuresDataFrame)
+
+    # Build new pandas data frame based on selected/extracted features
+    if transformer.selectionOrExtraction == 'selection':
+        selectedFeatureIndices = transformer.transformingObject.get_support(indices=True)
+        columnNames = [dataSet.featuresDataFrame.columns.values[i] for i in selectedFeatureIndices]
+        selectedFeaturesDataFrame = dataSet.featuresDataFrame[columnNames]
+        completeDataFrame = pandas.concat([dataSet.nonFeaturesDataFrame, selectedFeaturesDataFrame], axis=1)
+    else:
+        extractedFeaturesDataFrame = pandas.DataFrame(transformedValues)
+        completeDataFrame = pandas.concat([dataSet.nonFeaturesDataFrame, extractedFeaturesDataFrame], axis=1)
+
+    # Assign values to new DataSet object
+    newDescription = dataSet.description + ' features selected via ' + transformer.description
+    newPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + \
+              '_' + transformer.description.replace(' ', '_') + '.csv'
+    selectedFeaturesDataSet = mlutilities.types.DataSet(newDescription,
+                                                        newPath,
+                                                        'w',
+                                                        completeDataFrame,
+                                                        dataSet.featuresIndex,
+                                                        dataSet.labelIndex)
+    return selectedFeaturesDataSet
 
 
 def splitDataSet(dataSet, testProportion, seed=None, trainPath=None, testPath=None):

@@ -11,14 +11,14 @@ import mlutilities.modeling
 import mlutilities.utilities
 
 # Parameters
-runPrepareDatasets = False
-runScaleDatasets = False
-runFeatureEngineering = False
-runTestTrainSplit = False
-runTuneModels = False
-runApplyModels = False
-runScoreModels = False
-runVisualization = False
+runPrepareDatasets = True
+runScaleDatasets = True
+runFeatureEngineering = True
+runTestTrainSplit = True
+runTuneModels = True
+runApplyModels = True
+runScoreModels = True
+runVisualization = True
 
 # tuneScoreMethod = 'r2'
 tuneScoreMethod = 'mean_squared_error'
@@ -39,7 +39,7 @@ if runPrepareDatasets:
                                                 featuresIndex=myfeaturesIndex,
                                                 labelIndex=myLabelIndex)
     dryYearsDataSet = mlutilities.types.DataSet('Dry Years',
-                                                basePath + 'jul_IntMnt_driest31.csv',
+                                                basePath + 'jul_IntMnt_dry.csv',
                                                 featuresIndex=myfeaturesIndex,
                                                 labelIndex=myLabelIndex)
     regularDataSets = [allYearsDataSet, dryYearsDataSet]
@@ -50,7 +50,7 @@ regularDataSets = pickle.load(open(picklePath + 'regularDataSets.p', 'rb'))
 # Get scaled data sets
 if runScaleDatasets:
     print('Scaling data sets.')
-    scaledDataSets = mlutilities.dataTransformation.scaleDataSets(regularDataSets)
+    scaledDataSets, scalers = mlutilities.dataTransformation.scaleDataSets(regularDataSets)
     pickle.dump(scaledDataSets, open(picklePath + 'scaledDataSets.p', 'wb'))
 
 scaledDataSets = pickle.load(open(picklePath + 'scaledDataSets.p', 'rb'))
@@ -70,7 +70,7 @@ if runFeatureEngineering:
                                                                          {'n_components':10})
     featureEngineeringConfigurations = [varianceThresholdConfiguration, pcaConfiguration]
 
-    featureEngineeredDatasets = mlutilities.dataTransformation.engineerFeaturesForDataSets(allDataSets, featureEngineeringConfigurations)
+    featureEngineeredDatasets, transformers = mlutilities.dataTransformation.engineerFeaturesForDataSets(allDataSets, featureEngineeringConfigurations)
     allDataSets += featureEngineeredDatasets
     pickle.dump(allDataSets, open(picklePath + 'allDataSets.p', 'wb'))
 

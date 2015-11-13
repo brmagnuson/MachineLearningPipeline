@@ -29,7 +29,7 @@ class DataSet:
         self.labelSeries = self.dataFrame.iloc[:, labelIndex]
 
     def __str__(self):
-        return self.__class__.__name__ + ' Description: ' + self.description + ', Path: \'' + self.path + '\''
+        return self.__class__.__name__ + ' ' + self.description + ', Path: \'' + self.path + '\''
 
     def __eq__(self, other):
         """
@@ -60,12 +60,12 @@ class Scaler:
     """
     This associates a MinMaxScaler object with the original, unscaled DataSet used for fitting it.
     """
-    def __init__(self, dataSetUsedToFit, scalingFunction):
+    def __init__(self, dataSetUsedToFit, scalingObject):
         self.dataSetUsedToFit = dataSetUsedToFit
-        self.scalingFunction = scalingFunction
+        self.scalingObject = scalingObject
 
     def __str__(self):
-        return self.__class__.__name__ + ' for ' + str(self.dataSet)
+        return self.__class__.__name__ + ' for ' + str(self.dataSetUsedToFit)
 
 
 class FeatureEngineeringConfiguration:
@@ -80,6 +80,22 @@ class FeatureEngineeringConfiguration:
 
     def __str__(self):
         return self.__class__.__name__ + ' Description: ' + self.description
+
+
+class Transformer:
+    """
+    This associates a decomposition or feature_selection object with the original, untransformed DataSet
+    used for fitting it.
+    """
+    def __init__(self, description, selectionOrExtraction, dataSetUsedToFit, transformingObject):
+        self.description = description
+        self.selectionOrExtraction = selectionOrExtraction
+        self.dataSetUsedToFit = dataSetUsedToFit
+        self.transformingObject = transformingObject
+
+    def __str__(self):
+        return self.__class__.__name__ + ' ' + str(self.description) + \
+               ' for ' + str(self.dataSetUsedToFit)
 
 
 class ModellingMethod:
