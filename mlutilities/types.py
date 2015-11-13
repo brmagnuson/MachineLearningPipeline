@@ -1,4 +1,5 @@
 import pandas
+import copy
 
 
 class DataSet:
@@ -12,7 +13,7 @@ class DataSet:
         self.description = description
         self.path = path
         self.mode = mode
-        self.dataFrame = dataFrame
+        self.dataFrame = copy.deepcopy(dataFrame)
         self.featuresIndex = featuresIndex
         self.labelIndex = labelIndex
 
@@ -51,8 +52,8 @@ class SplitDataSet:
 
     def __str__(self):
         return self.__class__.__name__ + '\n' + \
-               'Training: ' + self.trainDataSet + '\n' + \
-               'Testing: ' + self.testDataSet
+               'Training: ' + str(self.trainDataSet) + '\n' + \
+               'Testing: ' + str(self.testDataSet)
 
 
 class Scaler:
@@ -64,7 +65,7 @@ class Scaler:
         self.scalingFunction = scalingFunction
 
     def __str__(self):
-        return self.__class__.__name__ + ' for ' + self.dataSet
+        return self.__class__.__name__ + ' for ' + str(self.dataSet)
 
 
 class FeatureEngineeringConfiguration:

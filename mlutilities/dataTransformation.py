@@ -77,7 +77,7 @@ def scaleDataSetByScaler(dataSet, scaler):
                                               completeDataFrame,
                                               dataSet.featuresIndex,
                                               dataSet.labelIndex)
-    return scaledDataSet, scaler
+    return scaledDataSet
 
 
 def engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration):
