@@ -95,37 +95,53 @@ for dataSetAssociation in dataSetAssociations:
 
 dataSetAssociations += featureEngineeredDataSetAssociations
 
-for item in dataSetAssociations:
+# Tune models
+parameters = [{'alpha': [0.1, 0.5, 1.0], 'normalize': [True, False]}]
+ridgeMethod = mltypes.ModellingMethod('Ridge Regression',
+                                                sklearn.linear_model.Ridge)
+ridgeConfig = mltypes.TuneModelConfiguration('Ridge regression scored by mean_squared_error',
+                                                       ridgeMethod,
+                                                       parameterGrid=parameters,
+                                                       scoreMethod='mean_squared_error')
+
+tuneModelResults = []
+for dataSetAssociation in dataSetAssociations:
+    tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, ridgeConfig)
+    tuneModelResults.append(tuneModelResult)
+
+# Apply models
+applyModelConfigs = []
+for tuneModelResult in tuneModelResults:
+
+    trainDataSet = tuneModelResult.dataSet
+    testDataSet = None
+    for dataSetAssociation in dataSetAssociations:
+        if dataSetAssociation.trainDataSet == trainDataSet:
+            testDataSet = dataSetAssociation.testDataSet
+            break
+
+    # Make sure we found a match
+    if testDataSet == None:
+        raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
+
+    applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
+                                                       tuneModelResult.modellingMethod,
+                                                       tuneModelResult.parameters,
+                                                       trainDataSet,
+                                                       testDataSet)
+    applyModelConfigs.append(applyModelConfig)
+
+applyModelResults = mlmodel.applyModels(applyModelConfigs)
+
+mseMethod = mltypes.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
+testScoreMethods = [mseMethod]
+scoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)
+
+if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:
+    sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: x.modelScores[0].score)
+else:
+    sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: -x.modelScores[0].score)
+
+for item in sortedScoreModelResults:
     print(item)
     print()
-
-# Tune model
-# parameters = [{'alpha': [0.1, 0.5, 1.0], 'normalize': [True, False]}]
-# ridgeMethod = mlutilities.types.ModellingMethod('Ridge Regression',
-#                                                 sklearn.linear_model.Ridge)
-# ridgeConfig = mlutilities.types.TuneModelConfiguration('Ridge regression scored by mean_squared_error',
-#                                                        ridgeMethod,
-#                                                        parameterGrid=parameters,
-#                                                        scoreMethod='mean_squared_error')
-#
-# tuneModelResult = mlutilities.modeling.tuneModel(trainDataSet, ridgeConfig)
-# print(tuneModelResult)
-# print()
-#
-# # Apply model
-# applyRidgeConfig = mlutilities.types.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
-#                                                              tuneModelResult.modellingMethod,
-#                                                              tuneModelResult.parameters,
-#                                                              trainDataSet,
-#                                                              testDataSet)
-# print(applyRidgeConfig)
-# print()
-#
-# applyRidgeResult = mlutilities.modeling.applyModel(applyRidgeConfig)
-# print(applyRidgeResult)
-# print()
-#
-# mseMethod = mlutilities.types.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
-# testScoreMethods = [mseMethod]
-# applyModelResult = mlutilities.modeling.scoreModel(applyRidgeResult, testScoreMethods)
-# print(applyModelResult)
