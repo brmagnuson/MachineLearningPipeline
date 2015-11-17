@@ -100,7 +100,7 @@ class Transformer:
 
 class ModellingMethod:
     """
-
+    This associates an sklearn modelling function with a description for easier processing.
     """
     def __init__(self, description, function):
         self.description = description
@@ -130,7 +130,7 @@ class TuneModelConfiguration:
 
 class TuneModelResult:
     """
-
+    The outcome of tuneModel(), which contains everything important found in tuning parameters for a ModellingMethod.
     """
     def __init__(self, description, dataSet, modellingMethod, parameters, scoreMethod, bestScore, gridScores):
         self.description = description
@@ -153,13 +153,17 @@ class TuneModelResult:
 
 class ApplyModelConfiguration:
     """
-
+    Everything needed to use applyModel(): the modelling method, its parameters, the DataSet to train on, and
+    the DataSet to predict for. (Note that if no test DataSet is passed in, the applyModel() will predict for the
+    training DataSet by default.)
     """
-    def __init__(self, description, modellingMethod, parameters, trainDataSet, testDataSet):
+    def __init__(self, description, modellingMethod, parameters, trainDataSet, testDataSet=None):
         self.description = description
         self.modellingMethod = modellingMethod
         self.parameters = parameters
         self.trainDataSet = trainDataSet
+        if testDataSet == None:
+            testDataSet = trainDataSet
         self.testDataSet = testDataSet
 
     def __str__(self):
@@ -171,7 +175,7 @@ class ApplyModelConfiguration:
 
 class ApplyModelResult:
     """
-
+    The outcome of applyModel(), which can then be scored.
     """
     def __init__(self, description, testPredictions, testDataSet, modellingMethod, parameters):
         self.description = description
@@ -189,7 +193,7 @@ class ApplyModelResult:
 
 class ScoreModelResult:
     """
-
+    The outcome of scoreModel: how a ModellingMethod performed on various ModelScoreMethods
     """
     def __init__(self, description, modellingMethod, parameters, modelScores):
         self.description = description
@@ -206,7 +210,7 @@ class ScoreModelResult:
 
 class ModelScore:
     """
-
+    Relates a score to a ModelScoreMethod.
     """
     def __init__(self, score, modelScoreMethod):
         self.score = score
@@ -218,7 +222,7 @@ class ModelScore:
 
 class ModelScoreMethod:
     """
-
+    This associates an sklearn.metrics scoring function with a description to facilitate processing.
     """
     def __init__(self, description, function):
         self.description = description

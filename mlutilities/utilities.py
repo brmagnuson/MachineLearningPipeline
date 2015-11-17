@@ -4,9 +4,9 @@ import matplotlib.pyplot
 
 def createScoreDataFrame(scoreModelResults):
     """
-
+    Creates a pandas dataframe from the scored results of various models for easier comparison
     :param scoreModelResults:
-    :return:
+    :return: DataFrame
     """
 
     columnNames = ['Base DataSet', 'Model Method', 'Parameters']
@@ -35,11 +35,11 @@ def createScoreDataFrame(scoreModelResults):
 
 def barChart(dataFrame, column, title, outputPath=None):
     """
-    Creates a simple bar chart
+    Creates a simple bar chart from a single column of a pandas dataframe
     :param dataframe:
-    :param columnName:
-    :param outputPath:
-    :return:
+    :param column:
+    :param title:
+    :param outputPath: Optional. If None, graphic is displayed rather than saved to file.
     """
     # Create new dataframe of just the desired column and sort accordingly
     if column == 'R Squared':
@@ -66,12 +66,12 @@ def barChart(dataFrame, column, title, outputPath=None):
 
 def scatterPlot(dataFrame, xColumn, yColumn, title, outputPath=None):
     """
-
+    Uses two columns of a pandas dataframe to make a scatterplot
     :param dataFrame:
     :param xColumn:
     :param yColumn:
-    :param outputPath:
-    :return:
+    :param title:
+    :param outputPath: Optional. If None, graphic is displayed rather than saved to file.
     """
     # Create graphic
     matplotlib.pyplot.scatter(dataFrame[xColumn], dataFrame[yColumn])

@@ -56,7 +56,7 @@ def scaleDataSets(dataSets):
 def scaleDataSetByScaler(dataSet, scaler):
     """
     Scales columns of data according to a scaler already fit on another (usually associated) DataSet
-    :param dataSet: DataSet object
+    :param dataSet: DataSet
     :param scaler: Scaler, which consists of the original DataSet used for fitting and the scaling function
     :return: scaled DataSet
     """
@@ -126,9 +126,9 @@ def engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration):
 def engineerFeaturesForDataSets(dataSets, featureEngineeringConfigurations):
     """
     Wrapper function to loop through multiple data sets and feature engineering configurations
-    :param dataSets: list of DataSet objects
+    :param dataSets: list of DataSets
     :param featureEngineeringConfigurations: list of FeatureEngineeringConfiguration objects
-    :return: list of feature engineered DataSet objects
+    :return: list of feature engineered DataSets
     """
     featureEngineeredDatasets = []
     transformers = []
@@ -144,7 +144,7 @@ def engineerFeaturesByTransformer(dataSet, transformer):
     """
     Transforms a DataSet's features according to transformer (either a selector or decomposer) already fit on
     another (usually associated) DataSet
-    :param dataSet: DataSet object
+    :param dataSet: DataSet
     :param transformer: Transformer, which consists of the original DataSet used for fitting and the selector or
     decomposer created on it
     :return: feature engineered DataSet
@@ -179,6 +179,9 @@ def splitDataSet(dataSet, testProportion, seed=None, trainPath=None, testPath=No
     Splits a DataSet's data frame into a test set and a training set based on the given proportion
     :param dataSet: input DataSet
     :param testProportion: float between 0 and 1; proportion that will be held back in the test set
+    :param seed: Optional. Integer. If None, test-train split randomness will not be controlled and replicable.
+    :param trainPath: Optional. If None, automatically creates new files in same location and appends _test and _train
+    to the end. If specified, you can control location and/or name of the new files.
     :return: tuple of training DataSet and testing DataSet
     """
     originalDataFrame = dataSet.dataFrame
@@ -217,6 +220,7 @@ def splitDataSets(dataSets, testProportion, seed=None):
     Wrapper function to loop through multiple data sets and split them into train/test data
     :param dataSets: list of DataSet objects
     :param testProportion: float between 0 and 1; proportion that will be held back in the test set
+    :param seed: Optional. Integer. If None, test-train split randomness will not be controlled and replicable.
     :return: tuple of lists of training DataSets and testing DataSets
     """
     theSplitDataSets = []

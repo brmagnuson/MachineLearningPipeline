@@ -4,10 +4,10 @@ import mlutilities.types
 
 def tuneModel(dataSet, tuneModelConfiguration):
     """
-
+    Finds the best combination of a set of model parameters for a DataSet.
     :param dataSet: Presumes that the last column in nonFeaturesDataFrame is the label.
     :param modelCreationConfiguration:
-    :return:
+    :return: TuneModelResult
     """
     # Get features and label from dataSet
     features = dataSet.featuresDataFrame
@@ -45,7 +45,7 @@ def tuneModels(dataSets, tuneModelConfigurations):
     Wrapper function to loop through multiple data sets and model creation configurations
     :param dataSets:
     :param modelCreationConfigurations:
-    :return:
+    :return: list of TuneModelResults
     """
     tuneModelResults = []
     for dataSet in dataSets:
@@ -59,7 +59,7 @@ def applyModel(applyModelConfiguration):
     """
     Given a model, its parameters, a training set, and a test set, train the model and apply to the test data
     :param applyModelConfiguration
-    :return: applyModelResult
+    :return: ApplyModelResult
     """
     # Get features and label from dataSet
     trainFeatures = applyModelConfiguration.trainDataSet.featuresDataFrame
@@ -86,7 +86,7 @@ def applyModels(applyModelConfigurations):
     """
     Wrapper function to loop through multiple ApplyModelConfigurations
     :param applyModelConfigurations:
-    :return:
+    :return: list of ApplyModelResults
     """
     applyModelResults = []
     for applyModelConfiguration in applyModelConfigurations:
@@ -97,10 +97,10 @@ def applyModels(applyModelConfigurations):
 
 def scoreModel(applyModelResult, modelScoreMethods):
     """
-
+    Scores the result of applying a model based on various sklearn.metrics scoring methods
     :param applyModelResult:
-    :param scoringFunction:
-    :return:
+    :param scoringFunction: list of ModelScoreMethods
+    :return: ScoreModelResult
     """
     testLabel = applyModelResult.testDataSet.labelSeries
     testPredictions = applyModelResult.testPredictions
@@ -123,7 +123,7 @@ def scoreModels(applyModelResults, modelScoreMethods):
     Wrapper function to loop through multiple ApplyModelResult objects
     :param applyModelResults:
     :param scoringFunction:
-    :return:
+    :return: list of ScoreModelResults
     """
     scoreModelResults = []
     for applyModelResult in applyModelResults:
