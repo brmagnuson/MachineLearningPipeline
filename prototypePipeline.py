@@ -1,14 +1,16 @@
-import pandas
+import os
+import fnmatch
 import pickle
 import sklearn.feature_selection
 import sklearn.decomposition
 import sklearn.linear_model
 import sklearn.ensemble
 import sklearn.metrics
-import mlutilities.types
-import mlutilities.dataTransformation
-import mlutilities.modeling
-import mlutilities.utilities
+import mlutilities.types as mltypes
+import mlutilities.dataTransformation as mldataTrans
+import mlutilities.modeling as mlmodel
+import mlutilities.utilities as mlutils
+import thesisFunctions
 
 # Parameters
 runPrepareDatasets = True
@@ -22,70 +24,111 @@ runVisualization = True
 
 # tuneScoreMethod = 'r2'
 tuneScoreMethod = 'mean_squared_error'
-r2Method = mlutilities.types.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
-mseMethod = mlutilities.types.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
+r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
+mseMethod = mltypes.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
 testScoreMethods = [mseMethod, r2Method]
 
-# Get list of data sets.
 picklePath = 'Pickles/'
 basePath = 'Data/'
-myfeaturesIndex = 6
+myFeaturesIndex = 6
 myLabelIndex = 5
 
 if runPrepareDatasets:
     print('Preparing input data sets.')
-    allYearsDataSet = mlutilities.types.DataSet('All Years',
-                                                basePath + 'jul_IntMnt_ref.csv',
-                                                featuresIndex=myfeaturesIndex,
-                                                labelIndex=myLabelIndex)
-    dryYearsDataSet = mlutilities.types.DataSet('Dry Years',
-                                                basePath + 'jul_IntMnt_dry.csv',
-                                                featuresIndex=myfeaturesIndex,
-                                                labelIndex=myLabelIndex)
-    regularDataSets = [allYearsDataSet, dryYearsDataSet]
-    pickle.dump(regularDataSets, open(picklePath + 'regularDataSets.p', 'wb'))
 
-regularDataSets = pickle.load(open(picklePath + 'regularDataSets.p', 'rb'))
+    # Get base test set from Data folder
+    universalTestDataSet = mltypes.DataSet('Jul IntMnt Test',
+                                           basePath + 'jul_IntMnt_test.csv',
+                                           featuresIndex=myFeaturesIndex,
+                                           labelIndex=myLabelIndex)
 
-# Get scaled data sets
+    # Get all base training sets from Data folder
+    baseTrainingDataSets = []
+    for root, directories, files in os.walk(basePath):
+        for file in fnmatch.filter(files, '*_train.csv'):
+            description = thesisFunctions.createDescriptionFromFileName(file)
+            baseTrainingDataSet = mltypes.DataSet(description,
+                                                  basePath + file,
+                                                  featuresIndex=myFeaturesIndex,
+                                                  labelIndex=myLabelIndex)
+            baseTrainingDataSets.append(baseTrainingDataSet)
+
+    # Associate each base training set with its own copy of the universal test set
+    dataSetAssociations = []
+    for baseTrainingDataSet in baseTrainingDataSets:
+        # Build new versions of DataSet attributes
+        copyDescription = baseTrainingDataSet.description + '\'s Copy Of Test Set'
+        copyPath = basePath + \
+                   os.path.basename(universalTestDataSet.path).split('.')[0] + '_' + \
+                   os.path.basename(baseTrainingDataSet.path).split('.')[0].split('_')[2] + '_copy.csv'
+        copyOfUniversalTestDataSet = mltypes.DataSet(copyDescription,
+                                                     copyPath,
+                                                     'w',
+                                                     dataFrame=universalTestDataSet.dataFrame,
+                                                     featuresIndex=myFeaturesIndex,
+                                                     labelIndex=myLabelIndex)
+        dataSetAssociation = mltypes.SplitDataSet(baseTrainingDataSet, copyOfUniversalTestDataSet)
+        dataSetAssociations.append(dataSetAssociation)
+
+    pickle.dump(dataSetAssociations, open(picklePath + 'dataSetAssociations.p', 'wb'))
+
+dataSetAssociations = pickle.load(open(picklePath + 'dataSetAssociations.p', 'rb'))
+
+# Scale data sets based on the training set
+scaledDataSetAssociations = []
 if runScaleDatasets:
     print('Scaling data sets.')
-    scaledDataSets, scalers = mlutilities.dataTransformation.scaleDataSets(regularDataSets)
-    pickle.dump(scaledDataSets, open(picklePath + 'scaledDataSets.p', 'wb'))
+    for dataSetAssociation in dataSetAssociations:
+        # Scale training data and get scaler
+        scaledTrainDataSet, scaler = mldataTrans.scaleDataSet(dataSetAssociation.trainDataSet)
 
-scaledDataSets = pickle.load(open(picklePath + 'scaledDataSets.p', 'rb'))
+        # Scale testing data using scaler
+        scaledTestDataSet = mldataTrans.scaleDataSetByScaler(dataSetAssociation.testDataSet, scaler)
 
-allDataSets = regularDataSets + scaledDataSets
+        # Associate the data sets
+        scaledDataSetAssociation = mltypes.SplitDataSet(scaledTrainDataSet, scaledTestDataSet)
+        scaledDataSetAssociations.append(scaledDataSetAssociation)
+
+    pickle.dump(scaledDataSetAssociations, open(picklePath + 'scaledDataSetAssociations.p', 'wb'))
+
+scaledDataSetAssociations = pickle.load(open(picklePath + 'scaledDataSetAssociations.p', 'rb'))
+
+dataSetAssociations += scaledDataSetAssociations
 
 # Perform feature engineering
+featureEngineeredDataSetAssociations = []
 if runFeatureEngineering:
     print('Engineering features.')
-    varianceThresholdConfiguration = mlutilities.types.FeatureEngineeringConfiguration('Variance Threshold 1',
-                                                                                       'selection',
-                                                                                       sklearn.feature_selection.VarianceThreshold,
-                                                                                       {'threshold':.1})
-    pcaConfiguration = mlutilities.types.FeatureEngineeringConfiguration('PCA n10',
-                                                                         'extraction',
-                                                                         sklearn.decomposition.PCA,
-                                                                         {'n_components':10})
-    featureEngineeringConfigurations = [varianceThresholdConfiguration, pcaConfiguration]
+    varianceThresholdConfig = mltypes.FeatureEngineeringConfiguration('Variance Threshold 1',
+                                                                      'selection',
+                                                                      sklearn.feature_selection.VarianceThreshold,
+                                                                      {'threshold': .1})
+    pcaConfig = mltypes.FeatureEngineeringConfiguration('PCA n10',
+                                                        'extraction',
+                                                        sklearn.decomposition.PCA,
+                                                        {'n_components': 10})
+    featureEngineeringConfigs = [varianceThresholdConfig, pcaConfig]
 
-    featureEngineeredDatasets, transformers = mlutilities.dataTransformation.engineerFeaturesForDataSets(allDataSets, featureEngineeringConfigurations)
-    allDataSets += featureEngineeredDatasets
-    pickle.dump(allDataSets, open(picklePath + 'allDataSets.p', 'wb'))
+    for dataSetAssociation in dataSetAssociations:
 
-allDataSets = pickle.load(open(picklePath + 'allDataSets.p', 'rb'))
+        for featureEngineeringConfig in featureEngineeringConfigs:
+            # Feature engineer training data and get transformer
+            featureEngineeredTrainDataSet, transformer = mldataTrans.engineerFeaturesForDataSet(
+                dataSetAssociation.trainDataSet,
+                featureEngineeringConfig)
+            # Transform testing data using transformer
+            featureEngineeredTestDataSet = mldataTrans.engineerFeaturesByTransformer(dataSetAssociation.testDataSet,
+                                                                                     transformer)
 
-# Train/test split
-if runTestTrainSplit:
-    print('Splitting into testing & training data.')
-    testProportion = 0.25
-    splitDataSets = mlutilities.dataTransformation.splitDataSets(allDataSets, testProportion, seed=1000)
-    pickle.dump(splitDataSets, open(picklePath + 'splitDataSets.p', 'wb'))
+            # Associate the data sets
+            featureEngineeredDataSetAssociation = mltypes.SplitDataSet(featureEngineeredTrainDataSet,
+                                                                       featureEngineeredTestDataSet)
+            featureEngineeredDataSetAssociations.append(featureEngineeredDataSetAssociation)
 
-splitDataSets = pickle.load(open(picklePath + 'splitDataSets.p', 'rb'))
+    pickle.dump(featureEngineeredDataSetAssociations, open(picklePath + 'featureEngineeredDataSetAssociations.p', 'wb'))
 
-trainDataSets = [splitDataSet.trainDataSet for splitDataSet in splitDataSets]
+featureEngineeredDataSetAssociations = pickle.load(open(picklePath + 'featureEngineeredDataSetAssociations.p', 'rb'))
+dataSetAssociations += featureEngineeredDataSetAssociations
 
 # Tune models
 if runTuneModels:
@@ -93,23 +136,28 @@ if runTuneModels:
 
     ridgeParameters = [{'alpha': [0.1, 0.5, 1.0],
                         'normalize': [True, False]}]
-    ridgeMethod = mlutilities.types.ModellingMethod('Ridge Regression',
-                                                    sklearn.linear_model.Ridge)
-    ridgeConfig = mlutilities.types.TuneModelConfiguration('Ridge Regression',
-                                                           ridgeMethod,
-                                                           ridgeParameters,
-                                                           tuneScoreMethod)
+    ridgeMethod = mltypes.ModellingMethod('Ridge Regression',
+                                          sklearn.linear_model.Ridge)
+    ridgeConfig = mltypes.TuneModelConfiguration('Ridge Regression',
+                                                 ridgeMethod,
+                                                 ridgeParameters,
+                                                 tuneScoreMethod)
     randomForestParameters = [{'n_estimators': [10, 20],
                                'max_features': [10, 'sqrt']}]
-    randomForestMethod = mlutilities.types.ModellingMethod('Random Forest',
-                                                           sklearn.ensemble.RandomForestRegressor)
-    randomForestConfig = mlutilities.types.TuneModelConfiguration('Random Forest',
-                                                                  randomForestMethod,
-                                                                  randomForestParameters,
-                                                                  tuneScoreMethod)
+    randomForestMethod = mltypes.ModellingMethod('Random Forest',
+                                                 sklearn.ensemble.RandomForestRegressor)
+    randomForestConfig = mltypes.TuneModelConfiguration('Random Forest',
+                                                        randomForestMethod,
+                                                        randomForestParameters,
+                                                        tuneScoreMethod)
     tuneModelConfigs = [ridgeConfig, randomForestConfig]
 
-    tuneModelResults = mlutilities.modeling.tuneModels(trainDataSets, tuneModelConfigs)
+    tuneModelResults = []
+    for dataSetAssociation in dataSetAssociations:
+        for tuneModelConfig in tuneModelConfigs:
+            tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, tuneModelConfig)
+            tuneModelResults.append(tuneModelResult)
+
     pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
 
 tuneModelResults = pickle.load(open(picklePath + 'tuneModelResults.p', 'rb'))
@@ -124,42 +172,43 @@ for item in sortedTuneModelResults:
     print(item)
     print()
 
-
-# Create ApplyModelConfigurations
+# Apply models
 if runApplyModels:
 
+    print('Applying models to test data.')
+
+    # Build ApplyModelConfigurations
     applyModelConfigs = []
     for tuneModelResult in tuneModelResults:
 
         trainDataSet = tuneModelResult.dataSet
         testDataSet = None
-        for splitDataSet in splitDataSets:
-            if splitDataSet.trainDataSet == trainDataSet:
-                testDataSet = splitDataSet.testDataSet
+        for dataSetAssociation in dataSetAssociations:
+            if dataSetAssociation.trainDataSet == trainDataSet:
+                testDataSet = dataSetAssociation.testDataSet
                 break
 
         # Make sure we found a match
         if testDataSet == None:
             raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
 
-        applyModelConfig = mlutilities.types.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
-                                                                     tuneModelResult.modellingMethod,
-                                                                     tuneModelResult.parameters,
-                                                                     trainDataSet,
-                                                                     testDataSet)
+        applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
+                                                           tuneModelResult.modellingMethod,
+                                                           tuneModelResult.parameters,
+                                                           trainDataSet,
+                                                           testDataSet)
         applyModelConfigs.append(applyModelConfig)
 
-    pickle.dump(applyModelConfigs, open(picklePath + 'applyModelConfigs.p', 'wb'))
+    # Apply models to test data
+    applyModelResults = mlmodel.applyModels(applyModelConfigs)
 
-applyModelConfigs = pickle.load(open(picklePath + 'applyModelConfigs.p', 'rb'))
+    pickle.dump(applyModelResults, open(picklePath + 'applyModelResults.p', 'wb'))
 
-# Apply models
-print('Applying models to test data.')
-applyModelResults = mlutilities.modeling.applyModels(applyModelConfigs)
+applyModelResults = pickle.load(open(picklePath + 'applyModelResults.p', 'rb'))
 
 # Score models
 if runScoreModels:
-    scoreModelResults = mlutilities.modeling.scoreModels(applyModelResults, testScoreMethods)
+    scoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)
     pickle.dump(scoreModelResults, open(picklePath + 'scoreModelResults.p', 'wb'))
 
 scoreModelResults = pickle.load(open(picklePath + 'scoreModelResults.p', 'rb'))
@@ -171,45 +220,44 @@ else:
     sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: -x.modelScores[0].score)
 
 # Convert to data frame for tabulation and visualization
-scoreModelResultsDF = mlutilities.utilities.createScoreDataFrame(sortedScoreModelResults)
+scoreModelResultsDF = mlutils.createScoreDataFrame(sortedScoreModelResults)
 scoreModelResultsDF.to_csv('Output/scoreModelResults.csv', index=False)
 
 # Visualization
-scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x**(1/2))
+scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x ** (1 / 2))
 dryYearScoreModelResultsDF = scoreModelResultsDF[scoreModelResultsDF['Base DataSet'].str.contains('Dry')]
 
 if runVisualization:
-    mlutilities.utilities.scatterPlot(scoreModelResultsDF,
-                                      'Mean Squared Error',
-                                      'R Squared',
-                                      'MSE by R Squared for Each Model',
-                                      'Output/mseByR2AllModels.png')
-    mlutilities.utilities.scatterPlot(dryYearScoreModelResultsDF,
-                                      'Mean Squared Error',
-                                      'R Squared',
-                                      'MSE by R Squared for Each Model (Dry Year Models Only',
-                                      'Output/mseByR2DryModels.png')
-    mlutilities.utilities.scatterPlot(scoreModelResultsDF,
-                                      'RMSE',
-                                      'R Squared',
-                                      'RMSE by R Squared for Each Model',
-                                      'Output/rmseByR2AllModels.png')
-    mlutilities.utilities.scatterPlot(dryYearScoreModelResultsDF,
-                                      'RMSE',
-                                      'R Squared',
-                                      'RMSE by R Squared for Each Model (Dry Year Models Only',
-                                      'Output/rmseByR2DryModels.png')
+    mlutils.scatterPlot(scoreModelResultsDF,
+                        'Mean Squared Error',
+                        'R Squared',
+                        'MSE by R Squared for Each Model',
+                        'Output/mseByR2AllModels.png')
+    mlutils.scatterPlot(dryYearScoreModelResultsDF,
+                        'Mean Squared Error',
+                        'R Squared',
+                        'MSE by R Squared for Each Model (Dry Year Models Only',
+                        'Output/mseByR2DryModels.png')
+    mlutils.scatterPlot(scoreModelResultsDF,
+                        'RMSE',
+                        'R Squared',
+                        'RMSE by R Squared for Each Model',
+                        'Output/rmseByR2AllModels.png')
+    mlutils.scatterPlot(dryYearScoreModelResultsDF,
+                        'RMSE',
+                        'R Squared',
+                        'RMSE by R Squared for Each Model (Dry Year Models Only',
+                        'Output/rmseByR2DryModels.png')
 
-    mlutilities.utilities.barChart(scoreModelResultsDF,
-                                   'Mean Squared Error',
-                                   'MSE for Each Model',
-                                   'Output/meanSquaredError.png')
-    mlutilities.utilities.barChart(scoreModelResultsDF,
-                                   'RMSE',
-                                   'Root Mean Squared Error for Each Model',
-                                   'Output/rootMeanSquaredError.png')
-    mlutilities.utilities.barChart(scoreModelResultsDF,
-                                   'R Squared',
-                                   'R Squared for Each Model',
-                                   'Output/rSquared.png')
-
+    mlutils.barChart(scoreModelResultsDF,
+                     'Mean Squared Error',
+                     'MSE for Each Model',
+                     'Output/meanSquaredError.png')
+    mlutils.barChart(scoreModelResultsDF,
+                     'RMSE',
+                     'Root Mean Squared Error for Each Model',
+                     'Output/rootMeanSquaredError.png')
+    mlutils.barChart(scoreModelResultsDF,
+                     'R Squared',
+                     'R Squared for Each Model',
+                     'Output/rSquared.png')

@@ -133,6 +133,7 @@ for tuneModelResult in tuneModelResults:
 
 applyModelResults = mlmodel.applyModels(applyModelConfigs)
 
+# Score models
 mseMethod = mltypes.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
 testScoreMethods = [mseMethod]
 scoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)

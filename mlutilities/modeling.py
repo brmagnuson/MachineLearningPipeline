@@ -57,22 +57,20 @@ def tuneModels(dataSets, tuneModelConfigurations):
 
 def applyModel(applyModelConfiguration):
     """
-
-    :param tunedModelConfig:
-    :param trainDataSet:
-    :param testDataSet:
-    :return:
+    Given a model, its parameters, a training set, and a test set, train the model and apply to the test data
+    :param applyModelConfiguration
+    :return: applyModelResult
     """
     # Get features and label from dataSet
     trainFeatures = applyModelConfiguration.trainDataSet.featuresDataFrame
     trainLabel = applyModelConfiguration.trainDataSet.labelSeries
     testFeatures = applyModelConfiguration.testDataSet.featuresDataFrame
 
-    # Train model
+    # Train model on training set
     predictor = applyModelConfiguration.modellingMethod.function(**applyModelConfiguration.parameters)
     predictor.fit(trainFeatures, trainLabel)
 
-    # Predict
+    # Predict for testing set
     testPredictions = predictor.predict(testFeatures)
 
     # Build ApplyModelResult
