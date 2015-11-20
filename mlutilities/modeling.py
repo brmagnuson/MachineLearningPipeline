@@ -61,7 +61,7 @@ def applyModel(applyModelConfiguration):
     :param applyModelConfiguration
     :return: ApplyModelResult
     """
-    # Get features and label from dataSet
+    # Get features and label from DataSets
     trainFeatures = applyModelConfiguration.trainDataSet.featuresDataFrame
     trainLabel = applyModelConfiguration.trainDataSet.labelSeries
     testFeatures = applyModelConfiguration.testDataSet.featuresDataFrame
@@ -132,5 +132,46 @@ def scoreModels(applyModelResults, modelScoreMethods):
     return scoreModelResults
 
 
-# def findEnsembleAverage():
+def findEnsembleAverage(findEnsembleAverageConfiguration):
+    """
+    Use each in a list of initialized predictors to get a list of predictions and average those
+    :param findEnsembleAverageConfiguration:
+    :return: ApplyModelResult
+    """
+    # Initialize predictors
+    predictors = []
+    for predictorConfiguration in findEnsembleAverageConfiguration.predictorConfigurations:
+        predictor = predictorConfiguration.predictorFunction(**predictorConfiguration.parameters)
+        predictors.append(predictor)
 
+    # Get features and label from DataSets
+    trainFeatures = findEnsembleAverageConfiguration.trainDataSet.featuresDataFrame
+    trainLabel = findEnsembleAverageConfiguration.trainDataSet.labelSeries
+    testFeatures = findEnsembleAverageConfiguration.testDataSet.featuresDataFrame
+
+    # Find average prediction for test DataSet
+    averager = mlutilities.types.EnsembleAverager(predictors)
+    averager.fit(trainFeatures, trainLabel)
+    testPredictions = averager.predict(testFeatures)
+
+    # Build ApplyModelResult
+    ensembleModellingMethod = mlutilities.types.ModellingMethod('Ensemble Average',
+                                                       mlutilities.types.EnsembleAverager)
+    applyModelResult = mlutilities.types.ApplyModelResult(findEnsembleAverageConfiguration.description.replace('Apply', 'Result:'),
+                                                          testPredictions,
+                                                          findEnsembleAverageConfiguration.testDataSet,
+                                                          modellingMethod=ensembleModellingMethod,
+                                                          parameters=None)
+    return applyModelResult
+
+def findEnsembleAverages(findEnsembleAverageConfigurations):
+    """
+    Wrapper function to loop through multiple FindEnsembleAverageConfiguration
+    :param findEnsembleAverageConfiguration:
+    :return: list of ApplyModelResults
+    """
+    applyModelResults = []
+    for findEnsembleAverageConfiguration in findEnsembleAverageConfigurations:
+        applyModelResult = findEnsembleAverage(findEnsembleAverageConfiguration)
+        applyModelResults.append(applyModelResult)
+    return applyModelResults

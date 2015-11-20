@@ -176,7 +176,7 @@ class ApplyModelConfiguration:
 
 class ApplyModelResult:
     """
-    The outcome of applyModel(), which can then be scored.
+    The outcome of applyModel() or findEnsembleAverage(), which can then be scored.
     """
     def __init__(self, description, testPredictions, testDataSet, modellingMethod, parameters):
         self.description = description

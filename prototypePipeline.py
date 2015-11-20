@@ -216,16 +216,6 @@ if runScoreModels:
 
 scoreModelResults = pickle.load(open(picklePath + 'scoreModelResults.p', 'rb'))
 
-# Model testing result reporting
-if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:
-    sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: x.modelScores[0].score)
-else:
-    sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: -x.modelScores[0].score)
-
-# Convert to data frame for tabulation and visualization
-scoreModelResultsDF = mlutils.createScoreDataFrame(sortedScoreModelResults)
-scoreModelResultsDF.to_csv('Output/scoreModelResults.csv', index=False)
-
 # Get ensemble averages for each base DataSet (try out each model for that DataSet)
 if runAverageModels:
 
@@ -250,9 +240,22 @@ if runAverageModels:
         )
         findEnsembleAverageConfigs.append(findEnsembleAverageConfig)
 
-    for item in findEnsembleAverageConfigs:
-        print(item)
-        print()
+    # Find ensemble average predictions for test data
+    ensembleAverageResults = mlmodel.findEnsembleAverages(findEnsembleAverageConfigs)
+
+    # Score ensemble average predictions and add to the other results
+    scoreEnsembleAverageResults = mlmodel.scoreModels(ensembleAverageResults, testScoreMethods)
+    scoreModelResults += scoreEnsembleAverageResults
+
+# Model testing result reporting
+if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:
+    sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: x.modelScores[0].score)
+else:
+    sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: -x.modelScores[0].score)
+
+# Convert to data frame for tabulation and visualization
+scoreModelResultsDF = mlutils.createScoreDataFrame(sortedScoreModelResults)
+scoreModelResultsDF.to_csv('Output/scoreModelResults.csv', index=False)
 
 # Visualization
 scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x ** (1 / 2))
