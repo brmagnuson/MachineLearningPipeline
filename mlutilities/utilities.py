@@ -20,9 +20,11 @@ def createScoreDataFrame(scoreModelResults):
 
         formattedDescription = scoreModelResult.description.split(':')[-1].strip()
 
+        # if scoreModelResult.modellingMethod.description ==
+
         row = [formattedDescription,
-               str(scoreModelResult.modellingMethod.description),
-               str(scoreModelResult.parameters)]
+               scoreModelResult.modellingMethod.description,
+               scoreModelResult.parameters]
 
         # Add each score
         for modelScore in scoreModelResult.modelScores:

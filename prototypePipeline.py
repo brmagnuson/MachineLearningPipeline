@@ -19,8 +19,8 @@ runFeatureEngineering = False
 runTestTrainSplit = False
 runTuneModels = False
 runApplyModels = False
+runEnsembleModels = False
 runScoreModels = False
-runAverageModels = True
 runVisualization = False
 
 # tuneScoreMethod = 'r2'
@@ -169,16 +169,16 @@ if tuneScoreMethod == 'mean_squared_error':
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
 else:
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
-for item in sortedTuneModelResults:
-    print(item)
-    print()
+# for item in sortedTuneModelResults:
+#     print(item)
+#     print()
 
 # Apply models
 if runApplyModels:
 
     print('Applying models to test data.')
 
-    # Build ApplyModelConfigurations
+    # Build single-model ApplyModelConfigurations
     applyModelConfigs = []
     for tuneModelResult in tuneModelResults:
 
@@ -193,12 +193,45 @@ if runApplyModels:
         if testDataSet == None:
             raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
 
-        applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
+        applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Train', 'Test'),
                                                            tuneModelResult.modellingMethod,
                                                            tuneModelResult.parameters,
                                                            trainDataSet,
                                                            testDataSet)
         applyModelConfigs.append(applyModelConfig)
+
+    # Build ensemble-averaging ApplyModelConfigurations
+    if runEnsembleModels:
+
+        # For each base DataSet, find its matching model functions and parameters
+        ensembleModellingMethod = mltypes.ModellingMethod('Averaging Ensemble',
+                                                          mltypes.AveragingEnsemble)
+        ensembleApplyModelConfigs = []
+        for dataSetAssociation in dataSetAssociations:
+            predictorConfigs = []
+
+            # Find models associated with that DataSet and get their information
+            for applyModelConfig in applyModelConfigs:
+                if dataSetAssociation.trainDataSet == applyModelConfig.trainDataSet:
+                    predictorConfig = mltypes.PredictorConfiguration(applyModelConfig.modellingMethod.description,
+                                                                     applyModelConfig.modellingMethod.function,
+                                                                     applyModelConfig.parameters)
+                    predictorConfigs.append(predictorConfig)
+
+            # Create dictionary of ensemble parameters that will be unpacked in applyModel()
+            ensembleParameters = {'predictorConfigurations': predictorConfigs}
+
+            ensembleApplyModelConfig = mltypes.ApplyModelConfiguration(
+                'Apply Averaging Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                ensembleModellingMethod,
+                ensembleParameters,
+                dataSetAssociation.trainDataSet,
+                dataSetAssociation.testDataSet
+            )
+            ensembleApplyModelConfigs.append(ensembleApplyModelConfig)
+
+        # Add ensemble configs to the rest of the ApplyModelConfigs
+        applyModelConfigs += ensembleApplyModelConfigs
 
     # Apply models to test data
     applyModelResults = mlmodel.applyModels(applyModelConfigs)
@@ -215,37 +248,6 @@ if runScoreModels:
     pickle.dump(scoreModelResults, open(picklePath + 'scoreModelResults.p', 'wb'))
 
 scoreModelResults = pickle.load(open(picklePath + 'scoreModelResults.p', 'rb'))
-
-# Get ensemble averages for each base DataSet (try out each model for that DataSet)
-if runAverageModels:
-
-    # For each dataSetAssociation, get associated model functions and parameters
-    findEnsembleAverageConfigs = []
-    for dataSetAssociation in dataSetAssociations:
-        predictorConfigs = []
-
-        # Find associated models and get their information
-        for applyModelConfig in applyModelConfigs:
-            if dataSetAssociation.trainDataSet == applyModelConfig.trainDataSet:
-                predictorConfig = mltypes.PredictorConfiguration(applyModelConfig.modellingMethod.description,
-                                                                 applyModelConfig.modellingMethod.function,
-                                                                 applyModelConfig.parameters)
-                predictorConfigs.append(predictorConfig)
-
-        findEnsembleAverageConfig = mltypes.FindEnsembleAverageConfiguration(
-            'Ensemble Average ' + dataSetAssociation.testDataSet.description,
-            predictorConfigs,
-            dataSetAssociation.trainDataSet,
-            dataSetAssociation.testDataSet
-        )
-        findEnsembleAverageConfigs.append(findEnsembleAverageConfig)
-
-    # Find ensemble average predictions for test data
-    ensembleAverageResults = mlmodel.findEnsembleAverages(findEnsembleAverageConfigs)
-
-    # Score ensemble average predictions and add to the other results
-    scoreEnsembleAverageResults = mlmodel.scoreModels(ensembleAverageResults, testScoreMethods)
-    scoreModelResults += scoreEnsembleAverageResults
 
 # Model testing result reporting
 if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:

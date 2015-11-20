@@ -124,7 +124,7 @@ for tuneModelResult in tuneModelResults:
     if testDataSet == None:
         raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
 
-    applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Training Set', 'Testing Set'),
+    applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Train', 'Test'),
                                                        tuneModelResult.modellingMethod,
                                                        tuneModelResult.parameters,
                                                        trainDataSet,
@@ -143,6 +143,9 @@ if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:
 else:
     sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: -x.modelScores[0].score)
 
-for item in sortedScoreModelResults:
-    print(item)
-    print()
+print(dataSetAssociations[0].trainDataSet.description)
+print(dataSetAssociations[0].testDataSet.description)
+print(tuneModelResults[0].description)
+print(applyModelConfigs[0].description)
+print(applyModelResults[0].description)
+print(scoreModelResults[0].description)
