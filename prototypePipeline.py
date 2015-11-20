@@ -13,14 +13,15 @@ import mlutilities.utilities as mlutils
 import thesisFunctions
 
 # Parameters
-runPrepareDatasets = True
-runScaleDatasets = True
-runFeatureEngineering = True
-runTestTrainSplit = True
-runTuneModels = True
-runApplyModels = True
-runScoreModels = True
-runVisualization = True
+runPrepareDatasets = False
+runScaleDatasets = False
+runFeatureEngineering = False
+runTestTrainSplit = False
+runTuneModels = False
+runApplyModels = False
+runScoreModels = False
+runAverageModels = True
+runVisualization = False
 
 # tuneScoreMethod = 'r2'
 tuneScoreMethod = 'mean_squared_error'
@@ -202,8 +203,10 @@ if runApplyModels:
     # Apply models to test data
     applyModelResults = mlmodel.applyModels(applyModelConfigs)
 
+    pickle.dump(applyModelConfigs, open(picklePath + 'applyModelConfigs.p', 'wb'))
     pickle.dump(applyModelResults, open(picklePath + 'applyModelResults.p', 'wb'))
 
+applyModelConfigs = pickle.load(open(picklePath + 'applyModelConfigs.p', 'rb'))
 applyModelResults = pickle.load(open(picklePath + 'applyModelResults.p', 'rb'))
 
 # Score models
@@ -222,6 +225,34 @@ else:
 # Convert to data frame for tabulation and visualization
 scoreModelResultsDF = mlutils.createScoreDataFrame(sortedScoreModelResults)
 scoreModelResultsDF.to_csv('Output/scoreModelResults.csv', index=False)
+
+# Get ensemble averages for each base DataSet (try out each model for that DataSet)
+if runAverageModels:
+
+    # For each dataSetAssociation, get associated model functions and parameters
+    findEnsembleAverageConfigs = []
+    for dataSetAssociation in dataSetAssociations:
+        predictorConfigs = []
+
+        # Find associated models and get their information
+        for applyModelConfig in applyModelConfigs:
+            if dataSetAssociation.trainDataSet == applyModelConfig.trainDataSet:
+                predictorConfig = mltypes.PredictorConfiguration(applyModelConfig.modellingMethod.description,
+                                                                 applyModelConfig.modellingMethod.function,
+                                                                 applyModelConfig.parameters)
+                predictorConfigs.append(predictorConfig)
+
+        findEnsembleAverageConfig = mltypes.FindEnsembleAverageConfiguration(
+            'Ensemble Average ' + dataSetAssociation.testDataSet.description,
+            predictorConfigs,
+            dataSetAssociation.trainDataSet,
+            dataSetAssociation.testDataSet
+        )
+        findEnsembleAverageConfigs.append(findEnsembleAverageConfig)
+
+    for item in findEnsembleAverageConfigs:
+        print(item)
+        print()
 
 # Visualization
 scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x ** (1 / 2))

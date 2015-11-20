@@ -1,4 +1,5 @@
 import pandas
+import numpy
 import copy
 
 
@@ -231,3 +232,64 @@ class ModelScoreMethod:
     def __str__(self):
         return self.__class__.__name__ + ' ' + self.description
 
+
+class EnsembleAverager:
+    """
+    This takes a list of models and averages their predictions for a test dataset (optionally as a weighted average),
+    mimicking a generic sklearn regression object.
+    Predictors should be a list of initialized sklearn regression model objects.
+    """
+    def __init__(self, predictors, weights=None):
+        self.predictors = predictors
+        self.weights = weights
+
+    def fit(self, X, y):
+        for predictor in self.predictors:
+            predictor.fit(X, y)
+
+    def predict(self, X):
+
+        # Make prediction using each predictor
+        self.predictions = []
+        for predictor in self.predictors:
+            prediction = predictor.predict(X)
+            self.predictions.append(prediction)
+
+        # Find the average prediction for each observation
+        meanPrediction = numpy.mean(self.predictions, axis=0)
+        return meanPrediction
+
+
+class FindEnsembleAverageConfiguration:
+    """
+    Everything needed to use findEnsembleAverage(): the modelling method, its parameters, the DataSet to train on, and
+    the DataSet to predict for. (Note that if no test DataSet is passed in, the applyModel() will predict for the
+    training DataSet by default.)
+    """
+    def __init__(self, description, predictorConfigurations, trainDataSet, testDataSet=None):
+        self.description = description
+        self.predictorConfigurations = predictorConfigurations
+        self.trainDataSet = trainDataSet
+        if testDataSet == None:
+            testDataSet = trainDataSet
+        self.testDataSet = testDataSet
+
+    def __str__(self):
+        return self.__class__.__name__ + ' Description: ' + self.description + '\n' + \
+               'Predictors: ' + str([x.description for x in self.predictorConfigurations]) + '\n' + \
+               'Parameters: ' + str([x.parameters for x in self.predictorConfigurations]) + '\n' + \
+               'Training Data Set: ' + str(self.trainDataSet) + '\n' + \
+               'Testing Data Set: ' + str(self.testDataSet)
+
+
+class PredictorConfiguration:
+    """
+    If no parameters are provided, defaults for that predictor function are used
+    """
+    def __init__(self, description, predictorFunction, parameters=None):
+        self.description = description
+        self.predictorFunction = predictorFunction
+        self.parameters = parameters
+
+    def __str__(self):
+        return self.__class__.__name__ + ' ' + self.description + ' ' + str(self.parameters)

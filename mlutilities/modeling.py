@@ -130,3 +130,7 @@ def scoreModels(applyModelResults, modelScoreMethods):
         scoreModelResult = scoreModel(applyModelResult, modelScoreMethods)
         scoreModelResults.append(scoreModelResult)
     return scoreModelResults
+
+
+# def findEnsembleAverage():
+
