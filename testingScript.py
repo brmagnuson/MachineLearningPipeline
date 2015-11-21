@@ -5,7 +5,7 @@ import sklearn.decomposition
 import sklearn.linear_model
 import sklearn.metrics
 import mlutilities.types as mltypes
-import mlutilities.dataTransformation as mldataTrans
+import mlutilities.dataTransformation as mldata
 import mlutilities.modeling as mlmodel
 import mlutilities.utilities as mlutils
 import thesisFunctions
@@ -55,10 +55,10 @@ scaledDataSetAssociations = []
 for dataSetAssociation in dataSetAssociations:
 
     # Scale training data and get scaler
-    scaledTrainDataSet, scaler = mldataTrans.scaleDataSet(dataSetAssociation.trainDataSet)
+    scaledTrainDataSet, scaler = mldata.scaleDataSet(dataSetAssociation.trainDataSet)
 
     # Scale testing data using scaler
-    scaledTestDataSet = mldataTrans.scaleDataSetByScaler(dataSetAssociation.testDataSet, scaler)
+    scaledTestDataSet = mldata.scaleDataSetByScaler(dataSetAssociation.testDataSet, scaler)
 
     # Associate the data sets
     scaledDataSetAssociation = mltypes.SplitDataSet(scaledTrainDataSet, scaledTestDataSet)
@@ -82,10 +82,10 @@ for dataSetAssociation in dataSetAssociations:
     for featureEngineeringConfig in featureEngineeringConfigs:
 
         # Feature engineer training data and get transformer
-        featureEngineeredTrainDataSet, transformer = mldataTrans.engineerFeaturesForDataSet(dataSetAssociation.trainDataSet,
+        featureEngineeredTrainDataSet, transformer = mldata.engineerFeaturesForDataSet(dataSetAssociation.trainDataSet,
                                                                                             featureEngineeringConfig)
         # Transform testing data using transformer
-        featureEngineeredTestDataSet = mldataTrans.engineerFeaturesByTransformer(dataSetAssociation.testDataSet,
+        featureEngineeredTestDataSet = mldata.engineerFeaturesByTransformer(dataSetAssociation.testDataSet,
                                                                                  transformer)
 
         # Associate the data sets

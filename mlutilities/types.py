@@ -237,9 +237,16 @@ class AveragingEnsemble:
     """
     This takes a list of models and averages their predictions for a test dataset (optionally as a weighted average),
     mimicking a generic sklearn regression object.
-    Predictors should be a list of initialized sklearn regression model objects.
+    Predictor configurations contain the functions and parameters necessary to initialize predictors.
+    If no weights are passed in, a regular arithmetic mean is calculated.
+    Weights should be a list of the same length as predictorConfigurations and in the same order.
     """
     def __init__(self, predictorConfigurations, weights=None):
+        if weights != None:
+            if len(predictorConfigurations) != len(weights):
+                raise Exception('Each predictor configuration needs a weight.\n' +
+                                'Number of predictor configurations: ' + str(len(predictorConfigurations)) + '\n' +
+                                'Number of weights: ' + str(len(weights)))
         predictors = []
         for predictorConfiguration in predictorConfigurations:
             predictor = predictorConfiguration.predictorFunction(**predictorConfiguration.parameters)
@@ -260,7 +267,7 @@ class AveragingEnsemble:
             self.predictions.append(prediction)
 
         # Find the average prediction for each observation
-        meanPrediction = numpy.mean(self.predictions, axis=0)
+        meanPrediction = numpy.average(self.predictions, axis=0, weights=self.weights)
         return meanPrediction
 
 
