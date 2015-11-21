@@ -17,7 +17,7 @@ runPrepareDatasets = False
 runScaleDatasets = False
 runFeatureEngineering = False
 runTestTrainSplit = False
-runTuneModels = True
+runTuneModels = False
 runApplyModels = True
 runEnsembleModels = True
 runScoreModels = True
@@ -169,9 +169,9 @@ if tuneScoreMethod == 'mean_squared_error':
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
 else:
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
-# for item in sortedTuneModelResults:
-#     print(item)
-#     print()
+for item in sortedTuneModelResults:
+    print(item)
+    print()
 
 # Apply models
 if runApplyModels:
@@ -206,8 +206,6 @@ if runApplyModels:
         # Find the maximum mean squared error
         if tuneScoreMethod == 'mean_squared_error':
             maximumMSE = max([tuneModelResult.bestScore for tuneModelResult in tuneModelResults])
-        else:
-            minimumR2 = min([tuneModelResult.bestScore for tuneModelResult in tuneModelResults])
 
         # For each base DataSet, find its matching model functions and parameters
         ensembleModellingMethod = mltypes.ModellingMethod('Averaging Ensemble',
@@ -232,7 +230,7 @@ if runApplyModels:
                         weight = maximumMSE + 1 - tuneModelResult.bestScore
                     else:
                         # R squared can be negative, and weights should all be positive.
-                        weight = abs(minimumR2) + 1 + tuneModelResult.bestScore
+                        weight = tuneModelResult.bestScore
                     weights.append(weight)
 
             # Create dictionary of ensemble parameters that will be unpacked in applyModel()
@@ -275,7 +273,7 @@ else:
 
 # Convert to data frame for tabulation and visualization
 scoreModelResultsDF = mlutils.createScoreDataFrame(sortedScoreModelResults)
-scoreModelResultsDF.to_csv('Output/scoreModelResultsR2.csv', index=False)
+scoreModelResultsDF.to_csv('Output/scoreModelResults.csv', index=False)
 
 # Visualization
 scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x ** (1 / 2))

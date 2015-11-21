@@ -1,4 +1,5 @@
 import sklearn.grid_search
+import sklearn.cross_validation
 import mlutilities.types
 
 
@@ -17,7 +18,7 @@ def tuneModel(dataSet, tuneModelConfiguration):
     gridSearchPredictor = sklearn.grid_search.GridSearchCV(tuneModelConfiguration.modellingMethod.function(),
                                                            tuneModelConfiguration.parameterGrid,
                                                            scoring=tuneModelConfiguration.scoreMethod,
-                                                           cv=5,
+                                                           cv=sklearn.cross_validation.KFold(len(label), n_folds=5, shuffle=True),
                                                            refit=False)
     gridSearchPredictor.fit(features, label)
 
