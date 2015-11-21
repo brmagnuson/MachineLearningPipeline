@@ -3,7 +3,7 @@ import sklearn.cross_validation
 import mlutilities.types
 
 
-def tuneModel(dataSet, tuneModelConfiguration):
+def tuneModel(dataSet, tuneModelConfiguration, randomSeed=None):
     """
     Finds the best combination of a set of model parameters for a DataSet.
     :param dataSet: Presumes that the last column in nonFeaturesDataFrame is the label.
@@ -18,7 +18,10 @@ def tuneModel(dataSet, tuneModelConfiguration):
     gridSearchPredictor = sklearn.grid_search.GridSearchCV(tuneModelConfiguration.modellingMethod.function(),
                                                            tuneModelConfiguration.parameterGrid,
                                                            scoring=tuneModelConfiguration.scoreMethod,
-                                                           cv=sklearn.cross_validation.KFold(len(label), n_folds=5, shuffle=True),
+                                                           cv=sklearn.cross_validation.KFold(len(label),
+                                                                                             n_folds=5,
+                                                                                             shuffle=True,
+                                                                                             random_state=randomSeed),
                                                            refit=False)
     gridSearchPredictor.fit(features, label)
 
@@ -41,7 +44,7 @@ def tuneModel(dataSet, tuneModelConfiguration):
     return tuneModelResult
 
 
-def tuneModels(dataSets, tuneModelConfigurations):
+def tuneModels(dataSets, tuneModelConfigurations, randomSeed=None):
     """
     Wrapper function to loop through multiple data sets and model creation configurations
     :param dataSets:
@@ -51,7 +54,7 @@ def tuneModels(dataSets, tuneModelConfigurations):
     tuneModelResults = []
     for dataSet in dataSets:
         for tuneModelConfiguration in tuneModelConfigurations:
-            tuneModelResult = tuneModel(dataSet, tuneModelConfiguration)
+            tuneModelResult = tuneModel(dataSet, tuneModelConfiguration, randomSeed)
             tuneModelResults.append(tuneModelResult)
     return tuneModelResults
 

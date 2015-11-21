@@ -48,7 +48,7 @@ testPath = os.path.dirname(dryDataSet.path) + '/' + month + '_IntMnt_test.csv'
 trainPath = os.path.dirname(dryDataSet.path) + '/' + os.path.basename(dryDataSet.path).split('.')[0] + '_train.csv'
 splitDryDataSet = mlutilities.dataTransformation.splitDataSet(dryDataSet,
                                                               testProportion,
-                                                              seed=20150112,
+                                                              randomSeed=20150112,
                                                               trainPath=trainPath,
                                                               testPath=testPath)
 universalTestDataSet = splitDryDataSet.testDataSet

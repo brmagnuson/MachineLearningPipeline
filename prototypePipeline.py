@@ -3,9 +3,10 @@ import fnmatch
 import pickle
 import sklearn.feature_selection
 import sklearn.decomposition
+import sklearn.metrics
 import sklearn.linear_model
 import sklearn.ensemble
-import sklearn.metrics
+import sklearn.neighbors
 import mlutilities.types as mltypes
 import mlutilities.dataTransformation as mldata
 import mlutilities.modeling as mlmodel
@@ -15,14 +16,14 @@ import thesisFunctions
 # Parameters
 runPrepareDatasets = False
 runScaleDatasets = False
-runFeatureEngineering = False
-runTestTrainSplit = False
-runTuneModels = False
+runFeatureEngineering = True
+runTuneModels = True
 runApplyModels = True
 runEnsembleModels = True
 runScoreModels = True
 runVisualization = False
 
+randomSeed = 4802394
 tuneScoreMethod = 'r2'
 # tuneScoreMethod = 'mean_squared_error'
 r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
@@ -100,15 +101,28 @@ dataSetAssociations += scaledDataSetAssociations
 featureEngineeredDataSetAssociations = []
 if runFeatureEngineering:
     print('Engineering features.')
-    varianceThresholdConfig = mltypes.FeatureEngineeringConfiguration('Variance Threshold 1',
+    varianceThresholdPoint1Config = mltypes.FeatureEngineeringConfiguration('Variance Threshold .1',
                                                                       'selection',
                                                                       sklearn.feature_selection.VarianceThreshold,
                                                                       {'threshold': .1})
-    pcaConfig = mltypes.FeatureEngineeringConfiguration('PCA n10',
+    pca20Config = mltypes.FeatureEngineeringConfiguration('PCA n20',
                                                         'extraction',
                                                         sklearn.decomposition.PCA,
-                                                        {'n_components': 10})
-    featureEngineeringConfigs = [varianceThresholdConfig, pcaConfig]
+                                                        {'n_components': 20})
+    pca50Config = mltypes.FeatureEngineeringConfiguration('PCA n50',
+                                                        'extraction',
+                                                        sklearn.decomposition.PCA,
+                                                        {'n_components': 50})
+    ica20Config = mltypes.FeatureEngineeringConfiguration('ICA n20',
+                                                        'extraction',
+                                                        sklearn.decomposition.FastICA,
+                                                        {'n_components': 20, 'max_iter': 2000, 'random_state': randomSeed})
+    ica50Config = mltypes.FeatureEngineeringConfiguration('ICA n50',
+                                                        'extraction',
+                                                        sklearn.decomposition.FastICA,
+                                                        {'n_components': 50, 'max_iter': 2000, 'random_state': randomSeed})
+    featureEngineeringConfigs = [varianceThresholdPoint1Config, pca20Config, pca50Config,
+                                 ica20Config, ica50Config]
 
     for dataSetAssociation in dataSetAssociations:
 
@@ -139,26 +153,40 @@ if runTuneModels:
                         'normalize': [True, False]}]
     ridgeMethod = mltypes.ModellingMethod('Ridge Regression',
                                           sklearn.linear_model.Ridge)
-    ridgeConfig = mltypes.TuneModelConfiguration('Ridge Regression',
+    ridgeConfig = mltypes.TuneModelConfiguration(ridgeMethod.description,
                                                  ridgeMethod,
                                                  ridgeParameters,
                                                  tuneScoreMethod)
     randomForestParameters = [{'n_estimators': [10, 20],
                                'max_features': [10, 'sqrt'],
-                               'random_state': [510]}]
+                               'random_state': [randomSeed]}]
     randomForestMethod = mltypes.ModellingMethod('Random Forest',
                                                  sklearn.ensemble.RandomForestRegressor)
-    randomForestConfig = mltypes.TuneModelConfiguration('Random Forest',
+    randomForestConfig = mltypes.TuneModelConfiguration(randomForestMethod.description,
                                                         randomForestMethod,
                                                         randomForestParameters,
                                                         tuneScoreMethod)
-    tuneModelConfigs = [ridgeConfig, randomForestConfig]
+    kNeighborsParameters = [{'n_neighbors': [2, 5, 10],
+                             'metric': ['minkowski', 'euclidean']}]
+    kNeighborsMethod = mltypes.ModellingMethod('K Nearest Neighbors',
+                                               sklearn.neighbors.KNeighborsRegressor)
+    kNeighborsConfig = mltypes.TuneModelConfiguration(kNeighborsMethod.description,
+                                                      kNeighborsMethod,
+                                                      kNeighborsParameters,
+                                                      tuneScoreMethod)
 
+    tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig]
+
+    counter = 0
+    total = len(dataSetAssociations) * len(tuneModelConfigs)
     tuneModelResults = []
     for dataSetAssociation in dataSetAssociations:
         for tuneModelConfig in tuneModelConfigs:
-            tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, tuneModelConfig)
+
+            print('Tuning (%s of %s):' % (counter, total), tuneModelConfig.description, 'for', dataSetAssociation.trainDataSet.description)
+            tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, tuneModelConfig, randomSeed)
             tuneModelResults.append(tuneModelResult)
+            counter += 1
 
     pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
 
@@ -169,9 +197,9 @@ if tuneScoreMethod == 'mean_squared_error':
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
 else:
     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
-for item in sortedTuneModelResults:
-    print(item)
-    print()
+# for item in sortedTuneModelResults:
+#     print(item)
+#     print()
 
 # Apply models
 if runApplyModels:

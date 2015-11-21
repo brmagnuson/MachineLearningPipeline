@@ -174,12 +174,12 @@ def engineerFeaturesByTransformer(dataSet, transformer):
     return selectedFeaturesDataSet
 
 
-def splitDataSet(dataSet, testProportion, seed=None, trainPath=None, testPath=None):
+def splitDataSet(dataSet, testProportion, randomSeed=None, trainPath=None, testPath=None):
     """
     Splits a DataSet's data frame into a test set and a training set based on the given proportion
     :param dataSet: input DataSet
     :param testProportion: float between 0 and 1; proportion that will be held back in the test set
-    :param seed: Optional. Integer. If None, test-train split randomness will not be controlled and replicable.
+    :param randomSeed: Optional. Integer. If None, test-train split randomness will not be controlled and replicable.
     :param trainPath: Optional. If None, automatically creates new files in same location and appends _test and _train
     to the end. If specified, you can control location and/or name of the new files.
     :return: tuple of training DataSet and testing DataSet
@@ -187,7 +187,7 @@ def splitDataSet(dataSet, testProportion, seed=None, trainPath=None, testPath=No
     originalDataFrame = dataSet.dataFrame
     trainDataFrame, testDataFrame = sklearn.cross_validation.train_test_split(originalDataFrame,
                                                                               test_size=testProportion,
-                                                                              random_state=seed)
+                                                                              random_state=randomSeed)
 
     # Assign values to new DataSets, using default path option if none was specified
     baseNewDescription = dataSet.description
@@ -215,7 +215,7 @@ def splitDataSet(dataSet, testProportion, seed=None, trainPath=None, testPath=No
     return theSplitDataSet
 
 
-def splitDataSets(dataSets, testProportion, seed=None):
+def splitDataSets(dataSets, testProportion, randomSeed=None):
     """
     Wrapper function to loop through multiple data sets and split them into train/test data
     :param dataSets: list of DataSet objects
@@ -225,6 +225,6 @@ def splitDataSets(dataSets, testProportion, seed=None):
     """
     theSplitDataSets = []
     for dataSet in dataSets:
-        theSplitDataSet = splitDataSet(dataSet, testProportion, seed)
+        theSplitDataSet = splitDataSet(dataSet, testProportion, randomSeed)
         theSplitDataSets.append(theSplitDataSet)
     return theSplitDataSets
