@@ -271,6 +271,54 @@ class AveragingEnsemble:
         return meanPrediction
 
 
+class StackingEnsemble:
+    """
+    This takes a list of models and stacks their predictions for a dataset, mimicking a generic sklearn regression object.
+    Predictor configurations contain the functions and parameters necessary to initialize predictors.
+    """
+    def __init__(self, basePredictorConfigurations, stackingPredictorConfiguration, includeOriginalFeatures=False):
+        basePredictors = []
+        for basePredictorConfiguration in basePredictorConfigurations:
+            basePredictor = basePredictorConfiguration.predictorFunction(**basePredictorConfiguration.parameters)
+            basePredictors.append(basePredictor)
+        self.basePredictors = basePredictors
+        self.stackingPredictor = stackingPredictorConfiguration.predictorFunction(**stackingPredictorConfiguration.parameters)
+        self.includeOriginalFeatures = includeOriginalFeatures
+
+    def fit(self, X, y):
+
+        # Building a dataframe of each base predictor's predictions
+        basePredictions = pandas.DataFrame()
+        counter = 1
+        for basePredictor in self.basePredictors:
+            basePredictor.fit(X, y)
+            basePrediction = basePredictor.predict(X)
+            basePredictions['Base Predictor ' + str(counter)] = basePrediction
+            counter += 1
+
+        if self.includeOriginalFeatures:
+            basePredictions = pandas.concat([basePredictions, X], axis=1)
+
+        # Use this new dataframe to fit the stacking predictor
+        self.stackingPredictor.fit(basePredictions, y)
+
+
+    def predict(self, X):
+
+        # Building a dataframe of each base predictor's predictions
+        basePredictions = pandas.DataFrame()
+        for basePredictor in self.basePredictors:
+            basePrediction = basePredictor.predict(X)
+            basePredictions[str(basePredictor)] = basePrediction
+
+        if self.includeOriginalFeatures:
+            basePredictions = pandas.concat([basePredictions, X], axis=1)
+
+        # Use this new dataframe to predict using the stacking predictor
+        stackedPrediction = self.stackingPredictor.predict(basePredictions)
+        return stackedPrediction
+
+
 class PredictorConfiguration:
     """
     If no parameters are provided, defaults for that predictor function are used

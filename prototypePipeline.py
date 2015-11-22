@@ -1,6 +1,7 @@
 import os
 import fnmatch
 import pickle
+import copy
 import sklearn.feature_selection
 import sklearn.decomposition
 import sklearn.metrics
@@ -16,14 +17,15 @@ import thesisFunctions
 # Parameters
 runPrepareDatasets = False
 runScaleDatasets = False
-runFeatureEngineering = True
+runFeatureEngineering = False
 runTuneModels = True
 runApplyModels = True
 runEnsembleModels = True
 runScoreModels = True
 runVisualization = False
 
-randomSeed = 4802394
+# randomSeed = 4802394
+randomSeed = 63000009
 tuneScoreMethod = 'r2'
 # tuneScoreMethod = 'mean_squared_error'
 r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
@@ -177,7 +179,7 @@ if runTuneModels:
 
     tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig]
 
-    counter = 0
+    counter = 1
     total = len(dataSetAssociations) * len(tuneModelConfigs)
     tuneModelResults = []
     for dataSetAssociation in dataSetAssociations:
@@ -228,7 +230,7 @@ if runApplyModels:
                                                            testDataSet)
         applyModelConfigs.append(applyModelConfig)
 
-    # Build ensemble-averaging ApplyModelConfigurations
+    # Build ensemble ApplyModelConfigurations
     if runEnsembleModels:
 
         # Find the maximum mean squared error
@@ -236,42 +238,85 @@ if runApplyModels:
             maximumMSE = max([tuneModelResult.bestScore for tuneModelResult in tuneModelResults])
 
         # For each base DataSet, find its matching model functions and parameters
-        ensembleModellingMethod = mltypes.ModellingMethod('Averaging Ensemble',
-                                                          mltypes.AveragingEnsemble)
         ensembleApplyModelConfigs = []
         for dataSetAssociation in dataSetAssociations:
 
             predictorConfigs = []
             weights = []
+            bestWeight = float('-inf')
+            stackingPredictorConfig = None
 
-            # Find models associated with that DataSet and get their information, and find weight for each  model
+            # Find models associated with that DataSet and get their information to build predictor configs for ensembles
             for tuneModelResult in tuneModelResults:
                 if dataSetAssociation.trainDataSet == tuneModelResult.dataSet:
+
+                    # Build Predictor Config
                     predictorConfig = mltypes.PredictorConfiguration(tuneModelResult.modellingMethod.description,
                                                                      tuneModelResult.modellingMethod.function,
                                                                      tuneModelResult.parameters)
                     predictorConfigs.append(predictorConfig)
 
-                    # Make sure all weights are all positive.
+                    # Make sure all weights are all positive
                     if tuneScoreMethod == 'mean_squared_error':
-                        # The higher MSE is, the worse it is, so we want to invert its weight.
+                        # The higher MSE is, the worse it is, so we want to invert its weight
                         weight = maximumMSE + 1 - tuneModelResult.bestScore
                     else:
-                        # R squared can be negative, and weights should all be positive.
+                        # R squared can be negative, and weights should all be positive
                         weight = tuneModelResult.bestScore
                     weights.append(weight)
 
-            # Create dictionary of ensemble parameters that will be unpacked in applyModel()
-            ensembleParameters = {'predictorConfigurations': predictorConfigs, 'weights': weights}
+                    # If tuneModelResult has a better score than previously seen, make it the stacked predictor config
+                    if weight > bestWeight:
+                        bestWeight = weight
+                        stackingPredictorConfig = copy.deepcopy(predictorConfig)
 
-            ensembleApplyModelConfig = mltypes.ApplyModelConfiguration(
+                        # Hack: If the number of models I'm stacking is fewer than max_features, RandomForestRegressor
+                        # will error out.
+                        if type(stackingPredictorConfig.predictorFunction()) == type(sklearn.ensemble.RandomForestRegressor()):
+                            stackingPredictorConfig.parameters['max_features'] = None
+
+
+            # Create averaging ensemble
+            averagingEnsembleModellingMethod = mltypes.ModellingMethod('Averaging Ensemble',
+                                                                       mltypes.AveragingEnsemble)
+            averagingEnsembleParameters = {'predictorConfigurations': predictorConfigs,
+                                           'weights': weights}
+            averagingEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
                 'Apply Averaging Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
-                ensembleModellingMethod,
-                ensembleParameters,
+                averagingEnsembleModellingMethod,
+                averagingEnsembleParameters,
                 dataSetAssociation.trainDataSet,
                 dataSetAssociation.testDataSet
             )
-            ensembleApplyModelConfigs.append(ensembleApplyModelConfig)
+            ensembleApplyModelConfigs.append(averagingEnsembleApplyModelConfig)
+
+            # Create stacking ensemble
+            stackingEnsembleModellingMethod = mltypes.ModellingMethod('Stacking Ensemble',
+                                                                      mltypes.StackingEnsemble)
+            stackingEnsembleParameters = {'basePredictorConfigurations': predictorConfigs,
+                                          'stackingPredictorConfiguration': stackingPredictorConfig}
+            stackingEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
+                'Apply Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                stackingEnsembleModellingMethod,
+                stackingEnsembleParameters,
+                dataSetAssociation.trainDataSet,
+                dataSetAssociation.testDataSet
+            )
+            ensembleApplyModelConfigs.append(stackingEnsembleApplyModelConfig)
+
+            stackingOFEnsembleModellingMethod = mltypes.ModellingMethod('Stacking OF Ensemble',
+                                                                      mltypes.StackingEnsemble)
+            stackingOFEnsembleParameters = {'basePredictorConfigurations': predictorConfigs,
+                                          'stackingPredictorConfiguration': stackingPredictorConfig,
+                                          'includeOriginalFeatures': True}
+            stackingOFEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
+                'Apply OF Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                stackingOFEnsembleModellingMethod,
+                stackingOFEnsembleParameters,
+                dataSetAssociation.trainDataSet,
+                dataSetAssociation.testDataSet
+            )
+            ensembleApplyModelConfigs.append(stackingOFEnsembleApplyModelConfig)
 
         # Add ensemble configs to the rest of the ApplyModelConfigs
         applyModelConfigs += ensembleApplyModelConfigs

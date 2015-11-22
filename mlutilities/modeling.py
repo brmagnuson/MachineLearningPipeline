@@ -52,8 +52,11 @@ def tuneModels(dataSets, tuneModelConfigurations, randomSeed=None):
     :return: list of TuneModelResults
     """
     tuneModelResults = []
+    counter = 1
+    total = len(dataSets) * len(tuneModelConfigurations)
     for dataSet in dataSets:
         for tuneModelConfiguration in tuneModelConfigurations:
+            print('Tuning (%s of %s):' % (counter, total), tuneModelConfiguration.description, 'for', dataSet.trainDataSet.description)
             tuneModelResult = tuneModel(dataSet, tuneModelConfiguration, randomSeed)
             tuneModelResults.append(tuneModelResult)
     return tuneModelResults
@@ -93,9 +96,13 @@ def applyModels(applyModelConfigurations):
     :return: list of ApplyModelResults
     """
     applyModelResults = []
+    counter = 1
+    total = len(applyModelConfigurations)
     for applyModelConfiguration in applyModelConfigurations:
+        print('Applying (%s of %s):' % (counter, total), applyModelConfiguration.description)
         applyModelResult = applyModel(applyModelConfiguration)
         applyModelResults.append(applyModelResult)
+        counter += 1
     return applyModelResults
 
 
