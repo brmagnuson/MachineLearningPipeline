@@ -18,7 +18,7 @@ import thesisFunctions
 runPrepareDatasets = False
 runScaleDatasets = False
 runFeatureEngineering = False
-runTuneModels = True
+runTuneModels = False
 runApplyModels = True
 runEnsembleModels = True
 runScoreModels = True

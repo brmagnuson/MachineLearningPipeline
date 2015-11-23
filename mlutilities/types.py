@@ -270,6 +270,11 @@ class AveragingEnsemble:
         meanPrediction = numpy.average(self.predictions, axis=0, weights=self.weights)
         return meanPrediction
 
+    def __str__(self):
+        return self.__class__.__name__ + '\n' + \
+               'Predictors: ' + str(self.predictors) + '\n' + \
+               'Weights: ' + str(self.weights)
+
 
 class StackingEnsemble:
     """
@@ -317,6 +322,11 @@ class StackingEnsemble:
         # Use this new dataframe to predict using the stacking predictor
         stackedPrediction = self.stackingPredictor.predict(basePredictions)
         return stackedPrediction
+
+    def __str__(self):
+        return self.__class__.__name__ + '\n' + \
+               'Stacking predictor: ' + str(self.stackingPredictor) + '\n' + \
+               'Base predictors: ' + str(self.basePredictors)
 
 
 class PredictorConfiguration:
