@@ -117,11 +117,11 @@ if runFeatureEngineering:
     ica20Config = mltypes.FeatureEngineeringConfiguration('ICA n20',
                                                         'extraction',
                                                         sklearn.decomposition.FastICA,
-                                                        {'n_components': 20, 'max_iter': 3000, 'random_state': randomSeed})
+                                                        {'n_components': 20, 'max_iter': 2500, 'random_state': randomSeed})
     ica50Config = mltypes.FeatureEngineeringConfiguration('ICA n50',
                                                         'extraction',
                                                         sklearn.decomposition.FastICA,
-                                                        {'n_components': 50, 'max_iter': 3000, 'random_state': randomSeed})
+                                                        {'n_components': 50, 'max_iter': 2500, 'random_state': randomSeed})
     featureEngineeringConfigs = [varianceThresholdPoint1Config, pca20Config, pca50Config,
                                  ica20Config, ica50Config]
 
@@ -233,6 +233,7 @@ if runApplyModels:
     if runEnsembleModels:
 
         # Find the maximum mean squared error
+        maximumMSE = None
         if tuneScoreMethod == 'mean_squared_error':
             maximumMSE = max([tuneModelResult.bestScore for tuneModelResult in tuneModelResults])
 
