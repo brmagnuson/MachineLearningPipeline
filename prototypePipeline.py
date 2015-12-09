@@ -15,17 +15,16 @@ import mlutilities.utilities as mlutils
 import thesisFunctions
 
 # Parameters
-runPrepareDatasets = False
-runScaleDatasets = False
-runFeatureEngineering = False
-runTuneModels = False
+runPrepareDatasets = True
+runScaleDatasets = True
+runFeatureEngineering = True
+runTuneModels = True
 runApplyModels = True
 runEnsembleModels = True
 runScoreModels = True
-runVisualization = False
+runVisualization = True
 
-# randomSeed = 4802394
-randomSeed = 63000009
+randomSeed = 47392
 tuneScoreMethod = 'r2'
 # tuneScoreMethod = 'mean_squared_error'
 r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
@@ -34,8 +33,8 @@ testScoreMethods = [mseMethod, r2Method]
 
 picklePath = 'Pickles/'
 basePath = 'Data/'
-myFeaturesIndex = 6
-myLabelIndex = 5
+myFeaturesIndex = 8
+myLabelIndex = 7
 
 if runPrepareDatasets:
     print('Preparing input data sets.')

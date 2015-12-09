@@ -22,9 +22,24 @@ myfeaturesIndex = 6
 myLabelIndex = 5
 month = 'jul'
 fullDataSet = mlutilities.types.DataSet('All Years',
-                                        basePath + month + '_IntMnt_ref.csv',
+                                        basePath + month + '_IntMnt_ref_original.csv',
                                         featuresIndex=myfeaturesIndex,
                                         labelIndex=myLabelIndex)
+
+# Create runoff per drainage unit column
+fullDataFrame = fullDataSet.dataFrame
+fullDataFrame['RunoffPerDrainageUnit'] = fullDataFrame.qmeas / fullDataFrame.DRAIN_SQKM
+
+# Reorder so that DRAIN_SQKM is in position 6 and runoff is in position 7
+columns = fullDataFrame.columns.tolist()
+newColumns = columns[:6] + columns[49:50] + columns[217:] + columns[6:49] + columns[50:217]
+orderedFullDataFrame = fullDataFrame[newColumns]
+fullDataSet = mlutilities.types.DataSet(fullDataSet.description,
+                                        basePath + month + '_IntMnt_ref.csv',
+                                        mode='w',
+                                        dataFrame=orderedFullDataFrame,
+                                        featuresIndex=8,
+                                        labelIndex=7)
 
 # Get appropriate calendar years for the month of interest
 # (Oct, Nov, and Dec: calendar year = water year - 1. Ex: Oct 1976 is water year 1977.)
