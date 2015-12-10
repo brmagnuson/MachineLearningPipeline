@@ -228,3 +228,58 @@ def splitDataSets(dataSets, testProportion, randomSeed=None):
         theSplitDataSet = splitDataSet(dataSet, testProportion, randomSeed)
         theSplitDataSets.append(theSplitDataSet)
     return theSplitDataSets
+
+
+def kFoldSplitDataSet(dataSet, numberOfFolds=3, randomSeed=None, trainPathPrefix=None, testPathPrefix=None):
+    """
+    Splits a DataSet's data frame into k test/training sets
+    :param dataSet: input DataSet
+    :param numberOfFolds: Optional. Integer. Default is 3.
+    :param randomSeed: Optional. Integer. If None, test-train split randomness will not be controlled and replicable.
+    :return: list of SplitDataSets, each representing one test-train fold.
+    """
+    originalDataFrame = dataSet.dataFrame
+    numberOfObs = len(originalDataFrame)
+    kFoldIndices = sklearn.cross_validation.KFold(numberOfObs, numberOfFolds, shuffle=True, random_state=randomSeed)
+
+    # Build k DataSets
+
+    baseNewDescription = dataSet.description
+    baseNewPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + '_'
+    foldDataSets = []
+    currentFold = 1
+
+    for trainIndex, testIndex in kFoldIndices:
+
+        trainDataFrame = originalDataFrame.iloc[trainIndex]
+        testDataFrame = originalDataFrame.iloc[testIndex]
+
+        if trainPathPrefix == None:
+            trainPath = baseNewPath + str(currentFold) + '_train.csv'
+        else:
+            trainPath = trainPathPrefix + '_' + str(currentFold) + '_train.csv'
+        if testPathPrefix == None:
+            testPath = baseNewPath + str(currentFold) + '_test.csv'
+        else:
+            testPath = testPathPrefix + '_' + str(currentFold) + '_test.csv'
+
+        trainDataSet = mlutilities.types.DataSet(baseNewDescription + ' ' + str(currentFold) + ' Training Set',
+                                                 trainPath,
+                                                 'w',
+                                                 trainDataFrame,
+                                                 dataSet.featuresIndex,
+                                                 dataSet.labelIndex)
+        testDataSet = mlutilities.types.DataSet(baseNewDescription + ' ' + str(currentFold) + ' Testing Set',
+                                                testPath,
+                                                'w',
+                                                testDataFrame,
+                                                dataSet.featuresIndex,
+                                                dataSet.labelIndex)
+
+        # Join into new SplitDataSet
+        foldDataSet = mlutilities.types.SplitDataSet(trainDataSet, testDataSet)
+        foldDataSets.append(foldDataSet)
+
+        currentFold += 1
+
+    return foldDataSets

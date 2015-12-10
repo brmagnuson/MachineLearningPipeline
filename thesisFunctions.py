@@ -1,4 +1,5 @@
 import os
+import math
 import fnmatch
 import pickle
 import copy
@@ -13,8 +14,38 @@ import mlutilities.dataTransformation as mldata
 import mlutilities.modeling as mlmodel
 import mlutilities.utilities as mlutils
 
+
 # The following are functions specifically for my thesis and data, rather than generalizable functions as in the
 # mlutilities library.
+
+def getDryYears(filePath, month, proportionOfInterest):
+    """
+    Given a ranking of driest water years from driest to wettest, extract the calendar years for the driest proportion.
+    :param filePath:
+    :param month: string. should be written as first three letters of month, lowercase. ex: 'jul'
+    :param proportionOfInterest: float between 0 and 1
+    :return:
+    """
+
+    # Read in water years as ordered from driest to wettest for the Sacramento by NOAA
+    waterYears = []
+    with open(filePath) as file:
+        for line in file.readlines():
+            year = int(line)
+            waterYears.append(year)
+
+    # Get water years of interest (drier years)
+    numberToExtract = math.ceil(len(waterYears) * proportionOfInterest)
+    dryWaterYears = waterYears[:numberToExtract]
+
+    # Get appropriate calendar years for the month of interest
+    # (Oct, Nov, and Dec: calendar year = water year - 1. Ex: Oct 1976 is water year 1977.)
+    if month in ['oct', 'nov', 'dec']:
+        calendarYears = [x - 1 for x in dryWaterYears]
+    else:
+        calendarYears = dryWaterYears
+    return calendarYears
+
 
 def createDescriptionFromFileName(fileName):
     """
@@ -47,7 +78,6 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     runApplyModels = True
     runEnsembleModels = True
     runScoreModels = True
-    runVisualization = True
 
     tuneScoreMethod = 'r2'
     # tuneScoreMethod = 'mean_squared_error'
@@ -343,10 +373,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
         # Apply models to test data
         applyModelResults = mlmodel.applyModels(applyModelConfigs)
 
-        pickle.dump(applyModelConfigs, open(picklePath + 'applyModelConfigs.p', 'wb'))
         pickle.dump(applyModelResults, open(picklePath + 'applyModelResults.p', 'wb'))
 
-    applyModelConfigs = pickle.load(open(picklePath + 'applyModelConfigs.p', 'rb'))
     applyModelResults = pickle.load(open(picklePath + 'applyModelResults.p', 'rb'))
 
     # Score models

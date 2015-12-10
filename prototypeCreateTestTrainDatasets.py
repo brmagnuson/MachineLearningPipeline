@@ -5,7 +5,7 @@ import mlutilities.dataTransformation
 
 
 # Read in water years as ordered from driest to wettest for the Sacramento by NOAA
-basePath = 'Data/'
+basePath = 'MasterData/'
 waterYears = []
 with open(basePath + 'NOAAWaterYearsDriestToWettest.csv') as file:
     for line in file.readlines():

@@ -324,10 +324,8 @@ if runApplyModels:
     # Apply models to test data
     applyModelResults = mlmodel.applyModels(applyModelConfigs)
 
-    pickle.dump(applyModelConfigs, open(picklePath + 'applyModelConfigs.p', 'wb'))
     pickle.dump(applyModelResults, open(picklePath + 'applyModelResults.p', 'wb'))
 
-applyModelConfigs = pickle.load(open(picklePath + 'applyModelConfigs.p', 'rb'))
 applyModelResults = pickle.load(open(picklePath + 'applyModelResults.p', 'rb'))
 
 # Score models
