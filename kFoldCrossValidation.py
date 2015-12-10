@@ -1,9 +1,12 @@
 import os
-import thesisFunctions
+import shutil
+import fnmatch
 import mlutilities.types as mltypes
 import mlutilities.dataTransformation as mldata
+import thesisFunctions
 
 # Parameters
+randomSeed = 47392
 masterDataPath = 'MasterData/'
 month = 'jul'
 dryProportionOfInterest = 0.5
@@ -34,7 +37,7 @@ dryDataSet = mltypes.DataSet('Dry Years',
 testPathPrefix = os.path.dirname(dryDataSet.path) + '/' + month + '_IntMnt'
 
 # From the dryDataSet, create k universal test sets and corresponding k dry training sets
-splitDryDataSets = mldata.kFoldSplitDataSet(dryDataSet, 5, randomSeed=47283,
+splitDryDataSets = mldata.kFoldSplitDataSet(dryDataSet, 5, randomSeed=randomSeed,
                                             testPathPrefix=testPathPrefix)
 
 # Use ObsIDs of each universal test set to subset full data set to everything else, creating k full training sets
@@ -49,19 +52,33 @@ for fold in range(len(splitDryDataSets)):
                                        featuresIndex=myfeaturesIndex,
                                        labelIndex=myLabelIndex)
 
-# For each fold of the pipeline
-# currentFold = 1
-# while currentFold < 6:
+# Run pipeline for each fold of the data
+for fold in range(len(splitDryDataSets)):
 
-    # Copy those datasets to CurrentFoldData, removing the _Number in their name
+    # Get the datasets from this fold
+    foldDataSets = []
+    for root, directories, files in os.walk(masterDataPath):
+        if root != masterDataPath:
+            continue
+        filesToCopy = fnmatch.filter(files, '*_' + str(fold) + '_*')
+    if len(filesToCopy) == 0:
+        raise Exception('No matching files found for fold', fold)
+
+    # Copy them to CurrentFoldData folder, removing the _Number in their name
+    for fileToCopy in filesToCopy:
+        newFilePath = masterDataPath + 'CurrentFoldData/' + fileToCopy.replace('_' + str(fold), '')
+        shutil.copyfile(masterDataPath + fileToCopy, newFilePath)
+
     # Run pipeline for those datasets
+    scoreModelResultsDF = thesisFunctions.flowModelPipeline(universalTestSetFileName='jul_IntMnt_test.csv',
+                                                            universalTestSetDescription='Jul IntMnt Test',
+                                                            basePath=masterDataPath + 'CurrentFoldData/',
+                                                            picklePath=masterDataPath + 'Pickles/',
+                                                            statusPrintPrefix='K-fold #' + str(fold),
+                                                            randomSeed=randomSeed)
+
     # Aggregate results
 
 
-# scoreModelResultsDF = thesisFunctions.flowModelPipeline(universalTestSetFileName='jul_IntMnt_test.csv',
-#                                                         universalTestSetDescription='Jul IntMnt Test',
-#                                                         basePath='Data/',
-#                                                         picklePath='Pickles/',
-#                                                         statusPrintPrefix='K-fold #1',
-#                                                         randomSeed=47392)
-# scoreModelResultsDF.to_csv('Output/cvScoreModelResults.csv', index=False)
+
+scoreModelResultsDF.to_csv('Output/cvScoreModelResults.csv', index=False)
