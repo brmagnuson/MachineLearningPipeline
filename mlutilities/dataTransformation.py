@@ -247,7 +247,7 @@ def kFoldSplitDataSet(dataSet, numberOfFolds=3, randomSeed=None, trainPathPrefix
     baseNewDescription = dataSet.description
     baseNewPath = os.path.dirname(dataSet.path) + '/' + os.path.basename(dataSet.path).split('.')[0] + '_'
     foldDataSets = []
-    currentFold = 1
+    currentFold = 0
 
     for trainIndex, testIndex in kFoldIndices:
 
