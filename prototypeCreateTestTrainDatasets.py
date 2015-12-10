@@ -18,12 +18,12 @@ numberToExtract = math.ceil(len(waterYears) * proportionOfInterest)
 dryWaterYears = waterYears[:numberToExtract]
 
 # Read in original dataset with all years (with ObsID column added at the beginning before running code)
-myfeaturesIndex = 6
+myFeaturesIndex = 6
 myLabelIndex = 5
 month = 'jul'
 fullDataSet = mlutilities.types.DataSet('All Years',
                                         basePath + month + '_IntMnt_ref.csv',
-                                        featuresIndex=myfeaturesIndex,
+                                        featuresIndex=myFeaturesIndex,
                                         labelIndex=myLabelIndex)
 
 # Get appropriate calendar years for the month of interest
@@ -39,7 +39,7 @@ dryDataSet = mlutilities.types.DataSet('Dry Years',
                                        basePath + month + '_IntMnt_dry.csv',
                                        'w',
                                        dataFrame=dryDataFrame,
-                                       featuresIndex=myfeaturesIndex,
+                                       featuresIndex=myFeaturesIndex,
                                        labelIndex=myLabelIndex)
 
 # Split dry data set into test and train
@@ -61,7 +61,7 @@ fullTrainDataSet = mlutilities.types.DataSet('All Years Training Set',
                                              basePath + month + '_IntMnt_ref_train.csv',
                                              'w',
                                              dataFrame=fullTrainDataFrame,
-                                             featuresIndex=myfeaturesIndex,
+                                             featuresIndex=myFeaturesIndex,
                                              labelIndex=myLabelIndex)
 
 # Make sure all the numbers add up

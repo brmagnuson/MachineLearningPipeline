@@ -1,4 +1,5 @@
 import os
+import shutil
 import math
 import fnmatch
 import pickle
@@ -67,8 +68,65 @@ def createDescriptionFromFileName(fileName):
     return prettyDescription
 
 
-def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, picklePath, statusPrintPrefix=None,
-                      randomSeed=None):
+def createKFoldDataSets(kFolds, masterDataPath, month, dryProportionOfInterest, myFeaturesIndex, myLabelIndex, randomSeed=None):
+
+    # Get dry water years
+    dryYears = getDryYears(masterDataPath + 'NOAAWaterYearsDriestToWettest.csv',
+                           month,
+                           dryProportionOfInterest)
+
+    # Read in original dataset with all years (with ObsID column added at the beginning before running code)
+    fullDataSet = mltypes.DataSet('All Years',
+                                  masterDataPath + month + '_IntMnt_ref.csv',
+                                  featuresIndex=myFeaturesIndex,
+                                  labelIndex=myLabelIndex)
+
+    # Subset full dataset to those years of interest
+    dryDataFrame = fullDataSet.dataFrame.loc[fullDataSet.dataFrame['Year'].isin(dryYears)]
+    dryDataSet = mltypes.DataSet('Dry Years',
+                                 masterDataPath + month + '_IntMnt_dry.csv',
+                                 'w',
+                                 dataFrame=dryDataFrame,
+                                 featuresIndex=myFeaturesIndex,
+                                 labelIndex=myLabelIndex)
+
+    testPathPrefix = os.path.dirname(dryDataSet.path) + '/' + month + '_IntMnt'
+
+    # From the dryDataSet, create k universal test sets and corresponding k dry training sets
+    splitDryDataSets = mldata.kFoldSplitDataSet(dryDataSet, 5, randomSeed=randomSeed,
+                                                testPathPrefix=testPathPrefix)
+
+    # Use ObsIDs of each universal test set to subset full data set to everything else, creating k full training sets
+    for fold in range(kFolds):
+        universalTestDataSet = splitDryDataSets[fold].testDataSet
+        universalTestObsIds = universalTestDataSet.dataFrame.ObsID.values
+        fullTrainDataFrame = fullDataSet.dataFrame.loc[~fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
+        fullTrainDataSet = mltypes.DataSet('All Years Training Set',
+                                           masterDataPath + month + '_IntMnt_ref_' + str(fold) + '_train.csv',
+                                           'w',
+                                           dataFrame=fullTrainDataFrame,
+                                           featuresIndex=myFeaturesIndex,
+                                           labelIndex=myLabelIndex)
+
+
+def copyFoldDataSets(fold, masterDataPath):
+
+    # Get the datasets from this fold
+    for root, directories, files in os.walk(masterDataPath):
+        if root != masterDataPath:
+            continue
+        filesToCopy = fnmatch.filter(files, '*_' + str(fold) + '_*')
+    if len(filesToCopy) == 0:
+        raise Exception('No matching files found for fold', fold)
+
+    # Copy them to CurrentFoldData folder, removing the _Number in their name
+    for fileToCopy in filesToCopy:
+        newFilePath = masterDataPath + 'CurrentFoldData/' + fileToCopy.replace('_' + str(fold), '')
+        shutil.copyfile(masterDataPath + fileToCopy, newFilePath)
+
+
+def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, picklePath, outputFilePath,
+                      statusPrintPrefix=None, randomSeed=None):
 
     # Parameters
     runPrepareDatasets = True
@@ -392,4 +450,5 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
 
     # Convert to data frame for tabulation and visualization
     scoreModelResultsDF = mlutils.createScoreDataFrame(sortedScoreModelResults)
+    scoreModelResultsDF.to_csv(outputFilePath, index=False)
     return scoreModelResultsDF

@@ -20,8 +20,6 @@ def createScoreDataFrame(scoreModelResults):
 
         formattedDescription = scoreModelResult.description.split(':')[-1].strip()
 
-        # if scoreModelResult.modellingMethod.description ==
-
         row = [formattedDescription,
                scoreModelResult.modellingMethod.description,
                scoreModelResult.parameters]
