@@ -486,7 +486,7 @@ def runAllModels(month, region, randomSeed=None):
                                                     basePath=masterDataPath + 'CurrentFoldData/',
                                                     picklePath=masterDataPath + 'Pickles/',
                                                     outputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
-                                                    statusPrintPrefix='K-fold #' + str(fold),
+                                                    statusPrintPrefix=region + ' ' + month.capitalize() + ' K-fold #' + str(fold),
                                                     subTaskPrint=False,
                                                     randomSeed=randomSeed)
 

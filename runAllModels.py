@@ -1,7 +1,10 @@
 import time
+import threading
 import thesisFunctions
 
 allMonthsPath = 'AllMonths/'
+randomSeed = 47392
+multiThreading = True
 
 # regions = ['CoastMnt', 'IntMnt', 'Xeric']
 regions = ['IntMnt']
@@ -12,10 +15,13 @@ startTime = time.strftime('%a, %d %b %Y %X')
 for region in regions:
     for month in months:
 
-        print('Running pipeline for %s, %s' % (region, month.capitalize()))
-        print('Current time:', time.strftime('%a, %d %b %Y %X'))
-        thesisFunctions.runAllModels(month, region, randomSeed=47392)
-        print()
+        if multiThreading:
+            t = threading.Thread(target=thesisFunctions.runAllModels, args=(month, region, randomSeed))
+            t.start()
+        else:
+            print('Running pipeline for %s, %s' % (region, month.capitalize()))
+            thesisFunctions.runAllModels(month, region, randomSeed)
+            print()
 
 endTime = time.strftime('%a, %d %b %Y %X')
 
