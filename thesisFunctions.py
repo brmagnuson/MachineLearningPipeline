@@ -130,7 +130,7 @@ def copyFoldDataSets(fold, masterDataPath):
 
 
 def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, picklePath, outputFilePath,
-                      statusPrintPrefix=None, suppressPrint=False, randomSeed=None):
+                      statusPrintPrefix=None, subTaskPrint=True, randomSeed=None):
 
     # Parameters
     runPrepareDatasets = True
@@ -297,7 +297,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
         for dataSetAssociation in dataSetAssociations:
             for tuneModelConfig in tuneModelConfigs:
 
-                print(statusPrintPrefix, 'Tuning (%s of %s):' % (counter, total), tuneModelConfig.description, 'for', dataSetAssociation.trainDataSet.description)
+                if subTaskPrint:
+                    print(statusPrintPrefix, 'Tuning (%s of %s):' % (counter, total), tuneModelConfig.description, 'for', dataSetAssociation.trainDataSet.description)
                 tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, tuneModelConfig, randomSeed)
                 tuneModelResults.append(tuneModelResult)
                 counter += 1
@@ -432,7 +433,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
             applyModelConfigs += ensembleApplyModelConfigs
 
         # Apply models to test data
-        applyModelResults = mlmodel.applyModels(applyModelConfigs)
+        applyModelResults = mlmodel.applyModels(applyModelConfigs, subTaskPrint=subTaskPrint)
 
         pickle.dump(applyModelResults, open(picklePath + 'applyModelResults.p', 'wb'))
 
@@ -486,6 +487,7 @@ def runAllModels(month, region, randomSeed=None):
                                                     picklePath=masterDataPath + 'Pickles/',
                                                     outputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
                                                     statusPrintPrefix='K-fold #' + str(fold),
+                                                    subTaskPrint=False,
                                                     randomSeed=randomSeed)
 
         allFoldScoreModelResultsDFs.append(foldScoreModelResultsDF)

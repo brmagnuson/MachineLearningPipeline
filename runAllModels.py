@@ -3,7 +3,8 @@ import thesisFunctions
 
 allMonthsPath = 'AllMonths/'
 
-regions = ['CoastMnt', 'IntMnt', 'Xeric']
+# regions = ['CoastMnt', 'IntMnt', 'Xeric']
+regions = ['IntMnt']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 startTime = time.strftime('%a, %d %b %Y %X')

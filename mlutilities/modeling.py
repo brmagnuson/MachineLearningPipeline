@@ -89,7 +89,7 @@ def applyModel(applyModelConfiguration):
     return applyModelResult
 
 
-def applyModels(applyModelConfigurations):
+def applyModels(applyModelConfigurations, subTaskPrint=True):
     """
     Wrapper function to loop through multiple ApplyModelConfigurations
     :param applyModelConfigurations:
@@ -99,7 +99,8 @@ def applyModels(applyModelConfigurations):
     counter = 1
     total = len(applyModelConfigurations)
     for applyModelConfiguration in applyModelConfigurations:
-        print('Applying (%s of %s):' % (counter, total), applyModelConfiguration.description)
+        if subTaskPrint:
+            print('Applying (%s of %s):' % (counter, total), applyModelConfiguration.description)
         applyModelResult = applyModel(applyModelConfiguration)
         applyModelResults.append(applyModelResult)
         counter += 1
