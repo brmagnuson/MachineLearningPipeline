@@ -2,17 +2,18 @@ import pandas
 import thesisFunctions
 
 # Parameters
-randomSeed = 17
+randomSeed = 47392
 masterDataPath = 'MasterData/'
 month = 'jul'
+region = 'IntMnt'
 dryProportionOfInterest = 0.5
 myFeaturesIndex = 6
 myLabelIndex = 5
 kFolds = 5
 
 # Create my 5 test/train folds
-# thesisFunctions.createKFoldDataSets(kFolds, masterDataPath, month, dryProportionOfInterest,
-#                                     myFeaturesIndex, myLabelIndex, randomSeed)
+thesisFunctions.createKFoldDataSets(kFolds, masterDataPath, month, region, dryProportionOfInterest,
+                                    myFeaturesIndex, myLabelIndex, randomSeed)
 
 # Run pipeline for each fold of the data
 allFoldScoreModelResultsDFs = []
@@ -42,4 +43,4 @@ allResultsDF.to_csv(masterDataPath + 'Output/scoreModelResults_all.csv', index=F
 # Group by unique model & dataset combinations to average
 averageResultsDF = allResultsDF.groupby(['Base DataSet', 'Model Method']).mean().reset_index()
 sortedAverageResultsDF = averageResultsDF.sort(columns='R Squared', ascending=False)
-sortedAverageResultsDF.to_csv(masterDataPath + 'Output/scoreModelResults_average.csv', index=False)\
+sortedAverageResultsDF.to_csv(masterDataPath + 'Output/scoreModelResults_average.csv', index=False)

@@ -4,6 +4,7 @@ import math
 import fnmatch
 import pickle
 import copy
+import pandas
 import sklearn.feature_selection
 import sklearn.decomposition
 import sklearn.metrics
@@ -68,7 +69,8 @@ def createDescriptionFromFileName(fileName):
     return prettyDescription
 
 
-def createKFoldDataSets(kFolds, masterDataPath, month, dryProportionOfInterest, myFeaturesIndex, myLabelIndex, randomSeed=None):
+def createKFoldDataSets(kFolds, masterDataPath, month, region, dryProportionOfInterest, myFeaturesIndex, myLabelIndex,
+                        randomSeed=None):
 
     # Get dry water years
     dryYears = getDryYears(masterDataPath + 'NOAAWaterYearsDriestToWettest.csv',
@@ -77,20 +79,20 @@ def createKFoldDataSets(kFolds, masterDataPath, month, dryProportionOfInterest, 
 
     # Read in original dataset with all years (with ObsID column added at the beginning before running code)
     fullDataSet = mltypes.DataSet('All Years',
-                                  masterDataPath + month + '_IntMnt_ref.csv',
+                                  masterDataPath + month + '_' + region + '_all.csv',
                                   featuresIndex=myFeaturesIndex,
                                   labelIndex=myLabelIndex)
 
     # Subset full dataset to those years of interest
     dryDataFrame = fullDataSet.dataFrame.loc[fullDataSet.dataFrame['Year'].isin(dryYears)]
     dryDataSet = mltypes.DataSet('Dry Years',
-                                 masterDataPath + month + '_IntMnt_dry.csv',
+                                 masterDataPath + month + '_' + region + '_dry.csv',
                                  'w',
                                  dataFrame=dryDataFrame,
                                  featuresIndex=myFeaturesIndex,
                                  labelIndex=myLabelIndex)
 
-    testPathPrefix = os.path.dirname(dryDataSet.path) + '/' + month + '_IntMnt'
+    testPathPrefix = os.path.dirname(dryDataSet.path) + '/' + month + '_' + region
 
     # From the dryDataSet, create k universal test sets and corresponding k dry training sets
     splitDryDataSets = mldata.kFoldSplitDataSet(dryDataSet, 5, randomSeed=randomSeed,
@@ -101,8 +103,10 @@ def createKFoldDataSets(kFolds, masterDataPath, month, dryProportionOfInterest, 
         universalTestDataSet = splitDryDataSets[fold].testDataSet
         universalTestObsIds = universalTestDataSet.dataFrame.ObsID.values
         fullTrainDataFrame = fullDataSet.dataFrame.loc[~fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
+
+        # Write this out to the proper folder.
         fullTrainDataSet = mltypes.DataSet('All Years Training Set',
-                                           masterDataPath + month + '_IntMnt_ref_' + str(fold) + '_train.csv',
+                                           masterDataPath + month + '_' + region + '_all_' + str(fold) + '_train.csv',
                                            'w',
                                            dataFrame=fullTrainDataFrame,
                                            featuresIndex=myFeaturesIndex,
@@ -126,7 +130,7 @@ def copyFoldDataSets(fold, masterDataPath):
 
 
 def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, picklePath, outputFilePath,
-                      statusPrintPrefix=None, randomSeed=None):
+                      statusPrintPrefix=None, suppressPrint=False, randomSeed=None):
 
     # Parameters
     runPrepareDatasets = True
@@ -452,3 +456,52 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     scoreModelResultsDF = mlutils.createScoreDataFrame(sortedScoreModelResults)
     scoreModelResultsDF.to_csv(outputFilePath, index=False)
     return scoreModelResultsDF
+
+
+def runAllModels(month, region, randomSeed=None):
+
+    # Set parameters
+    masterDataPath = 'AllMonths/' + region + '/' + month + '/'
+    dryProportionOfInterest = 0.5
+    myFeaturesIndex = 6
+    myLabelIndex = 5
+    kFolds = 5
+
+    # Create my 5 test/train folds
+    createKFoldDataSets(kFolds, masterDataPath, month, region, dryProportionOfInterest,
+                        myFeaturesIndex, myLabelIndex, randomSeed)
+
+    # Run pipeline for each fold of the data
+    allFoldScoreModelResultsDFs = []
+    for fold in range(kFolds):
+
+        copyFoldDataSets(fold, masterDataPath)
+
+        # Run pipeline for those datasets
+        universalTestSetFileName = month + '_' + region + '_test.csv'
+        universalTestSetDescription = month.capitalize() + ' ' + region + ' Test'
+        foldScoreModelResultsDF = flowModelPipeline(universalTestSetFileName=universalTestSetFileName,
+                                                    universalTestSetDescription=universalTestSetDescription,
+                                                    basePath=masterDataPath + 'CurrentFoldData/',
+                                                    picklePath=masterDataPath + 'Pickles/',
+                                                    outputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
+                                                    statusPrintPrefix='K-fold #' + str(fold),
+                                                    randomSeed=randomSeed)
+
+        allFoldScoreModelResultsDFs.append(foldScoreModelResultsDF)
+
+    # Aggregate results into a single DataFrame
+    allResultsDF = pandas.DataFrame()
+    for fold in allFoldScoreModelResultsDFs:
+        allResultsDF = allResultsDF.append(fold, ignore_index=True)
+    allResultsDF.to_csv(masterDataPath + 'Output/scoreModelResults_all.csv', index=False)
+
+    # allResultsDF = pandas.read_csv(masterDataPath + 'Output/scoreModelResults_all.csv')
+
+    # Group by unique model & dataset combinations to average
+    averageResultsDF = allResultsDF.groupby(['Base DataSet', 'Model Method']).mean().reset_index()
+    sortedAverageResultsDF = averageResultsDF.sort(columns='R Squared', ascending=False)
+    sortedAverageResultsDF.to_csv(masterDataPath + 'Output/scoreModelResults_average.csv', index=False)
+
+
+

@@ -22,7 +22,7 @@ myFeaturesIndex = 6
 myLabelIndex = 5
 month = 'jul'
 fullDataSet = mlutilities.types.DataSet('All Years',
-                                        basePath + month + '_IntMnt_ref.csv',
+                                        basePath + month + '_IntMnt_all.csv',
                                         featuresIndex=myFeaturesIndex,
                                         labelIndex=myLabelIndex)
 
@@ -58,7 +58,7 @@ dryTrainDataSet = splitDryDataSet.trainDataSet
 universalTestObsIds = universalTestDataSet.dataFrame.ObsID.values
 fullTrainDataFrame = fullDataSet.dataFrame.loc[~fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
 fullTrainDataSet = mlutilities.types.DataSet('All Years Training Set',
-                                             basePath + month + '_IntMnt_ref_train.csv',
+                                             basePath + month + '_IntMnt_all_train.csv',
                                              'w',
                                              dataFrame=fullTrainDataFrame,
                                              featuresIndex=myFeaturesIndex,
