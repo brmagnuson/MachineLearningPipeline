@@ -2,7 +2,7 @@ import os
 import shutil
 import math
 import fnmatch
-import pickle
+# import pickle
 import copy
 import pandas
 import sklearn.feature_selection
@@ -129,17 +129,17 @@ def copyFoldDataSets(fold, masterDataPath):
         shutil.copyfile(masterDataPath + fileToCopy, newFilePath)
 
 
-def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, picklePath, outputFilePath,
+def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, outputFilePath,
                       statusPrintPrefix=None, subTaskPrint=True, randomSeed=None):
 
     # Parameters
-    runPrepareDatasets = True
+    # runPrepareDatasets = True
     runScaleDatasets = True
     runFeatureEngineering = True
-    runTuneModels = True
-    runApplyModels = True
+    # runTuneModels = True
+    # runApplyModels = True
     runEnsembleModels = True
-    runScoreModels = True
+    # runScoreModels = True
 
     tuneScoreMethod = 'r2'
     # tuneScoreMethod = 'mean_squared_error'
@@ -150,46 +150,42 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     myFeaturesIndex = 6
     myLabelIndex = 5
 
-    if runPrepareDatasets:
-        print(statusPrintPrefix, 'Preparing input data sets.')
+    # if runPrepareDatasets:
+    print(statusPrintPrefix, 'Preparing input data sets.')
 
-        # Get base test set from folder
-        universalTestDataSet = mltypes.DataSet(universalTestSetDescription,
-                                               basePath + universalTestSetFileName,
-                                               featuresIndex=myFeaturesIndex,
-                                               labelIndex=myLabelIndex)
+    # Get base test set from folder
+    universalTestDataSet = mltypes.DataSet(universalTestSetDescription,
+                                           basePath + universalTestSetFileName,
+                                           featuresIndex=myFeaturesIndex,
+                                           labelIndex=myLabelIndex)
 
-        # Get all base training sets from folder
-        baseTrainingDataSets = []
-        for root, directories, files in os.walk(basePath):
-            for file in fnmatch.filter(files, '*_train.csv'):
-                description = createDescriptionFromFileName(file)
-                baseTrainingDataSet = mltypes.DataSet(description,
-                                                      basePath + file,
-                                                      featuresIndex=myFeaturesIndex,
-                                                      labelIndex=myLabelIndex)
-                baseTrainingDataSets.append(baseTrainingDataSet)
+    # Get all base training sets from folder
+    baseTrainingDataSets = []
+    for root, directories, files in os.walk(basePath):
+        for file in fnmatch.filter(files, '*_train.csv'):
+            description = createDescriptionFromFileName(file)
+            baseTrainingDataSet = mltypes.DataSet(description,
+                                                  basePath + file,
+                                                  featuresIndex=myFeaturesIndex,
+                                                  labelIndex=myLabelIndex)
+            baseTrainingDataSets.append(baseTrainingDataSet)
 
-        # Associate each base training set with its own copy of the universal test set
-        dataSetAssociations = []
-        for baseTrainingDataSet in baseTrainingDataSets:
-            # Build new versions of DataSet attributes
-            copyDescription = baseTrainingDataSet.description + '\'s Copy Of Test Set'
-            copyPath = basePath + \
-                       os.path.basename(universalTestDataSet.path).split('.')[0] + '_' + \
-                       os.path.basename(baseTrainingDataSet.path).split('.')[0].split('_')[2] + '_copy.csv'
-            copyOfUniversalTestDataSet = mltypes.DataSet(copyDescription,
-                                                         copyPath,
-                                                         'w',
-                                                         dataFrame=universalTestDataSet.dataFrame,
-                                                         featuresIndex=myFeaturesIndex,
-                                                         labelIndex=myLabelIndex)
-            dataSetAssociation = mltypes.SplitDataSet(baseTrainingDataSet, copyOfUniversalTestDataSet)
-            dataSetAssociations.append(dataSetAssociation)
-
-        pickle.dump(dataSetAssociations, open(picklePath + 'dataSetAssociations.p', 'wb'))
-
-    dataSetAssociations = pickle.load(open(picklePath + 'dataSetAssociations.p', 'rb'))
+    # Associate each base training set with its own copy of the universal test set
+    dataSetAssociations = []
+    for baseTrainingDataSet in baseTrainingDataSets:
+        # Build new versions of DataSet attributes
+        copyDescription = baseTrainingDataSet.description + '\'s Copy Of Test Set'
+        copyPath = basePath + \
+                   os.path.basename(universalTestDataSet.path).split('.')[0] + '_' + \
+                   os.path.basename(baseTrainingDataSet.path).split('.')[0].split('_')[2] + '_copy.csv'
+        copyOfUniversalTestDataSet = mltypes.DataSet(copyDescription,
+                                                     copyPath,
+                                                     'w',
+                                                     dataFrame=universalTestDataSet.dataFrame,
+                                                     featuresIndex=myFeaturesIndex,
+                                                     labelIndex=myLabelIndex)
+        dataSetAssociation = mltypes.SplitDataSet(baseTrainingDataSet, copyOfUniversalTestDataSet)
+        dataSetAssociations.append(dataSetAssociation)
 
     # Scale data sets based on the training set
     scaledDataSetAssociations = []
@@ -205,10 +201,6 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
             # Associate the data sets
             scaledDataSetAssociation = mltypes.SplitDataSet(scaledTrainDataSet, scaledTestDataSet)
             scaledDataSetAssociations.append(scaledDataSetAssociation)
-
-        pickle.dump(scaledDataSetAssociations, open(picklePath + 'scaledDataSetAssociations.p', 'wb'))
-
-    scaledDataSetAssociations = pickle.load(open(picklePath + 'scaledDataSetAssociations.p', 'rb'))
 
     dataSetAssociations += scaledDataSetAssociations
 
@@ -254,198 +246,184 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                                            featureEngineeredTestDataSet)
                 featureEngineeredDataSetAssociations.append(featureEngineeredDataSetAssociation)
 
-        pickle.dump(featureEngineeredDataSetAssociations, open(picklePath + 'featureEngineeredDataSetAssociations.p', 'wb'))
-
-    featureEngineeredDataSetAssociations = pickle.load(open(picklePath + 'featureEngineeredDataSetAssociations.p', 'rb'))
     dataSetAssociations += featureEngineeredDataSetAssociations
 
     # Tune models
-    if runTuneModels:
-        print(statusPrintPrefix, 'Tuning models.')
+    # if runTuneModels:
+    print(statusPrintPrefix, 'Tuning models.')
 
-        ridgeParameters = [{'alpha': [0.1, 0.5, 1.0],
-                            'normalize': [True, False]}]
-        ridgeMethod = mltypes.ModellingMethod('Ridge Regression',
-                                              sklearn.linear_model.Ridge)
-        ridgeConfig = mltypes.TuneModelConfiguration(ridgeMethod.description,
-                                                     ridgeMethod,
-                                                     ridgeParameters,
-                                                     tuneScoreMethod)
-        randomForestParameters = [{'n_estimators': [10, 20],
-                                   'max_features': [10, 'sqrt'],
-                                   'random_state': [randomSeed]}]
-        randomForestMethod = mltypes.ModellingMethod('Random Forest',
-                                                     sklearn.ensemble.RandomForestRegressor)
-        randomForestConfig = mltypes.TuneModelConfiguration(randomForestMethod.description,
-                                                            randomForestMethod,
-                                                            randomForestParameters,
-                                                            tuneScoreMethod)
-        kNeighborsParameters = [{'n_neighbors': [2, 5, 10],
-                                 'metric': ['minkowski', 'euclidean']}]
-        kNeighborsMethod = mltypes.ModellingMethod('K Nearest Neighbors',
-                                                   sklearn.neighbors.KNeighborsRegressor)
-        kNeighborsConfig = mltypes.TuneModelConfiguration(kNeighborsMethod.description,
-                                                          kNeighborsMethod,
-                                                          kNeighborsParameters,
-                                                          tuneScoreMethod)
+    ridgeParameters = [{'alpha': [0.1, 0.5, 1.0],
+                        'normalize': [True, False]}]
+    ridgeMethod = mltypes.ModellingMethod('Ridge Regression',
+                                          sklearn.linear_model.Ridge)
+    ridgeConfig = mltypes.TuneModelConfiguration(ridgeMethod.description,
+                                                 ridgeMethod,
+                                                 ridgeParameters,
+                                                 tuneScoreMethod)
+    randomForestParameters = [{'n_estimators': [10, 20],
+                               'max_features': [10, 'sqrt'],
+                               'random_state': [randomSeed]}]
+    randomForestMethod = mltypes.ModellingMethod('Random Forest',
+                                                 sklearn.ensemble.RandomForestRegressor)
+    randomForestConfig = mltypes.TuneModelConfiguration(randomForestMethod.description,
+                                                        randomForestMethod,
+                                                        randomForestParameters,
+                                                        tuneScoreMethod)
+    kNeighborsParameters = [{'n_neighbors': [2, 5, 10],
+                             'metric': ['minkowski', 'euclidean']}]
+    kNeighborsMethod = mltypes.ModellingMethod('K Nearest Neighbors',
+                                               sklearn.neighbors.KNeighborsRegressor)
+    kNeighborsConfig = mltypes.TuneModelConfiguration(kNeighborsMethod.description,
+                                                      kNeighborsMethod,
+                                                      kNeighborsParameters,
+                                                      tuneScoreMethod)
 
-        tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig]
+    tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig]
 
-        counter = 1
-        total = len(dataSetAssociations) * len(tuneModelConfigs)
-        tuneModelResults = []
-        for dataSetAssociation in dataSetAssociations:
-            for tuneModelConfig in tuneModelConfigs:
+    counter = 1
+    total = len(dataSetAssociations) * len(tuneModelConfigs)
+    tuneModelResults = []
+    for dataSetAssociation in dataSetAssociations:
+        for tuneModelConfig in tuneModelConfigs:
 
-                if subTaskPrint:
-                    print(statusPrintPrefix, 'Tuning (%s of %s):' % (counter, total), tuneModelConfig.description, 'for', dataSetAssociation.trainDataSet.description)
-                tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, tuneModelConfig, randomSeed)
-                tuneModelResults.append(tuneModelResult)
-                counter += 1
+            if subTaskPrint:
+                print(statusPrintPrefix, 'Tuning (%s of %s):' % (counter, total), tuneModelConfig.description, 'for', dataSetAssociation.trainDataSet.description)
+            tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, tuneModelConfig, randomSeed)
+            tuneModelResults.append(tuneModelResult)
+            counter += 1
 
-        pickle.dump(tuneModelResults, open(picklePath + 'tuneModelResults.p', 'wb'))
-
-    tuneModelResults = pickle.load(open(picklePath + 'tuneModelResults.p', 'rb'))
-
-    # Model tuning result reporting
-    if tuneScoreMethod == 'mean_squared_error':
-        sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
-    else:
-        sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
+    # # Model tuning result reporting
+    # if tuneScoreMethod == 'mean_squared_error':
+    #     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
+    # else:
+    #     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
 
     # Apply models
-    if runApplyModels:
+    # if runApplyModels:
 
-        print(statusPrintPrefix, 'Applying models to test data.')
+    print(statusPrintPrefix, 'Applying models to test data.')
 
-        # Build single-model ApplyModelConfigurations
-        applyModelConfigs = []
-        for tuneModelResult in tuneModelResults:
+    # Build single-model ApplyModelConfigurations
+    applyModelConfigs = []
+    for tuneModelResult in tuneModelResults:
 
-            trainDataSet = tuneModelResult.dataSet
-            testDataSet = None
-            for dataSetAssociation in dataSetAssociations:
-                if dataSetAssociation.trainDataSet == trainDataSet:
-                    testDataSet = dataSetAssociation.testDataSet
-                    break
+        trainDataSet = tuneModelResult.dataSet
+        testDataSet = None
+        for dataSetAssociation in dataSetAssociations:
+            if dataSetAssociation.trainDataSet == trainDataSet:
+                testDataSet = dataSetAssociation.testDataSet
+                break
 
-            # Make sure we found a match
-            if testDataSet == None:
-                raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
+        # Make sure we found a match
+        if testDataSet == None:
+            raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
 
-            applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Train', 'Test'),
-                                                               tuneModelResult.modellingMethod,
-                                                               tuneModelResult.parameters,
-                                                               trainDataSet,
-                                                               testDataSet)
-            applyModelConfigs.append(applyModelConfig)
+        applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Train', 'Test'),
+                                                           tuneModelResult.modellingMethod,
+                                                           tuneModelResult.parameters,
+                                                           trainDataSet,
+                                                           testDataSet)
+        applyModelConfigs.append(applyModelConfig)
 
-        # Build ensemble ApplyModelConfigurations
-        if runEnsembleModels:
+    # Build ensemble ApplyModelConfigurations
+    if runEnsembleModels:
 
-            # Find the maximum mean squared error
-            maximumMSE = None
-            if tuneScoreMethod == 'mean_squared_error':
-                maximumMSE = max([tuneModelResult.bestScore for tuneModelResult in tuneModelResults])
+        # Find the maximum mean squared error
+        maximumMSE = None
+        if tuneScoreMethod == 'mean_squared_error':
+            maximumMSE = max([tuneModelResult.bestScore for tuneModelResult in tuneModelResults])
 
-            # For each base DataSet, find its matching model functions and parameters
-            ensembleApplyModelConfigs = []
-            for dataSetAssociation in dataSetAssociations:
+        # For each base DataSet, find its matching model functions and parameters
+        ensembleApplyModelConfigs = []
+        for dataSetAssociation in dataSetAssociations:
 
-                predictorConfigs = []
-                weights = []
-                bestWeight = float('-inf')
-                stackingPredictorConfig = None
+            predictorConfigs = []
+            weights = []
+            bestWeight = float('-inf')
+            stackingPredictorConfig = None
 
-                # Find models associated with that DataSet and get their information to build predictor configs for ensembles
-                for tuneModelResult in tuneModelResults:
-                    if dataSetAssociation.trainDataSet == tuneModelResult.dataSet:
+            # Find models associated with that DataSet and get their information to build predictor configs for ensembles
+            for tuneModelResult in tuneModelResults:
+                if dataSetAssociation.trainDataSet == tuneModelResult.dataSet:
 
-                        # Build Predictor Config
-                        predictorConfig = mltypes.PredictorConfiguration(tuneModelResult.modellingMethod.description,
-                                                                         tuneModelResult.modellingMethod.function,
-                                                                         tuneModelResult.parameters)
-                        predictorConfigs.append(predictorConfig)
+                    # Build Predictor Config
+                    predictorConfig = mltypes.PredictorConfiguration(tuneModelResult.modellingMethod.description,
+                                                                     tuneModelResult.modellingMethod.function,
+                                                                     tuneModelResult.parameters)
+                    predictorConfigs.append(predictorConfig)
 
-                        # Make sure all weights are all positive
-                        if tuneScoreMethod == 'mean_squared_error':
-                            # The higher MSE is, the worse it is, so we want to invert its weight
-                            weight = maximumMSE + 1 - tuneModelResult.bestScore
-                        else:
-                            # R squared can be negative, and weights should all be positive
-                            weight = tuneModelResult.bestScore
-                        weights.append(weight)
+                    # Make sure all weights are all positive
+                    if tuneScoreMethod == 'mean_squared_error':
+                        # The higher MSE is, the worse it is, so we want to invert its weight
+                        weight = maximumMSE + 1 - tuneModelResult.bestScore
+                    else:
+                        # R squared can be negative, and weights should all be positive
+                        weight = tuneModelResult.bestScore
+                    weights.append(weight)
 
-                        # If tuneModelResult has a better score than previously seen, make it the stacked predictor config
-                        if weight > bestWeight:
-                            bestWeight = weight
-                            stackingPredictorConfig = copy.deepcopy(predictorConfig)
+                    # If tuneModelResult has a better score than previously seen, make it the stacked predictor config
+                    if weight > bestWeight:
+                        bestWeight = weight
+                        stackingPredictorConfig = copy.deepcopy(predictorConfig)
 
-                            # Hack: If the number of models I'm stacking is fewer than max_features, RandomForestRegressor
-                            # will error out.
-                            if type(stackingPredictorConfig.predictorFunction()) == type(sklearn.ensemble.RandomForestRegressor()):
-                                stackingPredictorConfig.parameters['max_features'] = None
+                        # Hack: If the number of models I'm stacking is fewer than max_features, RandomForestRegressor
+                        # will error out.
+                        if type(stackingPredictorConfig.predictorFunction()) == type(sklearn.ensemble.RandomForestRegressor()):
+                            stackingPredictorConfig.parameters['max_features'] = None
 
 
-                # Create averaging ensemble
-                averagingEnsembleModellingMethod = mltypes.ModellingMethod('Averaging Ensemble',
-                                                                           mltypes.AveragingEnsemble)
-                averagingEnsembleParameters = {'predictorConfigurations': predictorConfigs,
-                                               'weights': weights}
-                averagingEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
-                    'Apply Averaging Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
-                    averagingEnsembleModellingMethod,
-                    averagingEnsembleParameters,
-                    dataSetAssociation.trainDataSet,
-                    dataSetAssociation.testDataSet
-                )
-                ensembleApplyModelConfigs.append(averagingEnsembleApplyModelConfig)
+            # Create averaging ensemble
+            averagingEnsembleModellingMethod = mltypes.ModellingMethod('Averaging Ensemble',
+                                                                       mltypes.AveragingEnsemble)
+            averagingEnsembleParameters = {'predictorConfigurations': predictorConfigs,
+                                           'weights': weights}
+            averagingEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
+                'Apply Averaging Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                averagingEnsembleModellingMethod,
+                averagingEnsembleParameters,
+                dataSetAssociation.trainDataSet,
+                dataSetAssociation.testDataSet
+            )
+            ensembleApplyModelConfigs.append(averagingEnsembleApplyModelConfig)
 
-                # Create stacking ensemble
-                stackingEnsembleModellingMethod = mltypes.ModellingMethod('Stacking Ensemble',
-                                                                          mltypes.StackingEnsemble)
-                stackingEnsembleParameters = {'basePredictorConfigurations': predictorConfigs,
-                                              'stackingPredictorConfiguration': stackingPredictorConfig}
-                stackingEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
-                    'Apply Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
-                    stackingEnsembleModellingMethod,
-                    stackingEnsembleParameters,
-                    dataSetAssociation.trainDataSet,
-                    dataSetAssociation.testDataSet
-                )
-                ensembleApplyModelConfigs.append(stackingEnsembleApplyModelConfig)
+            # Create stacking ensemble
+            stackingEnsembleModellingMethod = mltypes.ModellingMethod('Stacking Ensemble',
+                                                                      mltypes.StackingEnsemble)
+            stackingEnsembleParameters = {'basePredictorConfigurations': predictorConfigs,
+                                          'stackingPredictorConfiguration': stackingPredictorConfig}
+            stackingEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
+                'Apply Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                stackingEnsembleModellingMethod,
+                stackingEnsembleParameters,
+                dataSetAssociation.trainDataSet,
+                dataSetAssociation.testDataSet
+            )
+            ensembleApplyModelConfigs.append(stackingEnsembleApplyModelConfig)
 
-                stackingOFEnsembleModellingMethod = mltypes.ModellingMethod('Stacking OF Ensemble',
-                                                                          mltypes.StackingEnsemble)
-                stackingOFEnsembleParameters = {'basePredictorConfigurations': predictorConfigs,
-                                              'stackingPredictorConfiguration': stackingPredictorConfig,
-                                              'includeOriginalFeatures': True}
-                stackingOFEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
-                    'Apply OF Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
-                    stackingOFEnsembleModellingMethod,
-                    stackingOFEnsembleParameters,
-                    dataSetAssociation.trainDataSet,
-                    dataSetAssociation.testDataSet
-                )
-                ensembleApplyModelConfigs.append(stackingOFEnsembleApplyModelConfig)
+            stackingOFEnsembleModellingMethod = mltypes.ModellingMethod('Stacking OF Ensemble',
+                                                                      mltypes.StackingEnsemble)
+            stackingOFEnsembleParameters = {'basePredictorConfigurations': predictorConfigs,
+                                          'stackingPredictorConfiguration': stackingPredictorConfig,
+                                          'includeOriginalFeatures': True}
+            stackingOFEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
+                'Apply OF Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                stackingOFEnsembleModellingMethod,
+                stackingOFEnsembleParameters,
+                dataSetAssociation.trainDataSet,
+                dataSetAssociation.testDataSet
+            )
+            ensembleApplyModelConfigs.append(stackingOFEnsembleApplyModelConfig)
 
-            # Add ensemble configs to the rest of the ApplyModelConfigs
-            applyModelConfigs += ensembleApplyModelConfigs
+        # Add ensemble configs to the rest of the ApplyModelConfigs
+        applyModelConfigs += ensembleApplyModelConfigs
 
-        # Apply models to test data
-        applyModelResults = mlmodel.applyModels(applyModelConfigs, subTaskPrint=subTaskPrint)
-
-        pickle.dump(applyModelResults, open(picklePath + 'applyModelResults.p', 'wb'))
-
-    applyModelResults = pickle.load(open(picklePath + 'applyModelResults.p', 'rb'))
+    # Apply models to test data
+    applyModelResults = mlmodel.applyModels(applyModelConfigs, subTaskPrint=subTaskPrint)
 
     # Score models
-    if runScoreModels:
-        print(statusPrintPrefix, 'Scoring models on test data.')
-        scoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)
-        pickle.dump(scoreModelResults, open(picklePath + 'scoreModelResults.p', 'wb'))
-
-    scoreModelResults = pickle.load(open(picklePath + 'scoreModelResults.p', 'rb'))
+    # if runScoreModels:
+    print(statusPrintPrefix, 'Scoring models on test data.')
+    scoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)
 
     # Model testing result reporting
     if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:
@@ -484,7 +462,6 @@ def runAllModels(month, region, randomSeed=None):
         foldScoreModelResultsDF = flowModelPipeline(universalTestSetFileName=universalTestSetFileName,
                                                     universalTestSetDescription=universalTestSetDescription,
                                                     basePath=masterDataPath + 'CurrentFoldData/',
-                                                    picklePath=masterDataPath + 'Pickles/',
                                                     outputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
                                                     statusPrintPrefix=region + ' ' + month.capitalize() + ' K-fold #' + str(fold),
                                                     subTaskPrint=False,

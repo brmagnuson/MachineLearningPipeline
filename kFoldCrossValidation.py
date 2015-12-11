@@ -25,7 +25,6 @@ for fold in range(kFolds):
     foldScoreModelResultsDF = thesisFunctions.flowModelPipeline(universalTestSetFileName='jul_IntMnt_test.csv',
                                                                 universalTestSetDescription='Jul IntMnt Test',
                                                                 basePath=masterDataPath + 'CurrentFoldData/',
-                                                                picklePath=masterDataPath + 'Pickles/',
                                                                 outputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
                                                                 statusPrintPrefix='K-fold #' + str(fold),
                                                                 randomSeed=randomSeed)

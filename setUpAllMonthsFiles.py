@@ -37,7 +37,7 @@ for region in regions:
             writer.writerows(lines)
 
         # Create subfolders used in model pipeline
-        subFolders = ['CurrentFoldData', 'Output', 'Pickles']
+        subFolders = ['CurrentFoldData', 'Output']
         for subFolder in subFolders:
             newSubFolderPath = destinationFolderPath + '/' + subFolder
             if not os.path.exists(newSubFolderPath):
