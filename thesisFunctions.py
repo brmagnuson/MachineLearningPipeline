@@ -2,7 +2,6 @@ import os
 import shutil
 import math
 import fnmatch
-# import pickle
 import copy
 import pandas
 import sklearn.feature_selection
@@ -130,16 +129,14 @@ def copyFoldDataSets(fold, masterDataPath):
 
 
 def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, outputFilePath,
-                      statusPrintPrefix=None, subTaskPrint=True, randomSeed=None):
+                      statusPrintPrefix=None, subTaskPrint=True, randomSeed=None, runScaleDatasets=True,
+                      runFeatureEngineering=True, runEnsembleModels=True):
 
-    # Parameters
-    # runPrepareDatasets = True
-    runScaleDatasets = True
-    runFeatureEngineering = True
-    # runTuneModels = True
-    # runApplyModels = True
-    runEnsembleModels = True
-    # runScoreModels = True
+    # # Parameters
+    # runPrepareDatasets=True
+    # runTuneModels=True
+    # runApplyModels=True
+    # runScoreModels=True
 
     tuneScoreMethod = 'r2'
     # tuneScoreMethod = 'mean_squared_error'
@@ -150,6 +147,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     myFeaturesIndex = 6
     myLabelIndex = 5
 
+    # Prepare datasets
     # if runPrepareDatasets:
     print(statusPrintPrefix, 'Preparing input data sets.')
 
@@ -300,7 +298,6 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
 
     # Apply models
     # if runApplyModels:
-
     print(statusPrintPrefix, 'Applying models to test data.')
 
     # Build single-model ApplyModelConfigurations
