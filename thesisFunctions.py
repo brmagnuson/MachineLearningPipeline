@@ -147,12 +147,15 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     :return:
     """
 
-    # # Parameters
     # runPrepareDatasets=True
     # runTuneModels=True
     # runApplyModels=True
     # runScoreModels=True
 
+    # Parameters
+    selectedFeatureList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12',
+                           't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12',
+                           'p2sum', 'p3sum', 'p6sum', 'PERMAVE', 'RFACT', 'DRAIN_SQKM', 'ELEV_MEAN_M_BASIN_30M']
     tuneScoreMethod = 'r2'
     # tuneScoreMethod = 'mean_squared_error'
     r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
@@ -241,7 +244,11 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                             'extraction',
                                                             sklearn.decomposition.FastICA,
                                                             {'n_components': 50, 'max_iter': 2500, 'random_state': randomSeed})
-        featureEngineeringConfigs = [varianceThresholdPoint1Config, pca20Config, pca50Config, ica50Config]
+        expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
+                                                                       'selection',
+                                                                       mltypes.ExtractSpecificFeatures,
+                                                                       {'featureList': selectedFeatureList})
+        featureEngineeringConfigs = [varianceThresholdPoint1Config, pca20Config, pca50Config, ica50Config, expertSelectedConfig]
 
         for dataSetAssociation in dataSetAssociations:
 

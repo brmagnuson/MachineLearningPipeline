@@ -69,6 +69,18 @@ class Scaler:
         return self.__class__.__name__ + ' for ' + str(self.dataSetUsedToFit)
 
 
+class ExtractSpecificFeatures:
+
+    def __init__(self, featureList):
+        self.featureList = featureList
+
+    def fit_transform(self, dataFrame):
+        return dataFrame[self.featureList]
+
+    def transform(self, dataFrame):
+        return dataFrame[self.featureList]
+
+
 class FeatureEngineeringConfiguration:
     """
     Everything we need to know to perform a specific type of feature selection on a DataSet.

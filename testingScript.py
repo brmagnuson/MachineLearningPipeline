@@ -22,13 +22,12 @@ trainingDataSet = mltypes.DataSet('All years training',
 trainFeatures = trainingDataSet.featuresDataFrame
 trainLabel = trainingDataSet.labelSeries
 
-predictor = sklearn.linear_model.Ridge(alpha=0.1, normalize=True)
-predictor.fit(trainFeatures, trainLabel)
-predictions = predictor.predict(trainFeatures)
-
-score = sklearn.metrics.r2_score(trainLabel, predictions)
-print('sklearn R squared:', score)
-print()
+expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
+                                                               'selection',
+                                                               mltypes.ExtractSpecificFeatures,
+                                                               {'featureList': ['wb0', 'wb1']})
+featureEngineeredTrainingDataSet, transformer = mldata.engineerFeaturesForDataSet(trainingDataSet,
+                                                                               expertSelectedConfig)
 
 ridgeModellingMethod = mltypes.ModellingMethod('Ridge Reg',
                                                sklearn.linear_model.Ridge)
@@ -36,9 +35,8 @@ applyModelConfig = mltypes.ApplyModelConfiguration('Apply Ridge Regression',
                                                    ridgeModellingMethod,
                                                    {'alpha': 0.1, 'normalize': True},
                                                    trainingDataSet)
-print(applyModelConfig)
+
 applyModelResult = mlmodel.applyModel(applyModelConfig)
-print(applyModelResult)
 r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
 scoreModelResult = mlmodel.scoreModel(applyModelResult, [r2Method])
 print(scoreModelResult)

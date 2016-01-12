@@ -95,9 +95,12 @@ def engineerFeaturesForDataSet(dataSet, featureEngineeringConfiguration):
 
     # Build new pandas data frame based on selected/extracted features
     if featureEngineeringConfiguration.selectionOrExtraction == 'selection':
-        selectedFeatureIndices = selector.get_support(indices=True)
-        columnNames = [dataSet.featuresDataFrame.columns.values[i] for i in selectedFeatureIndices]
-        selectedFeaturesDataFrame = dataSet.featuresDataFrame[columnNames]
+        if featureEngineeringConfiguration.method == mlutilities.types.ExtractSpecificFeatures:
+            selectedFeaturesDataFrame = fitTransformValues
+        else:
+            selectedFeatureIndices = selector.get_support(indices=True)
+            columnNames = [dataSet.featuresDataFrame.columns.values[i] for i in selectedFeatureIndices]
+            selectedFeaturesDataFrame = dataSet.featuresDataFrame[columnNames]
         completeDataFrame = pandas.concat([dataSet.nonFeaturesDataFrame, selectedFeaturesDataFrame], axis=1)
     else:
         extractedFeaturesDataFrame = pandas.DataFrame(fitTransformValues)
@@ -153,9 +156,12 @@ def engineerFeaturesByTransformer(dataSet, transformer):
 
     # Build new pandas data frame based on selected/extracted features
     if transformer.selectionOrExtraction == 'selection':
-        selectedFeatureIndices = transformer.transformingObject.get_support(indices=True)
-        columnNames = [dataSet.featuresDataFrame.columns.values[i] for i in selectedFeatureIndices]
-        selectedFeaturesDataFrame = dataSet.featuresDataFrame[columnNames]
+        if type(transformer.transformingObject) == mlutilities.types.ExtractSpecificFeatures:
+            selectedFeaturesDataFrame = transformedValues
+        else:
+            selectedFeatureIndices = transformer.transformingObject.get_support(indices=True)
+            columnNames = [dataSet.featuresDataFrame.columns.values[i] for i in selectedFeatureIndices]
+            selectedFeaturesDataFrame = dataSet.featuresDataFrame[columnNames]
         completeDataFrame = pandas.concat([dataSet.nonFeaturesDataFrame, selectedFeaturesDataFrame], axis=1)
     else:
         extractedFeaturesDataFrame = pandas.DataFrame(transformedValues)
