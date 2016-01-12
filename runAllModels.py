@@ -8,8 +8,7 @@ multiThreading = True
 
 # regions = ['CoastMnt', 'IntMnt', 'Xeric']
 regions = ['IntMnt']
-# months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-months = ['jan', 'feb']
+months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 startSecond = time.time()
 startTime = time.strftime('%a, %d %b %Y %X')
@@ -21,14 +20,14 @@ for region in regions:
         if multiThreading:
 
             # Build threads
-            t = threading.Thread(target=thesisFunctions.runAllModels, args=(month, region, randomSeed))
+            t = threading.Thread(target=thesisFunctions.runKFoldPipeline, args=(month, region, randomSeed))
             threads.append(t)
 
         else:
 
-            # Run each pipeline
+            # Run each pipeline in sequence
             print('Running pipeline for %s, %s' % (region, month.capitalize()))
-            thesisFunctions.runAllModels(month, region, randomSeed)
+            thesisFunctions.runKFoldPipeline(month, region, randomSeed)
             print()
 
 if multiThreading:

@@ -128,9 +128,24 @@ def copyFoldDataSets(fold, masterDataPath):
         shutil.copyfile(masterDataPath + fileToCopy, newFilePath)
 
 
-def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, outputFilePath,
+def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, scoreOutputFilePath,
                       statusPrintPrefix=None, subTaskPrint=True, randomSeed=None, runScaleDatasets=True,
                       runFeatureEngineering=True, runEnsembleModels=True):
+
+    """
+    Runs the pipeline for a given universal test set.
+    :param universalTestSetFileName:
+    :param universalTestSetDescription:
+    :param basePath:
+    :param scoreOutputFilePath:
+    :param statusPrintPrefix:
+    :param subTaskPrint:
+    :param randomSeed:
+    :param runScaleDatasets:
+    :param runFeatureEngineering:
+    :param runEnsembleModels:
+    :return:
+    """
 
     # # Parameters
     # runPrepareDatasets=True
@@ -420,21 +435,29 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     # Score models
     # if runScoreModels:
     print(statusPrintPrefix, 'Scoring models on test data.')
-    scoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)
+    testScoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)
 
     # Model testing result reporting
     if testScoreMethods[0].function == sklearn.metrics.mean_squared_error:
-        sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: x.modelScores[0].score)
+        sortedTestScoreModelResults = sorted(testScoreModelResults, key=lambda x: x.modelScores[0].score)
     else:
-        sortedScoreModelResults = sorted(scoreModelResults, key=lambda x: -x.modelScores[0].score)
+        sortedTestScoreModelResults = sorted(testScoreModelResults, key=lambda x: -x.modelScores[0].score)
 
     # Convert to data frame for tabulation and visualization
-    scoreModelResultsDF = mlutils.createScoreDataFrame(sortedScoreModelResults)
-    scoreModelResultsDF.to_csv(outputFilePath, index=False)
+    scoreModelResultsDF = mlutils.createScoreDataFrame(sortedTestScoreModelResults)
+    scoreModelResultsDF.to_csv(scoreOutputFilePath, index=False)
     return scoreModelResultsDF
 
 
-def runAllModels(month, region, randomSeed=None):
+def runKFoldPipeline(month, region, randomSeed=None):
+
+    """
+    Splits each region-month base dataset into k-fold test/train sets and runs the pipeline for each one.
+    :param month:
+    :param region:
+    :param randomSeed:
+    :return:
+    """
 
     # Set parameters
     masterDataPath = 'AllMonths/' + region + '/' + month + '/'
@@ -459,7 +482,7 @@ def runAllModels(month, region, randomSeed=None):
         foldScoreModelResultsDF = flowModelPipeline(universalTestSetFileName=universalTestSetFileName,
                                                     universalTestSetDescription=universalTestSetDescription,
                                                     basePath=masterDataPath + 'CurrentFoldData/',
-                                                    outputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
+                                                    scoreOutputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
                                                     statusPrintPrefix=region + ' ' + month.capitalize() + ' K-fold #' + str(fold),
                                                     subTaskPrint=False,
                                                     randomSeed=randomSeed)
