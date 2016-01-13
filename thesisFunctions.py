@@ -1,3 +1,4 @@
+import sys
 import os
 import shutil
 import math
@@ -19,13 +20,13 @@ import mlutilities.utilities as mlutils
 # The following are functions specifically for my thesis and data, rather than generalizable functions as in the
 # mlutilities library.
 
-def getDryYears(filePath, month, proportionOfInterest):
+def getYearsOfInterest(filePath, month, proportionOfInterest, wetOrDry='dry'):
     """
     Given a ranking of driest water years from driest to wettest, extract the calendar years for the driest proportion.
     :param filePath:
     :param month: string. should be written as first three letters of month, lowercase. ex: 'jul'
     :param proportionOfInterest: float between 0 and 1
-    :return:
+    :return: list of years of interest
     """
 
     # Read in water years as ordered from driest to wettest for the Sacramento by NOAA
@@ -36,15 +37,21 @@ def getDryYears(filePath, month, proportionOfInterest):
             waterYears.append(year)
 
     # Get water years of interest (drier years)
-    numberToExtract = math.ceil(len(waterYears) * proportionOfInterest)
-    dryWaterYears = waterYears[:numberToExtract]
+    if wetOrDry == 'dry':
+        stopIndex = math.ceil(len(waterYears) * proportionOfInterest)
+        waterYearsOfInterest = waterYears[:stopIndex]
+    elif wetOrDry == 'wet':
+        startIndex = math.ceil(len(waterYears) * proportionOfInterest)
+        waterYearsOfInterest = waterYears[startIndex:]
+    else:
+        raise ValueError('wetOrDry had value other than \'wet\' or \'dry\'.')
 
     # Get appropriate calendar years for the month of interest
     # (Oct, Nov, and Dec: calendar year = water year - 1. Ex: Oct 1976 is water year 1977.)
     if month in ['oct', 'nov', 'dec']:
-        calendarYears = [x - 1 for x in dryWaterYears]
+        calendarYears = [x - 1 for x in waterYearsOfInterest]
     else:
-        calendarYears = dryWaterYears
+        calendarYears = waterYearsOfInterest
     return calendarYears
 
 
@@ -68,13 +75,14 @@ def createDescriptionFromFileName(fileName):
     return prettyDescription
 
 
-def createKFoldDataSets(kFolds, masterDataPath, month, region, dryProportionOfInterest, myFeaturesIndex, myLabelIndex,
-                        randomSeed=None):
+def createKFoldDataSets(kFolds, masterDataPath, month, region, proportionOfInterest, myFeaturesIndex, myLabelIndex,
+                        wetOrDry='dry', randomSeed=None):
 
-    # Get dry water years
-    dryYears = getDryYears(masterDataPath + 'NOAAWaterYearsDriestToWettest.csv',
-                           month,
-                           dryProportionOfInterest)
+    # Get water years of interest
+    yearsOfInterest = getYearsOfInterest(masterDataPath + 'NOAAWaterYearsDriestToWettest.csv',
+                                  month,
+                                  proportionOfInterest,
+                                  wetOrDry)
 
     # Read in original dataset with all years (with ObsID column added at the beginning before running code)
     fullDataSet = mltypes.DataSet('All Years',
@@ -83,23 +91,30 @@ def createKFoldDataSets(kFolds, masterDataPath, month, region, dryProportionOfIn
                                   labelIndex=myLabelIndex)
 
     # Subset full dataset to those years of interest
-    dryDataFrame = fullDataSet.dataFrame.loc[fullDataSet.dataFrame['Year'].isin(dryYears)]
-    dryDataSet = mltypes.DataSet('Dry Years',
-                                 masterDataPath + month + '_' + region + '_dry.csv',
-                                 'w',
-                                 dataFrame=dryDataFrame,
-                                 featuresIndex=myFeaturesIndex,
-                                 labelIndex=myLabelIndex)
+    yearsOfInterestDataFrame = fullDataSet.dataFrame.loc[fullDataSet.dataFrame['Year'].isin(yearsOfInterest)]
+    if wetOrDry == 'dry':
+        yearsOfInterestDescription = 'Dry Years'
+    elif wetOrDry == 'wet':
+        yearsOfInterestDescription = 'Wet Years'
+    else:
+        raise ValueError('wetOrDry had value other than \'wet\' or \'dry\'.')
 
-    testPathPrefix = os.path.dirname(dryDataSet.path) + '/' + month + '_' + region
+    yearsOfInterestDataSet = mltypes.DataSet(yearsOfInterestDescription,
+                                             masterDataPath + month + '_' + region + '_' + wetOrDry + '.csv',
+                                             'w',
+                                             dataFrame=yearsOfInterestDataFrame,
+                                             featuresIndex=myFeaturesIndex,
+                                             labelIndex=myLabelIndex)
 
-    # From the dryDataSet, create k universal test sets and corresponding k dry training sets
-    splitDryDataSets = mldata.kFoldSplitDataSet(dryDataSet, 5, randomSeed=randomSeed,
+    testPathPrefix = os.path.dirname(yearsOfInterestDataSet.path) + '/' + month + '_' + region
+
+    # From the subset DataSet, create k universal test sets and corresponding k wet/dry (depending on wetOrDry) training sets
+    splitDataSets = mldata.kFoldSplitDataSet(yearsOfInterestDataSet, 5, randomSeed=randomSeed,
                                                 testPathPrefix=testPathPrefix)
 
     # Use ObsIDs of each universal test set to subset full data set to everything else, creating k full training sets
     for fold in range(kFolds):
-        universalTestDataSet = splitDryDataSets[fold].testDataSet
+        universalTestDataSet = splitDataSets[fold].testDataSet
         universalTestObsIds = universalTestDataSet.dataFrame.ObsID.values
         fullTrainDataFrame = fullDataSet.dataFrame.loc[~fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
 
@@ -457,7 +472,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     return scoreModelResultsDF
 
 
-def runKFoldPipeline(month, region, baseDirectoryPath, randomSeed=None):
+def runKFoldPipeline(month, region, baseDirectoryPath, wetOrDry='dry', randomSeed=None):
 
     """
     Splits each region-month base dataset into k-fold test/train sets and runs the pipeline for each one.
@@ -469,14 +484,14 @@ def runKFoldPipeline(month, region, baseDirectoryPath, randomSeed=None):
 
     # Set parameters
     masterDataPath = baseDirectoryPath + region + '/' + month + '/'
-    dryProportionOfInterest = 0.5
+    proportionOfInterest = 0.5
     myFeaturesIndex = 6
     myLabelIndex = 5
     kFolds = 5
 
     # Create my 5 test/train folds
-    createKFoldDataSets(kFolds, masterDataPath, month, region, dryProportionOfInterest,
-                        myFeaturesIndex, myLabelIndex, randomSeed)
+    createKFoldDataSets(kFolds, masterDataPath, month, region, proportionOfInterest,
+                        myFeaturesIndex, myLabelIndex, wetOrDry, randomSeed)
 
     # Run pipeline for each fold of the data
     allFoldScoreModelResultsDFs = []

@@ -2,7 +2,8 @@ import os
 import shutil
 import csv
 
-allMonthsPath = 'AllMonths/'
+# allMonthsPath = 'AllMonthsDryHalf/'
+allMonthsPath = 'AllMonthsWetHalf/'
 rfDataPath = '../RF_model_data/data/model_training/'
 
 regions = ['CoastMnt', 'IntMnt', 'Xeric']

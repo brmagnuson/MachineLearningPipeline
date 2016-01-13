@@ -2,13 +2,15 @@ import time
 import threading
 import thesisFunctions
 
-baseDirectoryPath = 'AllMonths/'
+baseDirectoryPath = 'AllMonthsWetHalf/'
+wetOrDry = 'wet'
 randomSeed = 47392
 multiThreading = True
 
 # regions = ['CoastMnt', 'IntMnt', 'Xeric']
 regions = ['IntMnt']
-months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+months = ['jan']
+# months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 startSecond = time.time()
 startTime = time.strftime('%a, %d %b %Y %X')
@@ -23,6 +25,7 @@ for region in regions:
             t = threading.Thread(target=thesisFunctions.runKFoldPipeline, args=(month,
                                                                                 region,
                                                                                 baseDirectoryPath,
+                                                                                wetOrDry,
                                                                                 randomSeed))
             threads.append(t)
 
@@ -30,7 +33,11 @@ for region in regions:
 
             # Run each pipeline in sequence
             print('Running pipeline for %s, %s' % (region, month.capitalize()))
-            thesisFunctions.runKFoldPipeline(month, region, baseDirectoryPath, randomSeed)
+            thesisFunctions.runKFoldPipeline(month,
+                                             region,
+                                             baseDirectoryPath,
+                                             wetOrDry,
+                                             randomSeed)
             print()
 
 if multiThreading:
