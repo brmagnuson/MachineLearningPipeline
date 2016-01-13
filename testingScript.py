@@ -22,12 +22,12 @@ trainingDataSet = mltypes.DataSet('All years training',
 trainFeatures = trainingDataSet.featuresDataFrame
 trainLabel = trainingDataSet.labelSeries
 
-expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
-                                                               'selection',
-                                                               mltypes.ExtractSpecificFeatures,
-                                                               {'featureList': ['wb0', 'wb1']})
-featureEngineeredTrainingDataSet, transformer = mldata.engineerFeaturesForDataSet(trainingDataSet,
-                                                                               expertSelectedConfig)
+# expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
+#                                                                'selection',
+#                                                                mltypes.ExtractSpecificFeatures,
+#                                                                {'featureList': ['wb0', 'wb1']})
+# featureEngineeredTrainingDataSet, transformer = mldata.engineerFeaturesForDataSet(trainingDataSet,
+#                                                                                expertSelectedConfig)
 
 ridgeModellingMethod = mltypes.ModellingMethod('Ridge Reg',
                                                sklearn.linear_model.Ridge)

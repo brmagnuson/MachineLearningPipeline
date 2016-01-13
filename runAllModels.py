@@ -2,7 +2,7 @@ import time
 import threading
 import thesisFunctions
 
-allMonthsPath = 'AllMonths/'
+baseDirectoryPath = 'AllMonths/'
 randomSeed = 47392
 multiThreading = True
 
@@ -20,14 +20,17 @@ for region in regions:
         if multiThreading:
 
             # Build threads
-            t = threading.Thread(target=thesisFunctions.runKFoldPipeline, args=(month, region, randomSeed))
+            t = threading.Thread(target=thesisFunctions.runKFoldPipeline, args=(month,
+                                                                                region,
+                                                                                baseDirectoryPath,
+                                                                                randomSeed))
             threads.append(t)
 
         else:
 
             # Run each pipeline in sequence
             print('Running pipeline for %s, %s' % (region, month.capitalize()))
-            thesisFunctions.runKFoldPipeline(month, region, randomSeed)
+            thesisFunctions.runKFoldPipeline(month, region, baseDirectoryPath, randomSeed)
             print()
 
 if multiThreading:
