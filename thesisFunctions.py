@@ -97,7 +97,7 @@ def createKFoldDataSets(kFolds, masterDataPath, month, region, proportionOfInter
     elif wetOrDry == 'wet':
         yearsOfInterestDescription = 'Wet Years'
     else:
-        raise ValueError('wetOrDry had value other than \'wet\' or \'dry\'.')
+        raise ValueError('wetOrDry had value other than "wet" or "dry".')
 
     yearsOfInterestDataSet = mltypes.DataSet(yearsOfInterestDescription,
                                              masterDataPath + month + '_' + region + '_' + wetOrDry + '.csv',
@@ -144,8 +144,8 @@ def copyFoldDataSets(fold, masterDataPath):
 
 
 def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, scoreOutputFilePath,
-                      statusPrintPrefix=None, subTaskPrint=True, randomSeed=None, runScaleDatasets=True,
-                      runFeatureEngineering=True, runEnsembleModels=True):
+                      myFeaturesIndex, myLabelIndex, statusPrintPrefix='', subTaskPrint=True, randomSeed=None,
+                      runScaleDatasets=True, runFeatureEngineering=True, runEnsembleModels=True):
 
     """
     Runs the pipeline for a given universal test set.
@@ -177,9 +177,6 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
     mseMethod = mltypes.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
     testScoreMethods = [mseMethod, r2Method]
-
-    myFeaturesIndex = 6
-    myLabelIndex = 5
 
     # Prepare datasets
     # if runPrepareDatasets:
@@ -241,25 +238,25 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     if runFeatureEngineering:
         print(statusPrintPrefix, 'Engineering features.')
         varianceThresholdPoint1Config = mltypes.FeatureEngineeringConfiguration('Variance Threshold .1',
-                                                                          'selection',
-                                                                          sklearn.feature_selection.VarianceThreshold,
-                                                                          {'threshold': .1})
+                                                                                'selection',
+                                                                                sklearn.feature_selection.VarianceThreshold,
+                                                                                {'threshold': .1})
         pca20Config = mltypes.FeatureEngineeringConfiguration('PCA n20',
-                                                            'extraction',
-                                                            sklearn.decomposition.PCA,
-                                                            {'n_components': 20})
+                                                              'extraction',
+                                                              sklearn.decomposition.PCA,
+                                                              {'n_components': 20})
         pca50Config = mltypes.FeatureEngineeringConfiguration('PCA n50',
-                                                            'extraction',
-                                                            sklearn.decomposition.PCA,
-                                                            {'n_components': 50})
+                                                              'extraction',
+                                                              sklearn.decomposition.PCA,
+                                                              {'n_components': 50})
         # ica20Config = mltypes.FeatureEngineeringConfiguration('ICA n20',
         #                                                     'extraction',
         #                                                     sklearn.decomposition.FastICA,
         #                                                     {'n_components': 20, 'max_iter': 2500, 'random_state': randomSeed})
         ica50Config = mltypes.FeatureEngineeringConfiguration('ICA n50',
-                                                            'extraction',
-                                                            sklearn.decomposition.FastICA,
-                                                            {'n_components': 50, 'max_iter': 2500, 'random_state': randomSeed})
+                                                              'extraction',
+                                                              sklearn.decomposition.FastICA,
+                                                              {'n_components': 50, 'max_iter': 2500, 'random_state': randomSeed})
         expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
                                                                        'selection',
                                                                        mltypes.ExtractSpecificFeatures,
@@ -269,13 +266,13 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
         for dataSetAssociation in dataSetAssociations:
 
             for featureEngineeringConfig in featureEngineeringConfigs:
+
                 # Feature engineer training data and get transformer
-                featureEngineeredTrainDataSet, transformer = mldata.engineerFeaturesForDataSet(
-                    dataSetAssociation.trainDataSet,
-                    featureEngineeringConfig)
+                featureEngineeredTrainDataSet, transformer = mldata.engineerFeaturesForDataSet(dataSetAssociation.trainDataSet,
+                                                                                               featureEngineeringConfig)
                 # Transform testing data using transformer
                 featureEngineeredTestDataSet = mldata.engineerFeaturesByTransformer(dataSetAssociation.testDataSet,
-                                                                                         transformer)
+                                                                                    transformer)
 
                 # Associate the data sets
                 featureEngineeredDataSetAssociation = mltypes.SplitDataSet(featureEngineeredTrainDataSet,
@@ -363,7 +360,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     # Build ensemble ApplyModelConfigurations
     if runEnsembleModels:
 
-        # Find the maximum mean squared error
+        # Find the maximum mean squared error for use in weighting
         maximumMSE = None
         if tuneScoreMethod == 'mean_squared_error':
             maximumMSE = max([tuneModelResult.bestScore for tuneModelResult in tuneModelResults])
@@ -472,7 +469,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     return scoreModelResultsDF
 
 
-def runKFoldPipeline(month, region, baseDirectoryPath, wetOrDry='dry', randomSeed=None):
+def runKFoldPipeline(month, region, baseDirectoryPath, myFeaturesIndex, myLabelIndex,
+                     kFolds=5, wetOrDry='dry', randomSeed=None):
 
     """
     Splits each region-month base dataset into k-fold test/train sets and runs the pipeline for each one.
@@ -485,9 +483,6 @@ def runKFoldPipeline(month, region, baseDirectoryPath, wetOrDry='dry', randomSee
     # Set parameters
     masterDataPath = baseDirectoryPath + region + '/' + month + '/'
     proportionOfInterest = 0.5
-    myFeaturesIndex = 6
-    myLabelIndex = 5
-    kFolds = 5
 
     # Create my 5 test/train folds
     createKFoldDataSets(kFolds, masterDataPath, month, region, proportionOfInterest,
@@ -506,6 +501,8 @@ def runKFoldPipeline(month, region, baseDirectoryPath, wetOrDry='dry', randomSee
                                                     universalTestSetDescription=universalTestSetDescription,
                                                     basePath=masterDataPath + 'CurrentFoldData/',
                                                     scoreOutputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
+                                                    myFeaturesIndex=myFeaturesIndex,
+                                                    myLabelIndex=myLabelIndex,
                                                     statusPrintPrefix=region + ' ' + month.capitalize() + ' K-fold #' + str(fold),
                                                     subTaskPrint=False,
                                                     randomSeed=randomSeed)

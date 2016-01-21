@@ -8,9 +8,10 @@ class DataSet:
     Everything we need to know about a data set to use it in our pipeline. It either reads in 
      a csv at a specific file location and creates a Pandas data frame or uses a Pandas data frame 
      to write out a csv to a specific file location.
-    featuresIndex should be index at which your features start, counting from 0.
+    featuresIndex should be index of column at which your features start, counting from 0. The default assumption is
+     that the first column is the label and the second column starts the features.
     """
-    def __init__(self, description, path, mode='r', dataFrame=None, featuresIndex=None, labelIndex=None):
+    def __init__(self, description, path, mode='r', dataFrame=None, featuresIndex=1, labelIndex=0):
         self.description = description
         self.path = path
         self.mode = mode

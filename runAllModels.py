@@ -4,13 +4,15 @@ import thesisFunctions
 
 baseDirectoryPath = 'AllMonthsWetHalf/'
 wetOrDry = 'wet'
+myFeaturesIndex = 6
+myLabelIndex = 5
+kFolds = 5
 randomSeed = 47392
 multiThreading = True
 
 # regions = ['CoastMnt', 'IntMnt', 'Xeric']
 regions = ['IntMnt']
-months = ['jan']
-# months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 startSecond = time.time()
 startTime = time.strftime('%a, %d %b %Y %X')
@@ -25,6 +27,9 @@ for region in regions:
             t = threading.Thread(target=thesisFunctions.runKFoldPipeline, args=(month,
                                                                                 region,
                                                                                 baseDirectoryPath,
+                                                                                myFeaturesIndex,
+                                                                                myLabelIndex,
+                                                                                kFolds,
                                                                                 wetOrDry,
                                                                                 randomSeed))
             threads.append(t)
@@ -36,6 +41,8 @@ for region in regions:
             thesisFunctions.runKFoldPipeline(month,
                                              region,
                                              baseDirectoryPath,
+                                             myFeaturesIndex,
+                                             myLabelIndex,
                                              wetOrDry,
                                              randomSeed)
             print()

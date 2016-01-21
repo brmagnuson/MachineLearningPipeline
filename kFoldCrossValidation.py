@@ -9,11 +9,11 @@ region = 'IntMnt'
 dryProportionOfInterest = 0.5
 myFeaturesIndex = 6
 myLabelIndex = 5
-kFolds = 5
+kFolds = 1
 
 # Create my 5 test/train folds
 thesisFunctions.createKFoldDataSets(kFolds, masterDataPath, month, region, dryProportionOfInterest,
-                                    myFeaturesIndex, myLabelIndex, randomSeed)
+                                    myFeaturesIndex, myLabelIndex, wetOrDry='dry', randomSeed=randomSeed)
 
 # Run pipeline for each fold of the data
 allFoldScoreModelResultsDFs = []
@@ -26,6 +26,8 @@ for fold in range(kFolds):
                                                                 universalTestSetDescription='Jul IntMnt Test',
                                                                 basePath=masterDataPath + 'CurrentFoldData/',
                                                                 scoreOutputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
+                                                                myFeaturesIndex=myFeaturesIndex,
+                                                                myLabelIndex=myLabelIndex,
                                                                 statusPrintPrefix='K-fold #' + str(fold),
                                                                 randomSeed=randomSeed)
 
