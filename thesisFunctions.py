@@ -765,3 +765,45 @@ def findModelAndPredict(basePath, month, region, randomSeed, myFeaturesIndex, my
     applyModelResult = mlmodel.applyModel(applyModelConfig)
     return applyModelResult
 
+
+def prepSacramentoData(month):
+
+    hucFile = 'SacramentoData/Sacramento_basin_huc12_v2.csv'
+    staticFile = 'SacramentoData/static_vars/h12.static.vars.csv'
+    climateBasePath = 'SacramentoData/climate_vars/'
+
+    # Find month number to build climate file path
+    months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    monthNumber = months.index(month) + 1
+    monthNumber = str(monthNumber)
+    if len(monthNumber) < 2:
+        monthNumber = '0' + monthNumber
+    climateFile = climateBasePath + 'm' + monthNumber + '_HUC12.clim.data.' + month + '.csv'
+
+    # Import HUCs for the Sacramento basin
+    sacHUCs = pandas.read_csv(hucFile)
+
+    # Import prediction data
+    staticData = pandas.read_csv(staticFile)
+    climateData = pandas.read_csv(climateFile)
+
+    # Build sum variables based on climateData
+    climateData['p6sum'] = climateData['p1'] + climateData['p2'] + climateData['p3'] + climateData['p4'] + \
+                           climateData['p5'] + climateData['p6']
+    climateData['p3sum'] = climateData['p1'] + climateData['p2'] + climateData['p3']
+    climateData['p2sum'] = climateData['p1'] + climateData['p2']
+
+    # Join to build data set for Sacramento basin
+    climateData.rename(columns={'SITE':'HUC12'}, inplace=True)
+    sacData = pandas.merge(sacHUCs, climateData, on='HUC12')
+    sacData = pandas.merge(sacData, staticData, on='HUC12')
+
+    # Reorder columns to match training dataset
+    columns = sacData.columns.tolist()
+    newColumns = columns[:3] + columns[29:42] + columns[3:29] + columns[42:]
+    sacData = sacData[newColumns]
+    print(sacData.columns.tolist())
+
+
+
+

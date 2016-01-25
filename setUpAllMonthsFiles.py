@@ -1,6 +1,7 @@
 import os
 import shutil
 import csv
+import pandas
 
 allMonthsPath = 'AllMonthsDryHalf/'
 # allMonthsPath = 'AllMonthsWetHalf/'
@@ -23,19 +24,18 @@ for region in regions:
         destinationFolderPath = allMonthsPath + region + '/' + month + '/'
 
         # Copy files from matching directory used to create the original random forest model, writing "ObsID" as
-        # header for first column
+        # header for first column and deleting the 'X.1' mystery variable when it shows up
         sourceFilePath = rfDataPath + region.lower() + '/' + month + '_' + region + '_ref.csv'
         destinationFilePath = destinationFolderPath + month + '_' + region + '_all.csv'
 
-        with open(sourceFilePath, 'r') as sourceFile:
-            reader = csv.reader(sourceFile)
-            lines = [line for line in reader]
+        sourceFile = pandas.read_csv(sourceFilePath)
 
-        lines[0][0] = 'ObsID'
+        sourceFile.rename(columns={'Unnamed: 0':'ObsID'}, inplace=True)
+        badVariable = 'X.1'
+        if badVariable in sourceFile.columns.values:
+            sourceFile.drop(badVariable, axis=1, inplace=True)
 
-        with open(destinationFilePath, 'w') as destinationFile:
-            writer = csv.writer(destinationFile)
-            writer.writerows(lines)
+        sourceFile.to_csv(destinationFilePath, index=False)
 
         # Create subfolders used in model pipeline
         subFolders = ['CurrentFoldData', 'Output', 'Prediction']
