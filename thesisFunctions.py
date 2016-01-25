@@ -4,6 +4,7 @@ import shutil
 import math
 import fnmatch
 import copy
+import re
 import pandas
 import sklearn.feature_selection
 import sklearn.decomposition
@@ -523,4 +524,244 @@ def runKFoldPipeline(month, region, baseDirectoryPath, myFeaturesIndex, myLabelI
     sortedAverageResultsDF.to_csv(masterDataPath + 'Output/scoreModelResults_average.csv', index=False)
 
 
+def getSKLearnFunction(description):
+    """
+    Matches a model description with an sklearn function object.
+    :param description:
+    :return:
+    """
+    if description == 'Ridge Regression':
+        predictorFunction = sklearn.linear_model.Ridge
+    elif description == 'Random Forest':
+        predictorFunction = sklearn.ensemble.RandomForestRegressor
+    elif description == 'K Nearest Neighbors':
+        predictorFunction = sklearn.neighbors.KNeighborsRegressor
+    else:
+        raise Exception('No matching sklearn function found.')
+    return predictorFunction
+
+
+def buildFeatureEngineeringConfig(dataSetDescription, selectedFeaturesList, randomSeed):
+
+    # Extract feature engineering information
+    featureEngineeringDescription = dataSetDescription.split('via')[1].strip().split(',')[0]
+    print('Feature engineering training data via', featureEngineeringDescription)
+    print()
+
+    # Build feature engineering config
+    if any(x in featureEngineeringDescription for x in ['ICA', 'PCA']):
+        selectionOrExtraction = 'extraction'
+        n_components = int(featureEngineeringDescription.split('n')[1])
+
+        if 'PCA' in featureEngineeringDescription:
+            featureEngineeringMethod = sklearn.decomposition.PCA
+            featureEngineeringParameters = {'n_components': n_components}
+        else:
+            featureEngineeringMethod = sklearn.decomposition.FastICA
+            featureEngineeringParameters = {'n_components': n_components, 'max_iter': 2500, 'random_state': randomSeed}
+
+    elif any(x in featureEngineeringDescription for x in ['Variance Threshold', 'Expert Selection']):
+        selectionOrExtraction = 'selection'
+
+        if 'Variance Threshold' in featureEngineeringDescription:
+            featureEngineeringMethod = sklearn.feature_selection.VarianceThreshold
+            featureEngineeringParameters = {'threshold': .1}
+        else:
+            featureEngineeringMethod = mltypes.ExtractSpecificFeatures
+            featureEngineeringParameters = {'featureList': selectedFeaturesList}
+
+    else:
+        raise Exception('Feature engineering method not recognized.')
+
+    featureEngineeringConfig = mltypes.FeatureEngineeringConfiguration(featureEngineeringDescription,
+                                                                       selectionOrExtraction,
+                                                                       featureEngineeringMethod,
+                                                                       featureEngineeringParameters)
+    return featureEngineeringConfig
+
+
+def buildApplyModelConfig(modelDescription, modelParameters, dataSet):
+
+    if 'Ensemble' in modelDescription:
+
+        # Build model method and parameters for averaging or stacking ensembles
+        if modelDescription == 'Averaging Ensemble':
+
+            # Parse trainModelParameters string for averaging ensemble so that its pieces can be correctly evaluated.
+
+            try:
+                # Find weights in trainModelParameters string and convert to list
+                weights = re.search("'weights': (.*?])", modelParameters).group(1)
+                weights = eval(weights)
+
+            except AttributeError:
+                raise Exception('Weights not found in Averaging Ensemble.')
+
+            try:
+                # Find predictor configurations
+                predictorConfigsString = re.search("'predictorConfigurations': (.*?])", modelParameters).group(1)
+
+            except AttributeError:
+                raise Exception('Predictor configurations not found in Averaging Ensemble.')
+
+            # Parse each predictor configuration
+            predictorConfigs = []
+            predictorTypeList = ['Ridge Regression', 'Random Forest', 'K Nearest Neighbors']
+            for predictorType in predictorTypeList:
+
+                # Get function object that matches predictorType
+                predictorFunction = getSKLearnFunction(predictorType)
+
+                # Get dictionary of predictor configuration's parameters
+                predictorParams = eval(re.search(predictorType + ' (.*?})', predictorConfigsString).group(1))
+
+                predictorConfig = mltypes.PredictorConfiguration(predictorType,
+                                                                 predictorFunction,
+                                                                 predictorParams)
+                predictorConfigs.append(predictorConfig)
+
+            # Build pieces for applyModelConfig
+            trainModelParameters = {'predictorConfigurations': predictorConfigs,
+                               'weights': weights}
+            modelMethod = mltypes.ModellingMethod(modelDescription, mltypes.AveragingEnsemble)
+
+        else:
+
+            # Parse trainModelParameters string for stacking ensemble so that its pieces can be correctly evaluated.
+            originalFeaturesSearch = re.search("'includeOriginalFeatures': (.*?),", modelParameters)
+
+            if originalFeaturesSearch == None:
+
+                # Then the stacking ensemble config must be using the default value, False
+                includeOriginalFeatures = False
+
+            else:
+                includeOriginalFeatures = originalFeaturesSearch.group(1)
+                includeOriginalFeatures = eval(includeOriginalFeatures)
+
+            try:
+                # Find predictor configurations
+                predictorConfigsString = re.search("'basePredictorConfigurations': (.*?])", modelParameters).group(1)
+
+            except AttributeError:
+                raise Exception('Base predictor configurations not found in Stacking Ensemble.')
+
+            # Parse each base predictor configuration
+            predictorConfigs = []
+            predictorTypeList = ['Ridge Regression', 'Random Forest', 'K Nearest Neighbors']
+            for predictorType in predictorTypeList:
+
+                # Get function object that matches predictorType
+                predictorFunction = getSKLearnFunction(predictorType)
+
+                # Get dictionary of predictor configuration's parameters
+                predictorParams = eval(re.search(predictorType + ' (.*?})', predictorConfigsString).group(1))
+
+                predictorConfig = mltypes.PredictorConfiguration(predictorType,
+                                                                 predictorFunction,
+                                                                 predictorParams)
+                predictorConfigs.append(predictorConfig)
+
+            # Find the stacking predictor configuration
+
+            try:
+                # Which of the base predictor configs do we use to stack the predictions?
+                stackingPredictor = re.search("'stackingPredictorConfiguration': (.*?) {", modelParameters).group(1)
+
+            except AttributeError:
+                raise Exception('Stacking Predictor not found in Stacking Ensemble.')
+
+            # Match the stacking predictor to its base predictor config
+            for predictorConfig in predictorConfigs:
+                if stackingPredictor == predictorConfig.description:
+                    stackingPredictorConfig = copy.deepcopy(predictorConfig)
+                    break
+
+
+            # Build pieces for applyModelConfig
+            trainModelParameters = {'basePredictorConfigurations': predictorConfigs,
+                                    'stackingPredictorConfiguration': stackingPredictorConfig,
+                                    'includeOriginalFeatures': includeOriginalFeatures}
+            modelMethod = mltypes.ModellingMethod(modelDescription, mltypes.StackingEnsemble)
+
+    elif any(x in modelDescription for x in ['Random Forest', 'Ridge Regression', 'K Nearest Neighbors']):
+
+        # Get model parameters from text string in dictionary form
+        trainModelParameters = eval(modelParameters)
+
+        # Build model method object
+        modelFunction = getSKLearnFunction(modelDescription)
+        modelMethod = mltypes.ModellingMethod(modelDescription, modelFunction)
+    else:
+        raise Exception('Model method not recognized.')
+
+    applyModelConfig = mltypes.ApplyModelConfiguration(modelDescription,
+                                                       modelMethod,
+                                                       trainModelParameters,
+                                                       dataSet)
+    return applyModelConfig
+
+
+def findModelAndPredict(basePath, month, region, randomSeed, myFeaturesIndex, myLabelIndex, selectedFeaturesList,
+                        modelRowIndex=0):
+
+    masterDataPath = basePath + region + '/' + month + '/'
+
+    # Read in score model results files.
+    averageFile = masterDataPath + 'Output/scoreModelResults_average.csv'
+    allFile = masterDataPath + 'Output/scoreModelResults_all.csv'
+    averageResults = pandas.read_csv(averageFile)
+    allResults = pandas.read_csv(allFile)
+
+    # Get model with highest average R2
+    bestModel = averageResults.iloc[modelRowIndex]
+    trainDataSetDescription = bestModel.loc['Base DataSet']
+    trainModelDescription = bestModel.loc['Model Method']
+
+    # From all the fold results that match the best model, extract the parameters of the one with the highest R2
+    bestModelFolds = allResults.loc[(allResults['Model Method'] == trainModelDescription) &
+                                    (allResults['Base DataSet'] == trainDataSetDescription)]
+    sortedBestModelFolds = bestModelFolds.sort(columns='R Squared', ascending=False)
+    trainModelParameters = sortedBestModelFolds.iloc[0].loc['Parameters']
+
+    # Find appropriate dataset (either all or dry, depending on above results) and copy to Prediction folder
+    if 'Dry' in trainDataSetDescription:
+        trainingFileName = month + '_' + region + '_dry.csv'
+    else:
+        trainingFileName = month + '_' + region + '_all.csv'
+
+    trainingFilePath = masterDataPath + trainingFileName
+    copiedTrainingFilePath = masterDataPath + 'Prediction/' + trainingFileName
+    shutil.copyfile(trainingFilePath, copiedTrainingFilePath)
+
+    trainDataSet = mltypes.DataSet(month.title() + ' Training Set',
+                                   copiedTrainingFilePath,
+                                   featuresIndex=myFeaturesIndex,
+                                   labelIndex=myLabelIndex)
+
+    # Scale if necessary
+    if 'Scaled' in trainDataSetDescription:
+        print('Scaling training data')
+        print()
+        scaledTrainDataSet, scaler = mldata.scaleDataSet(trainDataSet)
+        trainDataSet = scaledTrainDataSet
+
+    # Feature engineer if necessary
+    if 'features selected' in trainDataSetDescription:
+
+        featureEngineeringConfig = buildFeatureEngineeringConfig(trainDataSetDescription,
+                                                                 selectedFeaturesList,
+                                                                 randomSeed)
+        featureEngineeredTrainDataSet, transformer = mldata.engineerFeaturesForDataSet(trainDataSet,
+                                                                                       featureEngineeringConfig)
+        trainDataSet = featureEngineeredTrainDataSet
+
+    # Build apply model configuration
+    applyModelConfig = buildApplyModelConfig(trainModelDescription, trainModelParameters, trainDataSet)
+    print(applyModelConfig)
+    print()
+
+    # Train model and predict dataset
+    applyModelResult = mlmodel.applyModel(applyModelConfig)
+    return applyModelResult
 

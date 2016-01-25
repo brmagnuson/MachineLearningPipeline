@@ -2,8 +2,8 @@ import os
 import shutil
 import csv
 
-# allMonthsPath = 'AllMonthsDryHalf/'
-allMonthsPath = 'AllMonthsWetHalf/'
+allMonthsPath = 'AllMonthsDryHalf/'
+# allMonthsPath = 'AllMonthsWetHalf/'
 rfDataPath = '../RF_model_data/data/model_training/'
 
 regions = ['CoastMnt', 'IntMnt', 'Xeric']
@@ -38,7 +38,7 @@ for region in regions:
             writer.writerows(lines)
 
         # Create subfolders used in model pipeline
-        subFolders = ['CurrentFoldData', 'Output']
+        subFolders = ['CurrentFoldData', 'Output', 'Prediction']
         for subFolder in subFolders:
             newSubFolderPath = destinationFolderPath + '/' + subFolder
             if not os.path.exists(newSubFolderPath):
