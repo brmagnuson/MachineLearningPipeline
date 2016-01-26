@@ -3,11 +3,12 @@ import shutil
 import pandas
 import thesisFunctions
 
-# allMonthsPath = 'AllMonthsDryHalf/'
-allMonthsPath = 'AllMonthsWetHalf/'
+allMonthsPath = 'AllMonthsDryHalf/'
+# allMonthsPath = 'AllMonthsWetHalf/'
 rfDataPath = '../RF_model_data/data/model_training/'
 
-regions = ['CoastMnt', 'IntMnt', 'Xeric']
+regions = ['IntMnt']
+# regions = ['CoastMnt', 'IntMnt', 'Xeric']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 # Create folder for each month & region in allMonths

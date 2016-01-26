@@ -541,12 +541,10 @@ def getSKLearnFunction(description):
     return predictorFunction
 
 
-def buildFeatureEngineeringConfig(dataSetDescription, selectedFeaturesList, randomSeed):
+def parseDescriptionToBuildFeatureEngineeringConfig(dataSetDescription, selectedFeaturesList, randomSeed):
 
     # Extract feature engineering information
     featureEngineeringDescription = dataSetDescription.split('via')[1].strip().split(',')[0]
-    print('Feature engineering training data via', featureEngineeringDescription)
-    print()
 
     # Build feature engineering config
     if any(x in featureEngineeringDescription for x in ['ICA', 'PCA']):
@@ -565,7 +563,8 @@ def buildFeatureEngineeringConfig(dataSetDescription, selectedFeaturesList, rand
 
         if 'Variance Threshold' in featureEngineeringDescription:
             featureEngineeringMethod = sklearn.feature_selection.VarianceThreshold
-            featureEngineeringParameters = {'threshold': .08}
+            threshold = float(featureEngineeringDescription.split()[-1])
+            featureEngineeringParameters = {'threshold': threshold}
         else:
             featureEngineeringMethod = mltypes.ExtractSpecificFeatures
             featureEngineeringParameters = {'featureList': selectedFeaturesList}
@@ -742,8 +741,6 @@ def findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, 
 
     # Scale if necessary
     if 'Scaled' in trainDataSetDescription:
-        print('Scaling training data')
-        print()
         scaledTrainDataSet, scaler = mldata.scaleDataSet(trainDataSet)
         trainDataSet = scaledTrainDataSet
         predictionDataSet = mldata.scaleDataSetByScaler(predictionDataSet, scaler)
@@ -751,9 +748,9 @@ def findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, 
     # Feature engineer if necessary
     if 'features selected' in trainDataSetDescription:
 
-        featureEngineeringConfig = buildFeatureEngineeringConfig(trainDataSetDescription,
-                                                                 selectedFeaturesList,
-                                                                 randomSeed)
+        featureEngineeringConfig = parseDescriptionToBuildFeatureEngineeringConfig(trainDataSetDescription,
+                                                                                   selectedFeaturesList,
+                                                                                   randomSeed)
         featureEngineeredTrainDataSet, transformer = mldata.engineerFeaturesForDataSet(trainDataSet,
                                                                                        featureEngineeringConfig)
         trainDataSet = featureEngineeredTrainDataSet
@@ -764,8 +761,6 @@ def findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, 
                                                                trainModelParameters,
                                                                trainDataSet,
                                                                predictionDataSet)
-    print(applyModelConfig)
-    print()
 
     # Train model and predict dataset
     applyModelResult = mlmodel.applyModel(applyModelConfig)
@@ -798,6 +793,11 @@ def prepSacramentoData(month, region, basePath):
                            climateData['p5'] + climateData['p6']
     climateData['p3sum'] = climateData['p1'] + climateData['p2'] + climateData['p3']
     climateData['p2sum'] = climateData['p1'] + climateData['p2']
+
+    # Fill missing values in static data using the HUC12 above's data, since this only happens in two variables and for
+    # 3 HUC12s that are also in sacHUCs
+    staticData['PERDUN'].fillna(method='ffill', inplace=True)
+    staticData['PERHOR'].fillna(method='ffill', inplace=True)
 
     # Join to build data set for Sacramento basin
     climateData.rename(columns={'SITE':'HUC12'}, inplace=True)
