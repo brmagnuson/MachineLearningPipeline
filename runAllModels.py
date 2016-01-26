@@ -2,10 +2,10 @@ import time
 import threading
 import thesisFunctions
 
-baseDirectoryPath = 'AllMonthsDryHalf/'
-wetOrDry = 'dry'
-# baseDirectoryPath = 'AllMonthsWetHalf/'
-# wetOrDry = 'wet'
+# baseDirectoryPath = 'AllMonthsDryHalf/'
+# wetOrDry = 'dry'
+baseDirectoryPath = 'AllMonthsWetHalf/'
+wetOrDry = 'wet'
 myFeaturesIndex = 6
 myLabelIndex = 5
 kFolds = 5

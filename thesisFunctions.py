@@ -766,11 +766,11 @@ def findModelAndPredict(basePath, month, region, randomSeed, myFeaturesIndex, my
     return applyModelResult
 
 
-def prepSacramentoData(month):
+def prepSacramentoData(month, region, basePath):
 
-    hucFile = 'SacramentoData/Sacramento_basin_huc12_v2.csv'
-    staticFile = 'SacramentoData/static_vars/h12.static.vars.csv'
-    climateBasePath = 'SacramentoData/climate_vars/'
+    hucFile = '../SacramentoData/Sacramento_basin_huc12_v2.csv'
+    staticFile = '../SacramentoData/static_vars/h12.static.vars.csv'
+    climateBasePath = '../SacramentoData/climate_vars/'
 
     # Find month number to build climate file path
     months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
@@ -802,7 +802,10 @@ def prepSacramentoData(month):
     columns = sacData.columns.tolist()
     newColumns = columns[:3] + columns[29:42] + columns[3:29] + columns[42:]
     sacData = sacData[newColumns]
-    print(sacData.columns.tolist())
+
+    # Output to Prediction folder
+    predictionFilePath = basePath + region + '/' + month + '/Prediction/sacramentoData.csv'
+    sacData.to_csv(predictionFilePath, index=False)
 
 
 

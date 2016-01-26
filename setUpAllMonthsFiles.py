@@ -1,10 +1,10 @@
 import os
 import shutil
-import csv
 import pandas
+import thesisFunctions
 
-allMonthsPath = 'AllMonthsDryHalf/'
-# allMonthsPath = 'AllMonthsWetHalf/'
+# allMonthsPath = 'AllMonthsDryHalf/'
+allMonthsPath = 'AllMonthsWetHalf/'
 rfDataPath = '../RF_model_data/data/model_training/'
 
 regions = ['CoastMnt', 'IntMnt', 'Xeric']
@@ -20,6 +20,8 @@ for region in regions:
 # Populate folders with necessary files and folders
 for region in regions:
     for month in months:
+
+        print('Processing', region, month.title())
 
         destinationFolderPath = allMonthsPath + region + '/' + month + '/'
 
@@ -48,6 +50,9 @@ for region in regions:
         sourceFilePath = allMonthsPath + 'NOAAWaterYearsDriestToWettest.csv'
         destinationFilePath = destinationFolderPath + 'NOAAWaterYearsDriestToWettest.csv'
         shutil.copyfile(sourceFilePath, destinationFilePath)
+
+        # Add in Sacramento data for prediction
+        thesisFunctions.prepSacramentoData(month, region, allMonthsPath)
 
 
 
