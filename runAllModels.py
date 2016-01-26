@@ -2,8 +2,10 @@ import time
 import threading
 import thesisFunctions
 
-baseDirectoryPath = 'AllMonthsWetHalf/'
-wetOrDry = 'wet'
+baseDirectoryPath = 'AllMonthsDryHalf/'
+wetOrDry = 'dry'
+# baseDirectoryPath = 'AllMonthsWetHalf/'
+# wetOrDry = 'wet'
 myFeaturesIndex = 6
 myLabelIndex = 5
 kFolds = 5
@@ -43,6 +45,7 @@ for region in regions:
                                              baseDirectoryPath,
                                              myFeaturesIndex,
                                              myLabelIndex,
+                                             kFolds,
                                              wetOrDry,
                                              randomSeed)
             print()

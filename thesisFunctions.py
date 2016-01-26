@@ -238,10 +238,10 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     featureEngineeredDataSetAssociations = []
     if runFeatureEngineering:
         print(statusPrintPrefix, 'Engineering features.')
-        varianceThresholdPoint1Config = mltypes.FeatureEngineeringConfiguration('Variance Threshold .1',
+        varianceThresholdPoint1Config = mltypes.FeatureEngineeringConfiguration('Variance Threshold .08',
                                                                                 'selection',
                                                                                 sklearn.feature_selection.VarianceThreshold,
-                                                                                {'threshold': .1})
+                                                                                {'threshold': .08})
         pca20Config = mltypes.FeatureEngineeringConfiguration('PCA n20',
                                                               'extraction',
                                                               sklearn.decomposition.PCA,
@@ -294,7 +294,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                  ridgeMethod,
                                                  ridgeParameters,
                                                  tuneScoreMethod)
-    randomForestParameters = [{'n_estimators': [10, 20],
+    randomForestParameters = [{'n_estimators': [10, 20, 50],
                                'max_features': [10, 'sqrt'],
                                'random_state': [randomSeed]}]
     randomForestMethod = mltypes.ModellingMethod('Random Forest',
@@ -565,7 +565,7 @@ def buildFeatureEngineeringConfig(dataSetDescription, selectedFeaturesList, rand
 
         if 'Variance Threshold' in featureEngineeringDescription:
             featureEngineeringMethod = sklearn.feature_selection.VarianceThreshold
-            featureEngineeringParameters = {'threshold': .1}
+            featureEngineeringParameters = {'threshold': .08}
         else:
             featureEngineeringMethod = mltypes.ExtractSpecificFeatures
             featureEngineeringParameters = {'featureList': selectedFeaturesList}
