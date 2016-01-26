@@ -28,7 +28,10 @@ class DataSet:
 
         self.nonFeaturesDataFrame = self.dataFrame.ix[:, :self.featuresIndex]
         self.featuresDataFrame = self.dataFrame.ix[:, self.featuresIndex:]
-        self.labelSeries = self.dataFrame.iloc[:, labelIndex]
+
+        # As long as there is a label, create the labelSeries
+        if not labelIndex == None:
+            self.labelSeries = self.dataFrame.iloc[:, labelIndex]
 
     def __str__(self):
         return self.__class__.__name__ + ' ' + self.description + ', Path: \'' + self.path + '\''

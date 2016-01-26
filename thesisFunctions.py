@@ -580,7 +580,7 @@ def buildFeatureEngineeringConfig(dataSetDescription, selectedFeaturesList, rand
     return featureEngineeringConfig
 
 
-def buildApplyModelConfig(modelDescription, modelParameters, dataSet):
+def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, trainDataSet, predictionDataSet):
 
     if 'Ensemble' in modelDescription:
 
@@ -698,12 +698,13 @@ def buildApplyModelConfig(modelDescription, modelParameters, dataSet):
     applyModelConfig = mltypes.ApplyModelConfiguration(modelDescription,
                                                        modelMethod,
                                                        trainModelParameters,
-                                                       dataSet)
+                                                       trainDataSet,
+                                                       predictionDataSet)
     return applyModelConfig
 
 
-def findModelAndPredict(basePath, month, region, randomSeed, myFeaturesIndex, myLabelIndex, selectedFeaturesList,
-                        modelRowIndex=0):
+def findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, myFeaturesIndex, myLabelIndex,
+                        selectedFeaturesList, modelRowIndex=0):
 
     masterDataPath = basePath + region + '/' + month + '/'
 
@@ -745,6 +746,7 @@ def findModelAndPredict(basePath, month, region, randomSeed, myFeaturesIndex, my
         print()
         scaledTrainDataSet, scaler = mldata.scaleDataSet(trainDataSet)
         trainDataSet = scaledTrainDataSet
+        predictionDataSet = mldata.scaleDataSetByScaler(predictionDataSet, scaler)
 
     # Feature engineer if necessary
     if 'features selected' in trainDataSetDescription:
@@ -755,9 +757,13 @@ def findModelAndPredict(basePath, month, region, randomSeed, myFeaturesIndex, my
         featureEngineeredTrainDataSet, transformer = mldata.engineerFeaturesForDataSet(trainDataSet,
                                                                                        featureEngineeringConfig)
         trainDataSet = featureEngineeredTrainDataSet
+        predictionDataSet = mldata.engineerFeaturesByTransformer(predictionDataSet, transformer)
 
     # Build apply model configuration
-    applyModelConfig = buildApplyModelConfig(trainModelDescription, trainModelParameters, trainDataSet)
+    applyModelConfig = parseDescriptionToBuildApplyModelConfig(trainModelDescription,
+                                                               trainModelParameters,
+                                                               trainDataSet,
+                                                               predictionDataSet)
     print(applyModelConfig)
     print()
 
