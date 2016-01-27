@@ -804,6 +804,9 @@ def prepSacramentoData(month, region, basePath):
     sacData = pandas.merge(sacHUCs, climateData, on='HUC12')
     sacData = pandas.merge(sacData, staticData, on='HUC12')
 
+    # Get rid of 1949 and 2011, since they have a bunch of missing climate data for oct and dec
+    sacData = sacData[ ~ sacData.YEAR.isin([1949, 2011])]
+
     # Reorder columns to match training dataset
     columns = sacData.columns.tolist()
     newColumns = columns[:3] + columns[29:42] + columns[3:29] + columns[42:]
@@ -826,6 +829,8 @@ def outputPredictions(applyModelResult, outputPath):
 
 def processSacPredictions(basePath, region, month, randomSeed, trainFeaturesIndex, trainLabelIndex,
                           selectedFeaturesList, modelIndex):
+
+    print('Predicting for %s, %s' % (region, month.capitalize()))
 
     predictionPath = basePath + region + '/' + month + '/Prediction/sacramentoData.csv'
     predictionDataSet = mltypes.DataSet(month.title() + ' Prediction Data',
