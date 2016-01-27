@@ -813,6 +813,28 @@ def prepSacramentoData(month, region, basePath):
     predictionFilePath = basePath + region + '/' + month + '/Prediction/sacramentoData.csv'
     sacData.to_csv(predictionFilePath, index=False)
 
+def outputPredictions(applyModelResult, outputPath):
 
+    # Build predictions output data frame
+    nonFeatures = applyModelResult.testDataSet.nonFeaturesDataFrame
+    predictions = applyModelResult.testPredictions
+    predictionsDataFrame = pandas.DataFrame(predictions, columns=['qmeas'])
+    outputDataFrame = pandas.concat([nonFeatures, predictionsDataFrame], axis=1)
 
+    # Output to csv
+    outputDataFrame.to_csv(outputPath, index=False)
 
+def processSacPredictions(basePath, region, month, randomSeed, trainFeaturesIndex, trainLabelIndex,
+                          selectedFeaturesList, modelIndex):
+
+    predictionPath = basePath + region + '/' + month + '/Prediction/sacramentoData.csv'
+    predictionDataSet = mltypes.DataSet(month.title() + ' Prediction Data',
+                                        predictionPath,
+                                        featuresIndex=3,
+                                        labelIndex=None)
+
+    sacResult = findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, trainFeaturesIndex,
+                                    trainLabelIndex, selectedFeaturesList, modelIndex)
+
+    outputPath = basePath + region + '/' + month + '/Prediction/sacramentoPredictions.csv'
+    outputPredictions(sacResult, outputPath)
