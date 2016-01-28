@@ -81,9 +81,9 @@ def createKFoldDataSets(kFolds, masterDataPath, month, region, proportionOfInter
 
     # Get water years of interest
     yearsOfInterest = getYearsOfInterest(masterDataPath + 'NOAAWaterYearsDriestToWettest.csv',
-                                  month,
-                                  proportionOfInterest,
-                                  wetOrDry)
+                                         month,
+                                         proportionOfInterest,
+                                         wetOrDry)
 
     # Read in original dataset with all years (with ObsID column added at the beginning before running code)
     fullDataSet = mltypes.DataSet('All Years',
@@ -117,7 +117,7 @@ def createKFoldDataSets(kFolds, masterDataPath, month, region, proportionOfInter
     for fold in range(kFolds):
         universalTestDataSet = splitDataSets[fold].testDataSet
         universalTestObsIds = universalTestDataSet.dataFrame.ObsID.values
-        fullTrainDataFrame = fullDataSet.dataFrame.loc[~fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
+        fullTrainDataFrame = fullDataSet.dataFrame.loc[ ~ fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
 
         # Write this out to the proper folder.
         fullTrainDataSet = mltypes.DataSet('All Years Training Set',
@@ -771,7 +771,7 @@ def findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, 
     return applyModelResult
 
 
-def prepSacramentoData(month, region, basePath):
+def prepSacramentoData(month, region, basePath, wetOrDry=None, waterYearsFilePath=None, proportionOfInterest=None):
 
     hucFile = '../SacramentoData/Sacramento_basin_huc12_v2.csv'
     staticFile = '../SacramentoData/static_vars/h12.static.vars.csv'
@@ -810,6 +810,12 @@ def prepSacramentoData(month, region, basePath):
 
     # Get rid of 1949 and 2011, since they have a bunch of missing climate data for oct and dec
     sacData = sacData[ ~ sacData.YEAR.isin([1949, 2011])]
+
+    # Subset to just wet or dry years when trying to create a specific model
+    if wetOrDry != None:
+        yearsOfInterest = getYearsOfInterest(waterYearsFilePath, month, proportionOfInterest, wetOrDry)
+        print(yearsOfInterest)
+        sacData = sacData[sacData.YEAR.isin(yearsOfInterest)]
 
     # Reorder columns to match training dataset
     columns = sacData.columns.tolist()

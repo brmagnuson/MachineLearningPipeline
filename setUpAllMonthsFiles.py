@@ -3,9 +3,13 @@ import shutil
 import pandas
 import thesisFunctions
 
-allMonthsPath = 'AllMonthsDryHalf/'
-# allMonthsPath = 'AllMonthsWetHalf/'
+# allMonthsPath = 'AllMonthsDryHalf/'
+# wetOrDry = 'dry'
+allMonthsPath = 'AllMonthsWetHalf/'
+wetOrDry = 'wet'
 rfDataPath = '../RF_model_data/data/model_training/'
+
+proportionOfInterest = 0.5
 
 regions = ['IntMnt']
 # regions = ['CoastMnt', 'IntMnt', 'Xeric']
@@ -53,7 +57,8 @@ for region in regions:
         shutil.copyfile(sourceFilePath, destinationFilePath)
 
         # Add in Sacramento data for prediction
-        thesisFunctions.prepSacramentoData(month, region, allMonthsPath)
+        thesisFunctions.prepSacramentoData(month, region, allMonthsPath,
+                                           wetOrDry, destinationFilePath, proportionOfInterest)
 
 
 

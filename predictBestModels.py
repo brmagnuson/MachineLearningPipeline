@@ -55,6 +55,8 @@ if multiThreading:
     for t in threads:
         t.join()
 
+# Pull all results together
+
 endSecond = time.time()
 endTime = time.strftime('%a, %d %b %Y %X')
 totalSeconds = endSecond - startSecond
