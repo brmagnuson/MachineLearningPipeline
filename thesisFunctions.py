@@ -665,17 +665,21 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
 
             try:
                 # Which of the base predictor configs do we use to stack the predictions?
-                stackingPredictor = re.search("'stackingPredictorConfiguration': (.*?) {", modelParameters).group(1)
+                stackingPredictorDescription = re.search("'stackingPredictorConfiguration': (.*?) {", modelParameters).group(1)
 
             except AttributeError:
                 raise Exception('Stacking Predictor not found in Stacking Ensemble.')
 
             # Match the stacking predictor to its base predictor config
             for predictorConfig in predictorConfigs:
-                if stackingPredictor == predictorConfig.description:
+                if stackingPredictorDescription == predictorConfig.description:
                     stackingPredictorConfig = copy.deepcopy(predictorConfig)
                     break
 
+            # Hack: If the number of models I'm stacking in a random forest stackingPredictorConfig is fewer than
+            # max_features, RandomForestRegressor will error out.
+            if type(stackingPredictorConfig.predictorFunction()) == type(sklearn.ensemble.RandomForestRegressor()):
+                stackingPredictorConfig.parameters['max_features'] = None
 
             # Build pieces for applyModelConfig
             trainModelParameters = {'basePredictorConfigurations': predictorConfigs,

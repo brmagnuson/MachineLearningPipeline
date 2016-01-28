@@ -16,7 +16,6 @@ selectedFeaturesList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p
 
 regions = ['IntMnt']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-# months = ['dec']
 
 startSecond = time.time()
 startTime = time.strftime('%a, %d %b %Y %X')
