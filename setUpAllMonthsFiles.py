@@ -37,7 +37,7 @@ for region in regions:
 
         sourceFile = pandas.read_csv(sourceFilePath)
 
-        sourceFile.rename(columns={'Unnamed: 0':'ObsID'}, inplace=True)
+        sourceFile.rename(columns={'Unnamed: 0': 'ObsID'}, inplace=True)
         badVariable = 'X.1'
         if badVariable in sourceFile.columns.values:
             sourceFile.drop(badVariable, axis=1, inplace=True)
@@ -57,8 +57,7 @@ for region in regions:
         shutil.copyfile(sourceFilePath, destinationFilePath)
 
         # Add in Sacramento data for prediction
-        thesisFunctions.prepSacramentoData(month, region, allMonthsPath,
-                                           wetOrDry, destinationFilePath, proportionOfInterest)
-
-
-
+        sacData = thesisFunctions.prepSacramentoData(month, region, allMonthsPath,
+                                                     wetOrDry, destinationFilePath, proportionOfInterest)
+        predictionFilePath = allMonthsPath + region + '/' + month + '/Prediction/sacramentoData.csv'
+        sacData.to_csv(predictionFilePath, index=False)

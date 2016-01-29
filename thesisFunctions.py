@@ -811,10 +811,9 @@ def prepSacramentoData(month, region, basePath, wetOrDry=None, waterYearsFilePat
     # Get rid of 1949 and 2011, since they have a bunch of missing climate data for oct and dec
     sacData = sacData[ ~ sacData.YEAR.isin([1949, 2011])]
 
-    # Subset to just wet or dry years when trying to create a specific model
+    # Subset to just wet or dry years when trying to create a specific wet/dry model
     if wetOrDry != None:
         yearsOfInterest = getYearsOfInterest(waterYearsFilePath, month, proportionOfInterest, wetOrDry)
-        print(yearsOfInterest)
         sacData = sacData[sacData.YEAR.isin(yearsOfInterest)]
 
     # Reorder columns to match training dataset
@@ -822,9 +821,7 @@ def prepSacramentoData(month, region, basePath, wetOrDry=None, waterYearsFilePat
     newColumns = columns[:3] + columns[29:42] + columns[3:29] + columns[42:]
     sacData = sacData[newColumns]
 
-    # Output to Prediction folder
-    predictionFilePath = basePath + region + '/' + month + '/Prediction/sacramentoData.csv'
-    sacData.to_csv(predictionFilePath, index=False)
+    return sacData
 
 
 def outputPredictions(applyModelResult, outputPath):
