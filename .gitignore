@@ -1,8 +1,7 @@
 .idea
 *.pyc
 Data/
-MasterData/
 AllMonths/
 AllMonthsDryHalf/
 AllMonthsWetHalf/
-SacramentoData/
+SacramentoModel/
