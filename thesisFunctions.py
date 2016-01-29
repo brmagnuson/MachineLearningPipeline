@@ -826,6 +826,7 @@ def prepSacramentoData(month, region, basePath, wetOrDry=None, waterYearsFilePat
     predictionFilePath = basePath + region + '/' + month + '/Prediction/sacramentoData.csv'
     sacData.to_csv(predictionFilePath, index=False)
 
+
 def outputPredictions(applyModelResult, outputPath):
 
     # Build predictions output data frame
@@ -836,6 +837,7 @@ def outputPredictions(applyModelResult, outputPath):
 
     # Output to csv
     outputDataFrame.to_csv(outputPath, index=False)
+
 
 def processSacPredictions(basePath, region, month, randomSeed, trainFeaturesIndex, trainLabelIndex,
                           selectedFeaturesList, modelIndex):
@@ -853,3 +855,39 @@ def processSacPredictions(basePath, region, month, randomSeed, trainFeaturesInde
 
     outputPath = basePath + region + '/' + month + '/Prediction/sacramentoPredictions.csv'
     outputPredictions(sacResult, outputPath)
+
+
+def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, regions):
+
+    # For each region:
+    for region in regions:
+
+        allPredictions = pandas.DataFrame()
+
+        # For each half:
+        for baseFolder in baseFolderList:
+
+            # Create DataFrame for predictions for this half of the years (wet or dry)
+            halfPredictions = pandas.DataFrame()
+
+            # Concatenate month results
+            for month in months:
+
+                # Read in predictions
+                predictionsFile = baseFolder + region + '/' + month + '/Prediction/sacramentoPredictions.csv'
+                monthPredictions = pandas.read_csv(predictionsFile)
+
+                # Aggregate results for this half
+                halfPredictions = halfPredictions.append(monthPredictions, ignore_index=True)
+
+            allPredictions = allPredictions.append(halfPredictions, ignore_index=True)
+
+        # Sort by month, then year, then HUC12
+        sortedAllPredictions = allPredictions.sort(columns=['MONTH', 'YEAR', 'HUC12'])
+
+        # Output results for this regional model to file
+        outputFile = outputFolder + outputPrefix + region + '.csv'
+        sortedAllPredictions.to_csv(outputFile, index=False)
+
+
+

@@ -2,9 +2,11 @@ import time
 import threading
 import thesisFunctions
 
+# basePath = 'AllMonthsDryHalf/'
+basePath = 'AllMonthsWetHalf/'
+
 # Parameters
 multiThreading = True
-basePath = 'AllMonthsDryHalf/'
 randomSeed = 47392
 trainFeaturesIndex = 6
 trainLabelIndex = 5
