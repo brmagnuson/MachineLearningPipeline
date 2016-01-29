@@ -832,7 +832,7 @@ def outputPredictions(applyModelResult, outputPath):
     # Build predictions output data frame
     nonFeatures = applyModelResult.testDataSet.nonFeaturesDataFrame
     predictions = applyModelResult.testPredictions
-    predictionsDataFrame = pandas.DataFrame(predictions, columns=['qmeas'])
+    predictionsDataFrame = pandas.DataFrame(predictions, columns=['qpred'])
     outputDataFrame = pandas.concat([nonFeatures, predictionsDataFrame], axis=1)
 
     # Output to csv
@@ -889,5 +889,32 @@ def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, 
         outputFile = outputFolder + outputPrefix + region + '.csv'
         sortedAllPredictions.to_csv(outputFile, index=False)
 
+
+def formatWaterYearPredictions(waterYear, predictionsFile):
+
+    monthNums = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    monthTexts = ['oct', 'nov', 'dec', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep']
+
+    # Read in aggregated predictions
+    allPredictionsDF = pandas.read_csv(predictionsFile)
+
+    # Build base of dataFrame for the water year
+    huc12s = allPredictionsDF.HUC12.unique()
+    yearPredictionsDF = pandas.DataFrame(huc12s, columns=['HUC12'])
+
+    for monthNum, monthText in zip(monthNums, monthTexts):
+
+        # Find calendar year
+        if monthText in ['oct', 'nov', 'dec']:
+            calendarYear = waterYear - 1
+        else:
+            calendarYear = waterYear
+
+        monthPredictions = allPredictionsDF[(allPredictionsDF.YEAR == calendarYear) &
+                                            (allPredictionsDF.MONTH == monthNum)]
+        yearPredictionsDF[monthText] = monthPredictions.qpred.values.tolist()
+
+    yearPath = predictionsFile.split('.')[0] + str(calendarYear) + '.csv'
+    yearPredictionsDF.to_csv(yearPath, index=False)
 
 

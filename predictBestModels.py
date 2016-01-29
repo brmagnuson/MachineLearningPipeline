@@ -2,8 +2,8 @@ import time
 import threading
 import thesisFunctions
 
-# basePath = 'AllMonthsDryHalf/'
-basePath = 'AllMonthsWetHalf/'
+basePath = 'AllMonthsDryHalf/'
+# basePath = 'AllMonthsWetHalf/'
 
 # Parameters
 multiThreading = True
