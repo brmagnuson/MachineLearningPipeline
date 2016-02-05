@@ -57,7 +57,7 @@ for region in regions:
         shutil.copyfile(sourceFilePath, destinationFilePath)
 
         # Add in Sacramento data for prediction
-        sacData = thesisFunctions.prepSacramentoData(month, region, allMonthsPath,
+        sacData = thesisFunctions.prepSacramentoData(month, region,
                                                      wetOrDry, destinationFilePath, proportionOfInterest)
         predictionFilePath = allMonthsPath + region + '/' + month + '/Prediction/sacramentoData.csv'
         sacData.to_csv(predictionFilePath, index=False)

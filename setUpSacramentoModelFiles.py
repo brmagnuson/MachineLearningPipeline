@@ -6,72 +6,76 @@ import thesisFunctions
 sacBasePath = 'SacramentoModel/'
 rfDataPath = '../RF_model_data/data/model_training/'
 
+# Just use IntMnt and Xeric regions, because nothing from the CoastMnt dataset is in the Sacramento watershed
 regions = ['IntMnt', 'Xeric']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-# regions = ['CoastMnt']
 # months = ['jan', 'feb']
 
-# Build DataFrames in which to accumulate training and prediction data
-allTrainingDF = pandas.DataFrame()
-predictionDF = pandas.DataFrame()
+# Get gages for the Sacramento basin
+sacGagesFile = sacBasePath + 'Sac_gages_list.csv'
+sacGagesDF = pandas.read_csv(sacGagesFile)
+sacRefGages = sacGagesDF.STAID[sacGagesDF.CLASS == 'Ref'].map(lambda x: str(x)).values.tolist()
 
-for region in regions:
+# Build DataFrame in which to accumulate training data
+allTrainingDF = pandas.DataFrame()
+
+for month in months:
 
     print()
-    print('Processing region:', region)
+    print('Processing month:', month.title())
+    
+    # Build DataFrame in which to accumulate prediction data
+    monthPredictionDF = pandas.DataFrame()
 
-    for month in months:
+    for region in regions:
 
-        print(month, end=' ', flush=True)
+        print(region, end=' ', flush=True)
         
         # Get training data from matching directory used to create the original random forest model, writing "ObsID" as
         # header for first column and deleting the 'X.1' mystery variable when it shows up
         sourceFile = rfDataPath + region.lower() + '/' + month + '_' + region + '_ref.csv'
-        monthTrainingDF = pandas.read_csv(sourceFile)
-        monthTrainingDF.rename(columns={'Unnamed: 0': 'ObsID'}, inplace=True)
+        regionTrainingDF = pandas.read_csv(sourceFile)
+        regionTrainingDF.rename(columns={'Unnamed: 0': 'ObsID'}, inplace=True)
         badVariable = 'X.1'
-        if badVariable in monthTrainingDF.columns.values:
-            monthTrainingDF.drop(badVariable, axis=1, inplace=True)
+        if badVariable in regionTrainingDF.columns.values:
+            regionTrainingDF.drop(badVariable, axis=1, inplace=True)
 
         # Drop "T" from beginning of STAID column (someone added it as a string casting hack before I got the data)
-        monthTrainingDF['STAID'] = monthTrainingDF['STAID'].map(lambda x: x[1:])
+        regionTrainingDF['STAID'] = regionTrainingDF['STAID'].map(lambda x: x[1:])
+
+        # Subset all training data to just those observations in the Sacramento basin
+        regionTrainingDF = regionTrainingDF[regionTrainingDF.STAID.isin(sacRefGages)]
 
         # Get prediction data
-        monthPredictionDF = thesisFunctions.prepSacramentoData(month, region, sacBasePath)
+        regionPredictionDF = thesisFunctions.prepSacramentoData(month, region)
 
         # Add columns that ID current region and month (1 if True, 0 if False) to each DataFrame
         for regionColumn in regions:
 
             if regionColumn == region:
-                monthTrainingDF[regionColumn] = 1
-                monthPredictionDF[regionColumn] = 1
+                regionTrainingDF[regionColumn] = 1
+                regionPredictionDF[regionColumn] = 1
             else:
-                monthTrainingDF[regionColumn] = 0
-                monthPredictionDF[regionColumn] = 0
+                regionTrainingDF[regionColumn] = 0
+                regionPredictionDF[regionColumn] = 0
 
         for monthColumn in months:
 
             if monthColumn == month:
-                monthTrainingDF[monthColumn] = 1
-                monthPredictionDF[monthColumn] = 1
+                regionTrainingDF[monthColumn] = 1
+                regionPredictionDF[monthColumn] = 1
             else:
-                monthTrainingDF[monthColumn] = 0
-                monthPredictionDF[monthColumn] = 0
+                regionTrainingDF[monthColumn] = 0
+                regionPredictionDF[monthColumn] = 0
 
-        # Append to accumulator DataFrames
-        allTrainingDF = allTrainingDF.append(monthTrainingDF, ignore_index=True)
-        predictionDF = predictionDF.append(monthPredictionDF, ignore_index=True)
+        # Append data to accumulator DataFrames
+        allTrainingDF = allTrainingDF.append(regionTrainingDF, ignore_index=True)
+        monthPredictionDF = monthPredictionDF.append(regionPredictionDF, ignore_index=True)
 
-# Subset all training data to just those observations in the Sacramento basin
-sacGagesFile = sacBasePath + 'Sac_gages_list.csv'
-sacGagesDF = pandas.read_csv(sacGagesFile)
-sacRefGages = sacGagesDF.STAID[sacGagesDF.CLASS == 'Ref'].map(lambda x: str(x)).values.tolist()
-sacTrainingDF = allTrainingDF[allTrainingDF.STAID.isin(sacRefGages)]
+    # Write month's prediction data out to file (too big to deal with all months in one csv)
+    predictionFilePath = sacBasePath + '/Prediction/sacramentoData_' + month + '.csv'
+    monthPredictionDF.to_csv(predictionFilePath, index=False)
 
-# Write Sacramento training data out to file
-sacTrainingDataFile = sacBasePath + 'Sacramento_Basin.csv'
-sacTrainingDF.to_csv(sacTrainingDataFile, index=False)
-
-# Write Sacramento prediction data out to file
-predictionFilePath = sacBasePath + '/Prediction/sacramentoData.csv'
-predictionDF.to_csv(predictionFilePath, index=False)
+# Write all Sacramento training data out to file
+sacTrainingDataFilePath = sacBasePath + 'Sacramento_Basin.csv'
+allTrainingDF.to_csv(sacTrainingDataFilePath, index=False)

@@ -771,9 +771,10 @@ def findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, 
     return applyModelResult
 
 
-def prepSacramentoData(month, region, basePath, wetOrDry=None, waterYearsFilePath=None, proportionOfInterest=None):
+def prepSacramentoData(month, region, wetOrDry=None, waterYearsFilePath=None, proportionOfInterest=None):
 
     hucFile = '../SacramentoData/Sacramento_basin_huc12_v2.csv'
+    hucRegionFile = '../SacramentoData/Sacramento_huc12_ecoregions.csv'
     staticFile = '../SacramentoData/static_vars/h12.static.vars.csv'
     climateBasePath = '../SacramentoData/climate_vars/'
 
@@ -785,8 +786,17 @@ def prepSacramentoData(month, region, basePath, wetOrDry=None, waterYearsFilePat
         monthNumber = '0' + monthNumber
     climateFile = climateBasePath + 'm' + monthNumber + '_HUC12.clim.data.' + month + '.csv'
 
-    # Import HUCs for the Sacramento basin
+    # Get HUCs for the Sacramento basin for the region of interest
     sacHUCs = pandas.read_csv(hucFile)
+    sacHUCsWithRegions = pandas.read_csv(hucRegionFile)
+    sacHUCsWithRegions = sacHUCsWithRegions.loc[:, ['HUC_12', 'AggEcoreg']]
+    sacHUCsWithRegions.rename(columns={'HUC_12':'HUC12'}, inplace=True)
+    sacHUCsWithRegions.drop_duplicates(subset='HUC12', inplace=True)
+    sacHUCs = pandas.merge(sacHUCs, sacHUCsWithRegions, on='HUC12')
+    regionHUCs = sacHUCs[sacHUCs.AggEcoreg == region]
+
+    # Drop region column so that we don't have an extra column and confuse the models
+    regionHUCs = regionHUCs.loc[:, ['HUC12']]
 
     # Import prediction data
     staticData = pandas.read_csv(staticFile)
@@ -803,25 +813,25 @@ def prepSacramentoData(month, region, basePath, wetOrDry=None, waterYearsFilePat
     staticData['PERDUN'].fillna(method='ffill', inplace=True)
     staticData['PERHOR'].fillna(method='ffill', inplace=True)
 
-    # Join to build data set for Sacramento basin
+    # Join to build data set for region of Sacramento basin
     climateData.rename(columns={'SITE':'HUC12'}, inplace=True)
-    sacData = pandas.merge(sacHUCs, climateData, on='HUC12')
-    sacData = pandas.merge(sacData, staticData, on='HUC12')
+    regionData = pandas.merge(regionHUCs, climateData, on='HUC12')
+    regionData = pandas.merge(regionData, staticData, on='HUC12')
 
     # Get rid of 1949 and 2011, since they have a bunch of missing climate data for oct and dec
-    sacData = sacData[ ~ sacData.YEAR.isin([1949, 2011])]
+    regionData = regionData[ ~ regionData.YEAR.isin([1949, 2011])]
 
     # Subset to just wet or dry years when trying to create a specific wet/dry model
     if wetOrDry != None:
         yearsOfInterest = getYearsOfInterest(waterYearsFilePath, month, proportionOfInterest, wetOrDry)
-        sacData = sacData[sacData.YEAR.isin(yearsOfInterest)]
+        regionData = regionData[regionData.YEAR.isin(yearsOfInterest)]
 
     # Reorder columns to match training dataset
-    columns = sacData.columns.tolist()
+    columns = regionData.columns.tolist()
     newColumns = columns[:3] + columns[29:42] + columns[3:29] + columns[42:]
-    sacData = sacData[newColumns]
+    regionData = regionData[newColumns]
 
-    return sacData
+    return regionData
 
 
 def outputPredictions(applyModelResult, outputPath):
