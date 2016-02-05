@@ -26,13 +26,13 @@ for region in regions:
         if multiThreading:
 
             # Build threads
-            t = threading.Thread(target=thesisFunctions.runKFoldPipeline, args=(month,
-                                                                                region,
-                                                                                baseDirectoryPath,
+            t = threading.Thread(target=thesisFunctions.runKFoldPipeline, args=(baseDirectoryPath,
                                                                                 myFeaturesIndex,
                                                                                 myLabelIndex,
                                                                                 kFolds,
                                                                                 wetOrDry,
+                                                                                month,
+                                                                                region,
                                                                                 randomSeed))
             threads.append(t)
 
@@ -40,13 +40,13 @@ for region in regions:
 
             # Run each pipeline in sequence
             print('Running pipeline for %s, %s' % (region, month.capitalize()))
-            thesisFunctions.runKFoldPipeline(month,
-                                             region,
-                                             baseDirectoryPath,
+            thesisFunctions.runKFoldPipeline(baseDirectoryPath,
                                              myFeaturesIndex,
                                              myLabelIndex,
                                              kFolds,
                                              wetOrDry,
+                                             month,
+                                             region,
                                              randomSeed)
             print()
 

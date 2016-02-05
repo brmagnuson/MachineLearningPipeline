@@ -76,56 +76,77 @@ def createDescriptionFromFileName(fileName):
     return prettyDescription
 
 
-def createKFoldDataSets(kFolds, masterDataPath, month, region, proportionOfInterest, myFeaturesIndex, myLabelIndex,
-                        wetOrDry='dry', randomSeed=None):
+def createKFoldDataSets(kFolds, masterDataPath, myFeaturesIndex, myLabelIndex, randomSeed=None,
+                        modelApproach=None, proportionOfInterest=None, month=None, region=None):
 
-    # Get water years of interest
-    yearsOfInterest = getYearsOfInterest(masterDataPath + 'NOAAWaterYearsDriestToWettest.csv',
-                                         month,
-                                         proportionOfInterest,
-                                         wetOrDry)
+    if not modelApproach in ['wet', 'dry', 'sacramento']:
+        raise ValueError("modelApproach must be either 'wet', 'dry', or 'sacramento'.")
 
-    # Read in original dataset with all years (with ObsID column added at the beginning before running code)
-    fullDataSet = mltypes.DataSet('All Years',
-                                  masterDataPath + month + '_' + region + '_all.csv',
-                                  featuresIndex=myFeaturesIndex,
-                                  labelIndex=myLabelIndex)
+    # Read in original dataset with all years
+    if modelApproach in ['wet', 'dry']:
 
-    # Subset full dataset to those years of interest
-    yearsOfInterestDataFrame = fullDataSet.dataFrame.loc[fullDataSet.dataFrame['Year'].isin(yearsOfInterest)]
-    if wetOrDry == 'dry':
-        yearsOfInterestDescription = 'Dry Years'
-    elif wetOrDry == 'wet':
-        yearsOfInterestDescription = 'Wet Years'
+        fullDataSet = mltypes.DataSet('All Years',
+                                      masterDataPath + month + '_' + region + '_all.csv',
+                                      featuresIndex=myFeaturesIndex,
+                                      labelIndex=myLabelIndex)
     else:
-        raise ValueError('wetOrDry had value other than "wet" or "dry".')
 
-    yearsOfInterestDataSet = mltypes.DataSet(yearsOfInterestDescription,
-                                             masterDataPath + month + '_' + region + '_' + wetOrDry + '.csv',
-                                             'w',
-                                             dataFrame=yearsOfInterestDataFrame,
-                                             featuresIndex=myFeaturesIndex,
-                                             labelIndex=myLabelIndex)
+        fullDataSet = mltypes.DataSet('Sacramento Basin',
+                                      masterDataPath + 'Sacramento_Basin.csv',
+                                      featuresIndex=myFeaturesIndex,
+                                      labelIndex=myLabelIndex)
 
-    testPathPrefix = os.path.dirname(yearsOfInterestDataSet.path) + '/' + month + '_' + region
+    # Split DataSet k times
+    if modelApproach in ['wet', 'dry']:
 
-    # From the subset DataSet, create k universal test sets and corresponding k wet/dry (depending on wetOrDry) training sets
-    splitDataSets = mldata.kFoldSplitDataSet(yearsOfInterestDataSet, 5, randomSeed=randomSeed,
-                                                testPathPrefix=testPathPrefix)
+        # Get water years of interest
+        yearsOfInterest = getYearsOfInterest(masterDataPath + 'NOAAWaterYearsDriestToWettest.csv',
+                                             month,
+                                             proportionOfInterest,
+                                             modelApproach)
 
-    # Use ObsIDs of each universal test set to subset full data set to everything else, creating k full training sets
-    for fold in range(kFolds):
-        universalTestDataSet = splitDataSets[fold].testDataSet
-        universalTestObsIds = universalTestDataSet.dataFrame.ObsID.values
-        fullTrainDataFrame = fullDataSet.dataFrame.loc[ ~ fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
+        # Subset full dataset to those years of interest
+        yearsOfInterestDataFrame = fullDataSet.dataFrame.loc[fullDataSet.dataFrame['Year'].isin(yearsOfInterest)]
+        if modelApproach == 'dry':
+            yearsOfInterestDescription = 'Dry Years'
+        else:
+            yearsOfInterestDescription = 'Wet Years'
 
-        # Write this out to the proper folder.
-        fullTrainDataSet = mltypes.DataSet('All Years Training Set',
-                                           masterDataPath + month + '_' + region + '_all_' + str(fold) + '_train.csv',
-                                           'w',
-                                           dataFrame=fullTrainDataFrame,
-                                           featuresIndex=myFeaturesIndex,
-                                           labelIndex=myLabelIndex)
+        yearsOfInterestDataSet = mltypes.DataSet(yearsOfInterestDescription,
+                                                 masterDataPath + month + '_' + region + '_' + modelApproach + '.csv',
+                                                 'w',
+                                                 dataFrame=yearsOfInterestDataFrame,
+                                                 featuresIndex=myFeaturesIndex,
+                                                 labelIndex=myLabelIndex)
+
+        testPathPrefix = os.path.dirname(yearsOfInterestDataSet.path) + '/' + month + '_' + region
+
+        # From the subset DataSet, create k universal test sets and corresponding k wet/dry (depending on wetOrDry) training sets
+        splitDataSets = mldata.kFoldSplitDataSet(yearsOfInterestDataSet, kFolds, randomSeed=randomSeed,
+                                                 testPathPrefix=testPathPrefix)
+
+    else:
+
+        # When running the Sacramento Basin approach, we don't need to subset to dry/wet years. We just split it.
+        splitDataSets = mldata.kFoldSplitDataSet(fullDataSet, kFolds, randomSeed=randomSeed)
+
+    # If doing the wet/dry approach, use ObsIDs of each universal test set to subset full data set to everything else,
+    # creating k full training sets
+    if modelApproach in ['wet', 'dry']:
+        for fold in range(kFolds):
+            universalTestDataSet = splitDataSets[fold].testDataSet
+            universalTestObsIds = universalTestDataSet.dataFrame.ObsID.values
+            fullTrainDataFrame = fullDataSet.dataFrame.loc[ ~ fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
+
+            # Write this out to the proper folder.
+            fullTrainDataSet = mltypes.DataSet('All Years Training Set',
+                                               masterDataPath + month + '_' + region + '_all_' + str(fold) + '_train.csv',
+                                               'w',
+                                               dataFrame=fullTrainDataFrame,
+                                               featuresIndex=myFeaturesIndex,
+                                               labelIndex=myLabelIndex)
+
+    return
 
 
 def copyFoldDataSets(fold, masterDataPath):
@@ -254,15 +275,15 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
         #                                                     'extraction',
         #                                                     sklearn.decomposition.FastICA,
         #                                                     {'n_components': 20, 'max_iter': 2500, 'random_state': randomSeed})
-        ica50Config = mltypes.FeatureEngineeringConfiguration('ICA n50',
-                                                              'extraction',
-                                                              sklearn.decomposition.FastICA,
-                                                              {'n_components': 50, 'max_iter': 2500, 'random_state': randomSeed})
+        # ica50Config = mltypes.FeatureEngineeringConfiguration('ICA n50',
+        #                                                       'extraction',
+        #                                                       sklearn.decomposition.FastICA,
+        #                                                       {'n_components': 50, 'max_iter': 2500, 'random_state': randomSeed})
         expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
                                                                        'selection',
                                                                        mltypes.ExtractSpecificFeatures,
                                                                        {'featureList': selectedFeatureList})
-        featureEngineeringConfigs = [varianceThresholdPoint1Config, pca20Config, pca50Config, ica50Config, expertSelectedConfig]
+        featureEngineeringConfigs = [varianceThresholdPoint1Config, pca20Config, pca50Config, expertSelectedConfig]
 
         for dataSetAssociation in dataSetAssociations:
 
@@ -470,8 +491,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     return scoreModelResultsDF
 
 
-def runKFoldPipeline(month, region, baseDirectoryPath, myFeaturesIndex, myLabelIndex,
-                     kFolds=5, wetOrDry='dry', randomSeed=None):
+def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, kFolds=5,
+                     modelApproach=None, month=None, region=None, randomSeed=None):
 
     """
     Splits each region-month base dataset into k-fold test/train sets and runs the pipeline for each one.
@@ -481,13 +502,35 @@ def runKFoldPipeline(month, region, baseDirectoryPath, myFeaturesIndex, myLabelI
     :return:
     """
 
+    if not modelApproach in ['wet', 'dry', 'sacramento']:
+        raise ValueError("Model approach must be either 'wet', 'dry', or 'sacramento'.")
+
     # Set parameters
-    masterDataPath = baseDirectoryPath + region + '/' + month + '/'
-    proportionOfInterest = 0.5
+    if modelApproach in ['wet', 'dry']:
+        masterDataPath = baseDirectoryPath + region + '/' + month + '/'
+        proportionOfInterest = 0.5
+    else:
+        masterDataPath = baseDirectoryPath
 
     # Create my 5 test/train folds
-    createKFoldDataSets(kFolds, masterDataPath, month, region, proportionOfInterest,
-                        myFeaturesIndex, myLabelIndex, wetOrDry, randomSeed)
+    if modelApproach in ['wet', 'dry']:
+        createKFoldDataSets(kFolds,
+                            masterDataPath,
+                            myFeaturesIndex,
+                            myLabelIndex,
+                            randomSeed,
+                            modelApproach=modelApproach,
+                            proportionOfInterest=proportionOfInterest,
+                            month=month,
+                            region=region)
+    else:
+        createKFoldDataSets(kFolds,
+                            masterDataPath,
+                            myFeaturesIndex,
+                            myLabelIndex,
+                            randomSeed,
+                            modelApproach=modelApproach)
+
 
     # Run pipeline for each fold of the data
     allFoldScoreModelResultsDFs = []
@@ -496,15 +539,22 @@ def runKFoldPipeline(month, region, baseDirectoryPath, myFeaturesIndex, myLabelI
         copyFoldDataSets(fold, masterDataPath)
 
         # Run pipeline for those datasets
-        universalTestSetFileName = month + '_' + region + '_test.csv'
-        universalTestSetDescription = month.capitalize() + ' ' + region + ' Test'
+        if modelApproach in ['wet', 'dry']:
+            universalTestSetFileName = month + '_' + region + '_test.csv'
+            universalTestSetDescription = month.capitalize() + ' ' + region + ' Test'
+            statusPrintPrefix = region + ' ' + month.capitalize() + ' K-fold #' + str(fold)
+        else:
+            universalTestSetFileName = 'Sacramento_Basin_test.csv'
+            universalTestSetDescription = 'Sacramento Basin Test'
+            statusPrintPrefix = 'Sacramento Basin K-fold #' + str(fold)
+
         foldScoreModelResultsDF = flowModelPipeline(universalTestSetFileName=universalTestSetFileName,
                                                     universalTestSetDescription=universalTestSetDescription,
                                                     basePath=masterDataPath + 'CurrentFoldData/',
                                                     scoreOutputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
                                                     myFeaturesIndex=myFeaturesIndex,
                                                     myLabelIndex=myLabelIndex,
-                                                    statusPrintPrefix=region + ' ' + month.capitalize() + ' K-fold #' + str(fold),
+                                                    statusPrintPrefix=statusPrintPrefix,
                                                     subTaskPrint=False,
                                                     randomSeed=randomSeed)
 
