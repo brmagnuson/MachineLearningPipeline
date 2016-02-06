@@ -79,7 +79,7 @@ def createDescriptionFromFileName(fileName):
 def createKFoldDataSets(kFolds, masterDataPath, myFeaturesIndex, myLabelIndex, randomSeed=None,
                         modelApproach=None, proportionOfInterest=None, month=None, region=None):
 
-    if not modelApproach in ['wet', 'dry', 'sacramento']:
+    if modelApproach not in ['wet', 'dry', 'sacramento']:
         raise ValueError("modelApproach must be either 'wet', 'dry', or 'sacramento'.")
 
     # Read in original dataset with all years
@@ -502,7 +502,7 @@ def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, kFolds=5,
     :return:
     """
 
-    if not modelApproach in ['wet', 'dry', 'sacramento']:
+    if modelApproach not in ['wet', 'dry', 'sacramento']:
         raise ValueError("Model approach must be either 'wet', 'dry', or 'sacramento'.")
 
     # Set parameters
@@ -756,10 +756,8 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
     return applyModelConfig
 
 
-def findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, myFeaturesIndex, myLabelIndex,
-                        selectedFeaturesList, modelRowIndex=0):
-
-    masterDataPath = basePath + region + '/' + month + '/'
+def findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, myFeaturesIndex, myLabelIndex,
+                        selectedFeaturesList, month, region=None, modelRowIndex=0):
 
     # Read in score model results files.
     averageFile = masterDataPath + 'Output/scoreModelResults_average.csv'
@@ -778,8 +776,12 @@ def findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, 
     sortedBestModelFolds = bestModelFolds.sort(columns='R Squared', ascending=False)
     trainModelParameters = sortedBestModelFolds.iloc[0].loc['Parameters']
 
-    # Find appropriate dataset (either all or dry, depending on above results) and copy to Prediction folder
-    if 'Dry' in trainDataSetDescription:
+    # Find appropriate dataset based on the description and copy to Prediction folder
+    if 'Sacramento' in trainDataSetDescription:
+        trainingFileName = 'Sacramento_Basin.csv'
+    elif 'Wet' in trainDataSetDescription:
+        trainingFileName = month + '_' + region + '_wet.csv'
+    elif 'Dry' in trainDataSetDescription:
         trainingFileName = month + '_' + region + '_dry.csv'
     else:
         trainingFileName = month + '_' + region + '_all.csv'
@@ -896,22 +898,43 @@ def outputPredictions(applyModelResult, outputPath):
     outputDataFrame.to_csv(outputPath, index=False)
 
 
-def processSacPredictions(basePath, region, month, randomSeed, trainFeaturesIndex, trainLabelIndex,
-                          selectedFeaturesList, modelIndex):
+def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex,
+                          selectedFeaturesList, randomSeed, modelApproach, region=None, month=None):
 
-    print('Predicting for %s, %s' % (region, month.capitalize()))
+    if modelApproach not in ['wet', 'dry', 'sacramento']:
+        raise ValueError("Model approach must be either 'wet', 'dry', or 'sacramento'.")
 
-    predictionPath = basePath + region + '/' + month + '/Prediction/sacramentoData.csv'
-    predictionDataSet = mltypes.DataSet(month.title() + ' Prediction Data',
+    # Get prediction DataSet information and decide where to put output
+    if modelApproach in ['wet', 'dry']:
+        print('Predicting for %s, %s' % (region, month.capitalize()))
+
+        masterDataPath = basePath + region + '/' + month + '/'
+        predictionPath = masterDataPath + 'Prediction/sacramentoData.csv'
+        outputPath = masterDataPath + '/Prediction/sacramentoPredictions.csv'
+
+    else:
+        print('Predicting for %s' % (month.capitalize()))
+
+        masterDataPath = basePath
+        predictionPath = masterDataPath + '/Prediction/sacramentoData_' + month + '.csv'
+        outputPath = masterDataPath + 'Prediction/sacramentoPredictions_' + month + '.csv'
+
+    predictionDataSet = mltypes.DataSet(month.capitalize() + ' Prediction Data',
                                         predictionPath,
                                         featuresIndex=3,
                                         labelIndex=None)
 
-    sacResult = findModelAndPredict(predictionDataSet, basePath, month, region, randomSeed, trainFeaturesIndex,
-                                    trainLabelIndex, selectedFeaturesList, modelIndex)
+    # Train the best model and predict for the Sacramento region
+    if modelApproach in ['wet', 'dry']:
+        sacResult = findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, trainFeaturesIndex,
+                                        trainLabelIndex, selectedFeaturesList, month, region, modelIndex)
+    else:
+        sacResult = findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, trainFeaturesIndex,
+                                        trainLabelIndex, selectedFeaturesList, month, modelRowIndex=modelIndex)
 
-    outputPath = basePath + region + '/' + month + '/Prediction/sacramentoPredictions.csv'
+    # Save the output
     outputPredictions(sacResult, outputPath)
+    return
 
 
 def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, regions):

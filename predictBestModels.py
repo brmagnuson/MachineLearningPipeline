@@ -4,6 +4,8 @@ import thesisFunctions
 
 basePath = 'AllMonthsDryHalf/'
 # basePath = 'AllMonthsWetHalf/'
+modelApproach = 'dry'
+# modelApproach = 'wet'
 
 # Parameters
 multiThreading = True
@@ -32,20 +34,21 @@ for region in regions:
             # Build threads
             t = threading.Thread(target=thesisFunctions.processSacPredictions,
                                  args=(basePath,
-                                       region,
-                                       month,
-                                       randomSeed,
                                        trainFeaturesIndex,
                                        trainLabelIndex,
+                                       modelIndex,
                                        selectedFeaturesList,
-                                       modelIndex))
+                                       randomSeed,
+                                       modelApproach,
+                                       region,
+                                       month))
             threads.append(t)
 
         else:
 
             # Run each prediction process in sequence
-            thesisFunctions.processSacPredictions(basePath, region, month, randomSeed, trainFeaturesIndex, trainLabelIndex,
-                                                  selectedFeaturesList, modelIndex)
+            thesisFunctions.processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex,
+                                                  selectedFeaturesList, randomSeed, modelApproach, region, month)
 
 if multiThreading:
 
