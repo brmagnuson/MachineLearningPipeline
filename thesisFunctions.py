@@ -163,6 +163,8 @@ def copyFoldDataSets(fold, masterDataPath):
         newFilePath = masterDataPath + 'CurrentFoldData/' + fileToCopy.replace('_' + str(fold), '')
         shutil.copyfile(masterDataPath + fileToCopy, newFilePath)
 
+    return
+
 
 def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, scoreOutputFilePath,
                       myFeaturesIndex, myLabelIndex, statusPrintPrefix='', subTaskPrint=True, randomSeed=None,
@@ -572,6 +574,8 @@ def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, kFolds=5,
     sortedAverageResultsDF = averageResultsDF.sort(columns='R Squared', ascending=False)
     sortedAverageResultsDF.to_csv(masterDataPath + 'Output/scoreModelResults_average.csv', index=False)
 
+    return
+
 
 def getSKLearnFunction(description):
     """
@@ -895,6 +899,7 @@ def outputPredictions(applyModelResult, outputPath):
 
     # Output to csv
     outputDataFrame.to_csv(outputPath, index=False)
+    return
 
 
 def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex,
@@ -1001,5 +1006,9 @@ def formatWaterYearPredictions(waterYear, predictionsFile):
 
     yearPath = predictionsFile.split('.')[0] + str(calendarYear) + '.csv'
     yearPredictionsDF.to_csv(yearPath, index=False)
+    return
+
+
+
 
 
