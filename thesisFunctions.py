@@ -1,4 +1,3 @@
-import sys
 import os
 import shutil
 import math
@@ -937,37 +936,43 @@ def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIn
     return
 
 
-def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, regions):
+def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, region=None):
 
-    # For each region:
-    for region in regions:
+    allPredictions = pandas.DataFrame()
 
-        allPredictions = pandas.DataFrame()
+    # For each half:
+    for baseFolder in baseFolderList:
 
-        # For each half:
-        for baseFolder in baseFolderList:
+        # Create DataFrame for predictions for this half of the years (wet or dry)
+        halfPredictions = pandas.DataFrame()
 
-            # Create DataFrame for predictions for this half of the years (wet or dry)
-            halfPredictions = pandas.DataFrame()
+        # Concatenate month results
+        for month in months:
 
-            # Concatenate month results
-            for month in months:
-
-                # Read in predictions
+            # Read in predictions
+            if region != None:
                 predictionsFile = baseFolder + region + '/' + month + '/Prediction/sacramentoPredictions.csv'
-                monthPredictions = pandas.read_csv(predictionsFile)
+            else:
+                predictionsFile = baseFolder + 'Prediction/sacramentoPredictions_' + month + '.csv'
+            monthPredictions = pandas.read_csv(predictionsFile)
 
-                # Aggregate results for this half
-                halfPredictions = halfPredictions.append(monthPredictions, ignore_index=True)
+            # Aggregate results for this half
+            halfPredictions = halfPredictions.append(monthPredictions, ignore_index=True)
 
-            allPredictions = allPredictions.append(halfPredictions, ignore_index=True)
+        allPredictions = allPredictions.append(halfPredictions, ignore_index=True)
 
-        # Sort by month, then year, then HUC12
-        sortedAllPredictions = allPredictions.sort(columns=['MONTH', 'YEAR', 'HUC12'])
+    # Sort by month, then year, then HUC12
+    sortedAllPredictions = allPredictions.sort(columns=['MONTH', 'YEAR', 'HUC12'])
 
-        # Output results for this regional model to file
+    # Output results for this regional model to file
+    if region != None:
         outputFile = outputFolder + outputPrefix + region + '.csv'
-        sortedAllPredictions.to_csv(outputFile, index=False)
+    else:
+        outputFile = outputFolder + outputPrefix + '.csv'
+    sortedAllPredictions.to_csv(outputFile, index=False)
+
+    # Return aggregated filename
+    return outputFile
 
 
 def formatWaterYearPredictions(waterYear, predictionsFile):
