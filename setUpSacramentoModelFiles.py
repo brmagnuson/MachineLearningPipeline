@@ -49,8 +49,9 @@ for month in months:
         # Get prediction data
         regionPredictionDF = thesisFunctions.prepSacramentoData(month, region)
 
-        # Add columns that ID current region and month (1 if True, 0 if False) to each DataFrame
-        for regionColumn in regions:
+        # Add columns that ID current region and month (1 if True, 0 if False) to each DataFrame, leaving off last one
+        # in each list to prevent model being over-specified
+        for regionColumn in regions[:-1]:
 
             if regionColumn == region:
                 regionTrainingDF[regionColumn] = 1
@@ -59,7 +60,7 @@ for month in months:
                 regionTrainingDF[regionColumn] = 0
                 regionPredictionDF[regionColumn] = 0
 
-        for monthColumn in months:
+        for monthColumn in months[:-1]:
 
             if monthColumn == month:
                 regionTrainingDF[monthColumn] = 1
