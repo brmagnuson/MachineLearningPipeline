@@ -7,7 +7,7 @@ sacBasePath = 'SacramentoModel/'
 rfDataPath = '../RF_model_data/data/model_training/'
 
 # Just use IntMnt and Xeric regions, because nothing from the CoastMnt dataset is in the Sacramento watershed
-regions = ['IntMnt', 'Xeric']
+regions = ['IntMnt', 'Xeric', 'CoastMnt']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 # months = ['jan', 'feb']
 
@@ -49,8 +49,15 @@ for month in months:
         # Get prediction data
         regionPredictionDF = thesisFunctions.prepSacramentoData(month, region)
 
+        # Hack: If we're in the CoastMnt region loop, reassign region as 'IntMnt' because the only Sacramento reference
+        # gage in that region's source file, 11371000, is actually in the West Mnt region in the Gages II database. None
+        # of the prediction data is in the CoastMnt region so it won't affect anything in that dataframe.
+        if region == 'CoastMnt':
+            region = 'IntMnt'
+
         # Add columns that ID current region and month (1 if True, 0 if False) to each DataFrame, leaving off last one
-        # in each list to prevent model being over-specified
+        # in each list to prevent model being over-specified (actually the last two for the regions, because of the
+        # 11371000 misclassification as CoastMnt explained above
         for regionColumn in regions[:-1]:
 
             if regionColumn == region:
