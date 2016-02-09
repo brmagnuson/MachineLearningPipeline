@@ -914,13 +914,13 @@ def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIn
 
         masterDataPath = basePath + region + '/' + month + '/'
         predictionPath = masterDataPath + 'Prediction/sacramentoData.csv'
-        outputPath = masterDataPath + '/Prediction/sacramentoPredictions.csv'
+        outputPath = masterDataPath + 'Prediction/sacramentoPredictions.csv'
 
     else:
         print('Predicting for %s' % (month.capitalize()))
 
         masterDataPath = basePath
-        predictionPath = masterDataPath + '/Prediction/sacramentoData_' + month + '.csv'
+        predictionPath = masterDataPath + 'Prediction/sacramentoData_' + month + '.csv'
         outputPath = masterDataPath + 'Prediction/sacramentoPredictions_' + month + '.csv'
 
     predictionDataSet = mltypes.DataSet(month.capitalize() + ' Prediction Data',

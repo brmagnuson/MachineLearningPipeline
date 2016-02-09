@@ -53,14 +53,16 @@ for month in months:
         # gage in that region's source file, 11371000, is actually in the West Mnt region in the Gages II database. None
         # of the prediction data is in the CoastMnt region so it won't affect anything in that dataframe.
         if region == 'CoastMnt':
-            region = 'IntMnt'
+            regionForDF = 'IntMnt'
+        else:
+            regionForDF = region
 
         # Add columns that ID current region and month (1 if True, 0 if False) to each DataFrame, leaving off last one
         # in each list to prevent model being over-specified (actually the last two for the regions, because of the
         # 11371000 misclassification as CoastMnt explained above
         for regionColumn in regions[:-1]:
 
-            if regionColumn == region:
+            if regionColumn == regionForDF:
                 regionTrainingDF[regionColumn] = 1
                 regionPredictionDF[regionColumn] = 1
             else:
@@ -78,7 +80,11 @@ for month in months:
 
         # Append data to accumulator DataFrames
         allTrainingDF = allTrainingDF.append(regionTrainingDF, ignore_index=True)
-        monthPredictionDF = monthPredictionDF.append(regionPredictionDF, ignore_index=True)
+
+        # CoastMnt's DataFrame being empty means it has a different column order (HUC12 in the middle rather than at the
+        # end), so don't append it, because the different column orders mess up the output.
+        if region != 'CoastMnt':
+            monthPredictionDF = monthPredictionDF.append(regionPredictionDF, ignore_index=True)
 
     # Write month's prediction data out to file (too big to deal with all months in one csv)
     predictionFilePath = sacBasePath + '/Prediction/sacramentoData_' + month + '.csv'
