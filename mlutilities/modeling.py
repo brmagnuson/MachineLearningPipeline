@@ -1,3 +1,4 @@
+import numpy
 import sklearn.grid_search
 import sklearn.cross_validation
 import mlutilities.types
@@ -143,3 +144,22 @@ def scoreModels(applyModelResults, modelScoreMethods):
         scoreModelResults.append(scoreModelResult)
     return scoreModelResults
 
+
+def meanObservedExpectedScore(y_true, y_pred):
+
+    """
+    Function modeled after sklearn.metrics scoring functions to calculate mean O/E score for a model.
+    Works when y_true and y_pred are vector-like pandas DataFrames or numpy Arrays
+    """
+    meanOE = numpy.mean(y_true / y_pred)
+    return float(meanOE)
+
+
+def sdObservedExpectedScore(y_true, y_pred):
+    """
+    Function modeled after sklearn.metrics scoring functions to calculate the standard deviation of the O/E score for a
+    model.
+    Works when y_true and y_pred are vector-like pandas DataFrames or numpy Arrays
+    """
+    standardDeviationOE = numpy.std(y_true / y_pred)
+    return float(standardDeviationOE)

@@ -193,8 +193,10 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     tuneScoreMethod = 'r2'
     # tuneScoreMethod = 'mean_squared_error'
     r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
+    meanOEMethod = mltypes.ModelScoreMethod('Mean O/E', mlmodel.meanObservedExpectedScore)
+    sdOEMethod = mltypes.ModelScoreMethod('Standard Deviation O/E', mlmodel.sdObservedExpectedScore)
     mseMethod = mltypes.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
-    testScoreMethods = [r2Method, mseMethod]
+    testScoreMethods = [r2Method, meanOEMethod, sdOEMethod, mseMethod]
 
     # Prepare datasets
     # if runPrepareDatasets:
