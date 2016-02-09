@@ -194,7 +194,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     # tuneScoreMethod = 'mean_squared_error'
     r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
     mseMethod = mltypes.ModelScoreMethod('Mean Squared Error', sklearn.metrics.mean_squared_error)
-    testScoreMethods = [mseMethod, r2Method]
+    testScoreMethods = [r2Method, mseMethod]
 
     # Prepare datasets
     # if runPrepareDatasets:
@@ -483,6 +483,11 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
 
     # Convert to data frame for tabulation and visualization
     scoreModelResultsDF = mlutils.createScoreDataFrame(sortedTestScoreModelResults)
+
+    # Add RMSE and arrange column
+    scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x ** (1/2))
+
+    # Output to file
     scoreModelResultsDF.to_csv(scoreOutputFilePath, index=False)
     return scoreModelResultsDF
 
