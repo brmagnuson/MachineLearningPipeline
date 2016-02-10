@@ -16,6 +16,11 @@ multiThreading = True
 regions = ['IntMnt']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
+selectedFeatureList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12',
+                       't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12',
+                       'p2sum', 'p3sum', 'p6sum', 'PERMAVE', 'RFACT', 'DRAIN_SQKM', 'ELEV_MEAN_M_BASIN_30M',
+                       'WD_BASIN']
+
 startSecond = time.time()
 startTime = time.strftime('%a, %d %b %Y %X')
 
@@ -29,6 +34,7 @@ for region in regions:
             t = threading.Thread(target=thesisFunctions.runKFoldPipeline, args=(baseDirectoryPath,
                                                                                 myFeaturesIndex,
                                                                                 myLabelIndex,
+                                                                                selectedFeatureList,
                                                                                 kFolds,
                                                                                 wetOrDry,
                                                                                 month,

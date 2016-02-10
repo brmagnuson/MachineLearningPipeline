@@ -167,8 +167,8 @@ def copyFoldDataSets(fold, masterDataPath):
 
 
 def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, scoreOutputFilePath,
-                      myFeaturesIndex, myLabelIndex, statusPrintPrefix='', subTaskPrint=True, randomSeed=None,
-                      runScaleDatasets=True, runFeatureEngineering=True, runEnsembleModels=True):
+                      myFeaturesIndex, myLabelIndex, selectedFeatureList, statusPrintPrefix='', subTaskPrint=True,
+                      randomSeed=None, runScaleDatasets=True, runFeatureEngineering=True, runEnsembleModels=True):
 
     """
     Runs the pipeline for a given universal test set.
@@ -186,10 +186,10 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     """
 
     # Parameters
-    selectedFeatureList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12',
-                           't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12',
-                           'p2sum', 'p3sum', 'p6sum', 'PERMAVE', 'RFACT', 'DRAIN_SQKM', 'ELEV_MEAN_M_BASIN_30M',
-                           'WD_BASIN']
+    # selectedFeatureList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12',
+    #                        't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12',
+    #                        'p2sum', 'p3sum', 'p6sum', 'PERMAVE', 'RFACT', 'DRAIN_SQKM', 'ELEV_MEAN_M_BASIN_30M',
+    #                        'WD_BASIN']
     tuneScoreMethod = 'r2'
     # tuneScoreMethod = 'mean_squared_error'
     r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
@@ -494,7 +494,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     return scoreModelResultsDF
 
 
-def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, kFolds=5,
+def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, selectedFeaturesList, kFolds=5,
                      modelApproach=None, month=None, region=None, randomSeed=None):
 
     """
@@ -557,6 +557,7 @@ def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, kFolds=5,
                                                     scoreOutputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
                                                     myFeaturesIndex=myFeaturesIndex,
                                                     myLabelIndex=myLabelIndex,
+                                                    selectedFeatureList=selectedFeaturesList,
                                                     statusPrintPrefix=statusPrintPrefix,
                                                     subTaskPrint=False,
                                                     randomSeed=randomSeed)
