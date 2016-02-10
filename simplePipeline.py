@@ -1,9 +1,14 @@
+import time
 import thesisFunctions
 
+
+startSecond = time.time()
+startTime = time.strftime('%a, %d %b %Y %X')
+
 # Parameters
-runScaleDatasets = False
-runFeatureEngineering = False
-runEnsembleModels = False
+runScaleDatasets = True
+runFeatureEngineering = True
+runEnsembleModels = True
 
 randomSeed = 47392
 
@@ -33,6 +38,14 @@ flowModelResult = thesisFunctions.flowModelPipeline(universalTestSetFileName,
                                                     runFeatureEngineering=runFeatureEngineering,
                                                     runEnsembleModels=runEnsembleModels)
 
+endSecond = time.time()
+endTime = time.strftime('%a, %d %b %Y %X')
+totalSeconds = endSecond - startSecond
+
+print()
+print('Start time:', startTime)
+print('End time:', endTime)
+print('Total: {} minutes and {} seconds'.format(int(totalSeconds // 60), round(totalSeconds % 60)))
 
 # # Visualization
 # scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x ** (1 / 2))

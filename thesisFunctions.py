@@ -305,7 +305,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     # if runTuneModels:
     print(statusPrintPrefix, 'Tuning models.')
 
-    ridgeParameters = [{'alpha': [0.1, 0.5, 1.0],
+    ridgeParameters = [{'alpha': [0.1, 0.2, 0.5, 1.0],
                         'normalize': [True, False]}]
     ridgeMethod = mltypes.ModellingMethod('Ridge Regression',
                                           sklearn.linear_model.Ridge)
@@ -313,9 +313,10 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                  ridgeMethod,
                                                  ridgeParameters,
                                                  tuneScoreMethod)
-    randomForestParameters = [{'n_estimators': [10, 20, 50],
+    randomForestParameters = [{'n_estimators': [50, 75, 100],
                                'max_features': [10, 'sqrt'],
-                               'random_state': [randomSeed]}]
+                               'random_state': [randomSeed],
+                               'n_jobs': [10]}]
     randomForestMethod = mltypes.ModellingMethod('Random Forest',
                                                  sklearn.ensemble.RandomForestRegressor)
     randomForestConfig = mltypes.TuneModelConfiguration(randomForestMethod.description,
@@ -323,7 +324,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                         randomForestParameters,
                                                         tuneScoreMethod)
     kNeighborsParameters = [{'n_neighbors': [2, 5, 10],
-                             'metric': ['minkowski', 'euclidean']}]
+                             'metric': ['minkowski'],
+                             'weights': ['uniform', 'distance']}]
     kNeighborsMethod = mltypes.ModellingMethod('K Nearest Neighbors',
                                                sklearn.neighbors.KNeighborsRegressor)
     kNeighborsConfig = mltypes.TuneModelConfiguration(kNeighborsMethod.description,
