@@ -1,22 +1,8 @@
-import os
-import fnmatch
-import pickle
-import copy
-import sklearn.feature_selection
-import sklearn.decomposition
-import sklearn.metrics
-import sklearn.linear_model
-import sklearn.ensemble
-import sklearn.neighbors
-import mlutilities.types as mltypes
-import mlutilities.dataTransformation as mldata
-import mlutilities.modeling as mlmodel
-import mlutilities.utilities as mlutils
 import thesisFunctions
 
 # Parameters
 runScaleDatasets = False
-runFeatureEngineering = True
+runFeatureEngineering = False
 runEnsembleModels = False
 
 randomSeed = 47392
