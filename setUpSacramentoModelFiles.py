@@ -60,7 +60,7 @@ for month in months:
         # Add columns that ID current region and month (1 if True, 0 if False) to each DataFrame, leaving off last one
         # in each list to prevent model being over-specified (actually the last two for the regions, because of the
         # 11371000 misclassification as CoastMnt explained above
-        for regionColumn in regions[:-1]:
+        for regionColumn in regions[:-2]:
 
             if regionColumn == regionForDF:
                 regionTrainingDF[regionColumn] = 1
