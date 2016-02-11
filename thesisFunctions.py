@@ -11,6 +11,7 @@ import sklearn.metrics
 import sklearn.linear_model
 import sklearn.ensemble
 import sklearn.neighbors
+import sklearn.tree
 import sklearn.svm
 import mlutilities.types as mltypes
 import mlutilities.dataTransformation as mldata
@@ -122,7 +123,8 @@ def createKFoldDataSets(kFolds, masterDataPath, myFeaturesIndex, myLabelIndex, r
 
         testPathPrefix = os.path.dirname(yearsOfInterestDataSet.path) + '/' + month + '_' + region
 
-        # From the subset DataSet, create k universal test sets and corresponding k wet/dry (depending on wetOrDry) training sets
+        # From the subset DataSet, create k universal test sets and corresponding k wet/dry (depending on wetOrDry)
+        # training sets
         splitDataSets = mldata.kFoldSplitDataSet(yearsOfInterestDataSet, kFolds, randomSeed=randomSeed,
                                                  testPathPrefix=testPathPrefix)
 
@@ -137,15 +139,15 @@ def createKFoldDataSets(kFolds, masterDataPath, myFeaturesIndex, myLabelIndex, r
         for fold in range(kFolds):
             universalTestDataSet = splitDataSets[fold].testDataSet
             universalTestObsIds = universalTestDataSet.dataFrame.ObsID.values
-            fullTrainDataFrame = fullDataSet.dataFrame.loc[ ~ fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
+            fullTrainDataFrame = fullDataSet.dataFrame.loc[~ fullDataSet.dataFrame.ObsID.isin(universalTestObsIds)]
 
             # Write this out to the proper folder.
-            fullTrainDataSet = mltypes.DataSet('All Years Training Set',
-                                               masterDataPath + month + '_' + region + '_all_' + str(fold) + '_train.csv',
-                                               'w',
-                                               dataFrame=fullTrainDataFrame,
-                                               featuresIndex=myFeaturesIndex,
-                                               labelIndex=myLabelIndex)
+            mltypes.DataSet('All Years Training Set',
+                            masterDataPath + month + '_' + region + '_all_' + str(fold) + '_train.csv',
+                            'w',
+                            dataFrame=fullTrainDataFrame,
+                            featuresIndex=myFeaturesIndex,
+                            labelIndex=myLabelIndex)
 
     return
 
@@ -254,10 +256,10 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     featureEngineeredDataSetAssociations = []
     if runFeatureEngineering:
         print(statusPrintPrefix, 'Engineering features.')
-        varianceThresholdPoint1Config = mltypes.FeatureEngineeringConfiguration('Variance Threshold .08',
-                                                                                'selection',
-                                                                                sklearn.feature_selection.VarianceThreshold,
-                                                                                {'threshold': .08})
+        varianceThresholdConfig = mltypes.FeatureEngineeringConfiguration('Variance Threshold .08',
+                                                                          'selection',
+                                                                          sklearn.feature_selection.VarianceThreshold,
+                                                                          {'threshold': .08})
         pca20Config = mltypes.FeatureEngineeringConfiguration('PCA n20',
                                                               'extraction',
                                                               sklearn.decomposition.PCA,
@@ -270,7 +272,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                                        'selection',
                                                                        mltypes.ExtractSpecificFeatures,
                                                                        {'featureList': selectedFeatureList})
-        featureEngineeringConfigs = [varianceThresholdPoint1Config, pca20Config, pca50Config, expertSelectedConfig]
+        featureEngineeringConfigs = [varianceThresholdConfig, pca20Config, pca50Config, expertSelectedConfig]
 
         for dataSetAssociation in dataSetAssociations:
 
@@ -321,8 +323,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                       kNeighborsParameters,
                                                       tuneScoreMethod)
     svmParameters = [{'C': [1.0, 10.0],
-                     'epsilon': [0.1, 0.2],
-                     'kernel': ['rbf', 'sigmoid']}]
+                      'epsilon': [0.1, 0.2],
+                      'kernel': ['rbf', 'sigmoid']}]
     svmMethod = mltypes.ModellingMethod(constants.supportVectorMachine,
                                         getSKLearnFunction(constants.supportVectorMachine))
     svmConfig = mltypes.TuneModelConfiguration(constants.supportVectorMachine,
@@ -347,7 +349,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                     adaBoostParameters,
                                                     tuneScoreMethod)
 
-    tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig, svmConfig, decisionTreeConfig, adaBoostConfig]
+    tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig,
+                        svmConfig, decisionTreeConfig, adaBoostConfig]
 
     counter = 1
     total = len(dataSetAssociations) * len(tuneModelConfigs)
@@ -356,7 +359,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
         for tuneModelConfig in tuneModelConfigs:
 
             if subTaskPrint:
-                print(statusPrintPrefix, 'Tuning (%s of %s):' % (counter, total), tuneModelConfig.description, 'for', dataSetAssociation.trainDataSet.description)
+                print(statusPrintPrefix, 'Tuning (%s of %s):' % (counter, total),
+                      tuneModelConfig.description, 'for', dataSetAssociation.trainDataSet.description)
             tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, tuneModelConfig, randomSeed)
             tuneModelResults.append(tuneModelResult)
             counter += 1
@@ -376,10 +380,11 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                 break
 
         # Make sure we found a match
-        if testDataSet == None:
+        if testDataSet is None:
             raise Exception('No SplitDataSet found matching this training DataSet:\n' + trainDataSet)
 
-        applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Train', 'Test'),
+        applyModelConfig = mltypes.ApplyModelConfiguration('Apply ' + tuneModelResult.description.replace('Train',
+                                                                                                          'Test'),
                                                            tuneModelResult.modellingMethod,
                                                            tuneModelResult.parameters,
                                                            trainDataSet,
@@ -403,7 +408,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
             bestWeight = float('-inf')
             stackingPredictorConfig = None
 
-            # Find models associated with that DataSet and get their information to build predictor configs for ensembles
+            # Find models associated with that DataSet and get their information to build predictor configs
+            # for ensembles
             for tuneModelResult in tuneModelResults:
                 if dataSetAssociation.trainDataSet == tuneModelResult.dataSet:
 
@@ -429,9 +435,9 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
 
                         # Hack: If the number of models I'm stacking is fewer than max_features, RandomForestRegressor
                         # will error out.
-                        if type(stackingPredictorConfig.predictorFunction()) == type(sklearn.ensemble.RandomForestRegressor()):
+                        if type(stackingPredictorConfig.predictorFunction()) == \
+                                type(sklearn.ensemble.RandomForestRegressor()):
                             stackingPredictorConfig.parameters['max_features'] = None
-
 
             # Create averaging ensemble
             averagingEnsembleModellingMethod = mltypes.ModellingMethod('Averaging Ensemble',
@@ -439,7 +445,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
             averagingEnsembleParameters = {'predictorConfigurations': predictorConfigs,
                                            'weights': weights}
             averagingEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
-                'Apply Averaging Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                'Apply Averaging Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train',
+                                                                                                               'Test'),
                 averagingEnsembleModellingMethod,
                 averagingEnsembleParameters,
                 dataSetAssociation.trainDataSet,
@@ -453,7 +460,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
             stackingEnsembleParameters = {'basePredictorConfigurations': predictorConfigs,
                                           'stackingPredictorConfiguration': stackingPredictorConfig}
             stackingEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
-                'Apply Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                'Apply Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train',
+                                                                                                              'Test'),
                 stackingEnsembleModellingMethod,
                 stackingEnsembleParameters,
                 dataSetAssociation.trainDataSet,
@@ -462,12 +470,13 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
             ensembleApplyModelConfigs.append(stackingEnsembleApplyModelConfig)
 
             stackingOFEnsembleModellingMethod = mltypes.ModellingMethod('Stacking OF Ensemble',
-                                                                      mltypes.StackingEnsemble)
+                                                                        mltypes.StackingEnsemble)
             stackingOFEnsembleParameters = {'basePredictorConfigurations': predictorConfigs,
-                                          'stackingPredictorConfiguration': stackingPredictorConfig,
-                                          'includeOriginalFeatures': True}
+                                            'stackingPredictorConfiguration': stackingPredictorConfig,
+                                            'includeOriginalFeatures': True}
             stackingOFEnsembleApplyModelConfig = mltypes.ApplyModelConfiguration(
-                'Apply OF Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train', 'Test'),
+                'Apply OF Stacking Ensemble for DataSet: ' + dataSetAssociation.trainDataSet.description.replace('Train',
+                                                                                                                 'Test'),
                 stackingOFEnsembleModellingMethod,
                 stackingOFEnsembleParameters,
                 dataSetAssociation.trainDataSet,
@@ -543,7 +552,6 @@ def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, selectedF
                             randomSeed,
                             modelApproach=modelApproach)
 
-
     # Run pipeline for each fold of the data
     allFoldScoreModelResultsDFs = []
     for fold in range(kFolds):
@@ -563,7 +571,8 @@ def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, selectedF
         foldScoreModelResultsDF = flowModelPipeline(universalTestSetFileName=universalTestSetFileName,
                                                     universalTestSetDescription=universalTestSetDescription,
                                                     basePath=masterDataPath + 'CurrentFoldData/',
-                                                    scoreOutputFilePath=masterDataPath + 'Output/scoreModelResults_' + str(fold) + '.csv',
+                                                    scoreOutputFilePath=masterDataPath + 'Output/scoreModelResults_' +
+                                                                        str(fold) + '.csv',
                                                     myFeaturesIndex=myFeaturesIndex,
                                                     myLabelIndex=myLabelIndex,
                                                     selectedFeatureList=selectedFeaturesList,
@@ -693,7 +702,7 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
 
             # Build pieces for applyModelConfig
             trainModelParameters = {'predictorConfigurations': predictorConfigs,
-                               'weights': weights}
+                                    'weights': weights}
             modelMethod = mltypes.ModellingMethod(modelDescription, mltypes.AveragingEnsemble)
 
         else:
@@ -701,7 +710,7 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
             # Parse trainModelParameters string for stacking ensemble so that its pieces can be correctly evaluated.
             originalFeaturesSearch = re.search("'includeOriginalFeatures': (.*?),", modelParameters)
 
-            if originalFeaturesSearch == None:
+            if originalFeaturesSearch is None:
 
                 # Then the stacking ensemble config must be using the default value, False
                 includeOriginalFeatures = False
@@ -762,7 +771,8 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
             modelMethod = mltypes.ModellingMethod(modelDescription, mltypes.StackingEnsemble)
 
     elif any(x in modelDescription for x in [constants.randomForest, constants.ridgeRegression, constants.kNeighbors,
-                                             constants.supportVectorMachine, constants.decisionTree, constants.adaBoost]):
+                                             constants.supportVectorMachine, constants.decisionTree,
+                                             constants.adaBoost]):
 
         # Get model parameters from text string in dictionary form
         trainModelParameters = eval(modelParameters)
@@ -867,7 +877,7 @@ def prepSacramentoData(month, region, wetOrDry=None, waterYearsFilePath=None, pr
     sacHUCs = pandas.read_csv(hucFile)
     sacHUCsWithRegions = pandas.read_csv(hucRegionFile)
     sacHUCsWithRegions = sacHUCsWithRegions.loc[:, ['HUC_12', 'AggEcoreg']]
-    sacHUCsWithRegions.rename(columns={'HUC_12':'HUC12'}, inplace=True)
+    sacHUCsWithRegions.rename(columns={'HUC_12': 'HUC12'}, inplace=True)
     sacHUCsWithRegions.drop_duplicates(subset='HUC12', inplace=True)
     sacHUCs = pandas.merge(sacHUCs, sacHUCsWithRegions, on='HUC12')
     regionHUCs = sacHUCs[sacHUCs.AggEcoreg == region]
@@ -891,15 +901,15 @@ def prepSacramentoData(month, region, wetOrDry=None, waterYearsFilePath=None, pr
     staticData['PERHOR'].fillna(method='ffill', inplace=True)
 
     # Join to build data set for region of Sacramento basin
-    climateData.rename(columns={'SITE':'HUC12'}, inplace=True)
+    climateData.rename(columns={'SITE': 'HUC12'}, inplace=True)
     regionData = pandas.merge(regionHUCs, climateData, on='HUC12')
     regionData = pandas.merge(regionData, staticData, on='HUC12')
 
     # Get rid of 1949 and 2011, since they have a bunch of missing climate data for oct and dec
-    regionData = regionData[ ~ regionData.YEAR.isin([1949, 2011])]
+    regionData = regionData[~ regionData.YEAR.isin([1949, 2011])]
 
     # Subset to just wet or dry years when trying to create a specific wet/dry model
-    if wetOrDry != None:
+    if wetOrDry is not None:
         yearsOfInterest = getYearsOfInterest(waterYearsFilePath, month, proportionOfInterest, wetOrDry)
         regionData = regionData[regionData.YEAR.isin(yearsOfInterest)]
 
@@ -977,7 +987,7 @@ def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, 
         for month in months:
 
             # Read in predictions
-            if region != None:
+            if region is not None:
                 predictionsFile = baseFolder + region + '/' + month + '/Prediction/sacramentoPredictions.csv'
             else:
                 predictionsFile = baseFolder + 'Prediction/sacramentoPredictions_' + month + '.csv'
@@ -992,7 +1002,7 @@ def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, 
     sortedAllPredictions = allPredictions.sort(columns=['MONTH', 'YEAR', 'HUC12'])
 
     # Output results for this regional model to file
-    if region != None:
+    if region is not None:
         outputFile = outputFolder + outputPrefix + region + '.csv'
     else:
         outputFile = outputFolder + outputPrefix + '.csv'
