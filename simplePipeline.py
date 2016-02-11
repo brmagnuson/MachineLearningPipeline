@@ -7,8 +7,8 @@ startSecond = time.time()
 startTime = time.strftime('%a, %d %b %Y %X')
 
 # Parameters
-runScaleDatasets = False
-runFeatureEngineering = False
+runScaleDatasets = True
+runFeatureEngineering = True
 runEnsembleModels = True
 
 randomSeed = constants.randomSeed

@@ -424,8 +424,12 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                         # The higher MSE is, the worse it is, so we want to invert its weight
                         weight = maximumMSE + 1 - tuneModelResult.bestScore
                     else:
-                        # R squared can be negative, and weights should all be positive
-                        weight = tuneModelResult.bestScore
+                        # R squared can be negative, and weights should all be zero or positive.
+                        if tuneModelResult.bestScore < 0:
+                            weight = 0
+                        else:
+                            weight = tuneModelResult.bestScore
+
                     weights.append(weight)
 
                     # If tuneModelResult has a better score than previously seen, make it the stacked predictor config
