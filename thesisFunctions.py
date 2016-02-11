@@ -433,11 +433,13 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                         bestWeight = weight
                         stackingPredictorConfig = copy.deepcopy(predictorConfig)
 
-                        # Hack: If the number of models I'm stacking is fewer than max_features, RandomForestRegressor
-                        # will error out.
+                        # Hack: If stacking with a RandomForestRegressor and the number of models I'm stacking is fewer
+                        # than max_features (which might occur when max_features was set to a specific number),
+                        # RandomForestRegressor will error out.
                         if type(stackingPredictorConfig.predictorFunction()) == \
                                 type(sklearn.ensemble.RandomForestRegressor()):
-                            stackingPredictorConfig.parameters['max_features'] = None
+                            if isinstance(stackingPredictorConfig.parameters['max_features'], int):
+                                stackingPredictorConfig.parameters['max_features'] = None
 
             # Create averaging ensemble
             averagingEnsembleModellingMethod = mltypes.ModellingMethod('Averaging Ensemble',
@@ -759,10 +761,13 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
                     stackingPredictorConfig = copy.deepcopy(predictorConfig)
                     break
 
-            # Hack: If the number of models I'm stacking in a random forest stackingPredictorConfig is fewer than
-            # max_features, RandomForestRegressor will error out.
+            # Hack: If stacking with a RandomForestRegressor and the number of models I'm stacking is fewer than
+            # max_features (which might occur when max_features was set to a specific number), RandomForestRegressor
+            # will error out.
             if type(stackingPredictorConfig.predictorFunction()) == type(sklearn.ensemble.RandomForestRegressor()):
-                stackingPredictorConfig.parameters['max_features'] = None
+                if isinstance(stackingPredictorConfig.parameters['max_features'], int):
+                    stackingPredictorConfig.parameters['max_features'] = None
+
 
             # Build pieces for applyModelConfig
             trainModelParameters = {'basePredictorConfigurations': predictorConfigs,
