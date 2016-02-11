@@ -188,10 +188,6 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     """
 
     # Parameters
-    # selectedFeatureList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12',
-    #                        't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12',
-    #                        'p2sum', 'p3sum', 'p6sum', 'PERMAVE', 'RFACT', 'DRAIN_SQKM', 'ELEV_MEAN_M_BASIN_30M',
-    #                        'WD_BASIN']
     tuneScoreMethod = 'r2'
     # tuneScoreMethod = 'mean_squared_error'
     r2Method = mltypes.ModelScoreMethod('R Squared', sklearn.metrics.r2_score)
@@ -201,7 +197,6 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     testScoreMethods = [r2Method, meanOEMethod, sdOEMethod, mseMethod]
 
     # Prepare datasets
-    # if runPrepareDatasets:
     print(statusPrintPrefix, 'Preparing input data sets.')
 
     # Get base test set from folder
@@ -271,14 +266,6 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                               'extraction',
                                                               sklearn.decomposition.PCA,
                                                               {'n_components': 50})
-        # ica20Config = mltypes.FeatureEngineeringConfiguration('ICA n20',
-        #                                                     'extraction',
-        #                                                     sklearn.decomposition.FastICA,
-        #                                                     {'n_components': 20, 'max_iter': 2500, 'random_state': randomSeed})
-        # ica50Config = mltypes.FeatureEngineeringConfiguration('ICA n50',
-        #                                                       'extraction',
-        #                                                       sklearn.decomposition.FastICA,
-        #                                                       {'n_components': 50, 'max_iter': 2500, 'random_state': randomSeed})
         expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
                                                                        'selection',
                                                                        mltypes.ExtractSpecificFeatures,
@@ -304,7 +291,6 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     dataSetAssociations += featureEngineeredDataSetAssociations
 
     # Tune models
-    # if runTuneModels:
     print(statusPrintPrefix, 'Tuning models.')
 
     ridgeParameters = [{'alpha': [0.0, 0.1, 0.5, 1.0],
@@ -375,14 +361,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
             tuneModelResults.append(tuneModelResult)
             counter += 1
 
-    # # Model tuning result reporting
-    # if tuneScoreMethod == 'mean_squared_error':
-    #     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: x.bestScore)
-    # else:
-    #     sortedTuneModelResults = sorted(tuneModelResults, key=lambda x: -x.bestScore)
-
     # Apply models
-    # if runApplyModels:
     print(statusPrintPrefix, 'Applying models to test data.')
 
     # Build single-model ApplyModelConfigurations

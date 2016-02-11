@@ -8,3 +8,5 @@ kNeighbors = 'K Nearest Neighbors'
 supportVectorMachine = 'Support Vector Machine'
 decisionTree = 'Decision Tree'
 adaBoost = 'Ada Boost'
+
+randomSeed = 47392

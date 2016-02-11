@@ -1,6 +1,7 @@
 import time
 import threading
 import thesisFunctions
+import constants
 
 # baseDirectoryPath = 'AllMonthsDryHalf/'
 # wetOrDry = 'dry'
@@ -9,7 +10,7 @@ wetOrDry = 'wet'
 myFeaturesIndex = 6
 myLabelIndex = 5
 kFolds = 5
-randomSeed = 47392
+randomSeed = constants.randomSeed
 multiThreading = True
 
 # regions = ['CoastMnt', 'IntMnt', 'Xeric']

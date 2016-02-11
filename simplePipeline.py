@@ -1,5 +1,6 @@
 import time
 import thesisFunctions
+import constants
 
 
 startSecond = time.time()
@@ -10,7 +11,7 @@ runScaleDatasets = False
 runFeatureEngineering = False
 runEnsembleModels = True
 
-randomSeed = 47392
+randomSeed = constants.randomSeed
 
 month = 'jul'
 region = 'IntMnt'
