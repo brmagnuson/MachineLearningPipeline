@@ -11,6 +11,7 @@ import sklearn.metrics
 import sklearn.linear_model
 import sklearn.ensemble
 import sklearn.neighbors
+import sklearn.svm
 import mlutilities.types as mltypes
 import mlutilities.dataTransformation as mldata
 import mlutilities.modeling as mlmodel
@@ -305,7 +306,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     # if runTuneModels:
     print(statusPrintPrefix, 'Tuning models.')
 
-    ridgeParameters = [{'alpha': [0.1, 0.2, 0.5, 1.0],
+    ridgeParameters = [{'alpha': [0.0, 0.1, 0.5, 1.0],
                         'normalize': [True, False]}]
     ridgeMethod = mltypes.ModellingMethod('Ridge Regression',
                                           sklearn.linear_model.Ridge)
@@ -332,8 +333,34 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                       kNeighborsMethod,
                                                       kNeighborsParameters,
                                                       tuneScoreMethod)
+    svParameters = [{'C': [1.0, 10.0],
+                     'epsilon': [0.1, 0.2],
+                     'kernel': ['rbf', 'sigmoid']}]
+    svMethod = mltypes.ModellingMethod('Support Vector Machine',
+                                       sklearn.svm.SVR)
+    svConfig = mltypes.TuneModelConfiguration(svMethod.description,
+                                              svMethod,
+                                              svParameters,
+                                              tuneScoreMethod)
+    decisionTreeParameters = [{'max_features': ['sqrt', 'auto'],
+                               'random_state': [randomSeed]}]
+    decisionTreeMethod = mltypes.ModellingMethod('Decision Tree',
+                                                 sklearn.tree.DecisionTreeRegressor)
+    decisionTreeConfig = mltypes.TuneModelConfiguration(decisionTreeMethod.description,
+                                                        decisionTreeMethod,
+                                                        decisionTreeParameters,
+                                                        tuneScoreMethod)
+    adaBoostParameters = [{'n_estimators': [50, 100],
+                           'learning_rate': [0.5, 1.0],
+                           'random_state': [randomSeed]}]
+    adaBoostMethod = mltypes.ModellingMethod('Ada Boost',
+                                             sklearn.ensemble.AdaBoostRegressor)
+    adaBoostConfig = mltypes.TuneModelConfiguration(adaBoostMethod.description,
+                                                    adaBoostMethod,
+                                                    adaBoostParameters,
+                                                    tuneScoreMethod)
 
-    tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig]
+    tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig, svConfig, decisionTreeConfig, adaBoostConfig]
 
     counter = 1
     total = len(dataSetAssociations) * len(tuneModelConfigs)

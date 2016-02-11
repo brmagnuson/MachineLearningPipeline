@@ -6,8 +6,8 @@ startSecond = time.time()
 startTime = time.strftime('%a, %d %b %Y %X')
 
 # Parameters
-runScaleDatasets = True
-runFeatureEngineering = True
+runScaleDatasets = False
+runFeatureEngineering = False
 runEnsembleModels = True
 
 randomSeed = 47392
