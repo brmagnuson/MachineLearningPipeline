@@ -16,6 +16,7 @@ import mlutilities.types as mltypes
 import mlutilities.dataTransformation as mldata
 import mlutilities.modeling as mlmodel
 import mlutilities.utilities as mlutils
+import constants
 
 
 # The following are functions specifically for my thesis and data, rather than generalizable functions as in the
@@ -308,9 +309,9 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
 
     ridgeParameters = [{'alpha': [0.0, 0.1, 0.5, 1.0],
                         'normalize': [True, False]}]
-    ridgeMethod = mltypes.ModellingMethod('Ridge Regression',
-                                          sklearn.linear_model.Ridge)
-    ridgeConfig = mltypes.TuneModelConfiguration(ridgeMethod.description,
+    ridgeMethod = mltypes.ModellingMethod(constants.ridgeRegression,
+                                          getSKLearnFunction(constants.ridgeRegression))
+    ridgeConfig = mltypes.TuneModelConfiguration(constants.ridgeRegression,
                                                  ridgeMethod,
                                                  ridgeParameters,
                                                  tuneScoreMethod)
@@ -318,49 +319,49 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                'max_features': [10, 'sqrt'],
                                'random_state': [randomSeed],
                                'n_jobs': [10]}]
-    randomForestMethod = mltypes.ModellingMethod('Random Forest',
-                                                 sklearn.ensemble.RandomForestRegressor)
-    randomForestConfig = mltypes.TuneModelConfiguration(randomForestMethod.description,
+    randomForestMethod = mltypes.ModellingMethod(constants.randomForest,
+                                                 getSKLearnFunction(constants.randomForest))
+    randomForestConfig = mltypes.TuneModelConfiguration(constants.randomForest,
                                                         randomForestMethod,
                                                         randomForestParameters,
                                                         tuneScoreMethod)
     kNeighborsParameters = [{'n_neighbors': [2, 5, 10],
                              'metric': ['minkowski'],
                              'weights': ['uniform', 'distance']}]
-    kNeighborsMethod = mltypes.ModellingMethod('K Nearest Neighbors',
-                                               sklearn.neighbors.KNeighborsRegressor)
-    kNeighborsConfig = mltypes.TuneModelConfiguration(kNeighborsMethod.description,
+    kNeighborsMethod = mltypes.ModellingMethod(constants.kNeighbors,
+                                               getSKLearnFunction(constants.kNeighbors))
+    kNeighborsConfig = mltypes.TuneModelConfiguration(constants.kNeighbors,
                                                       kNeighborsMethod,
                                                       kNeighborsParameters,
                                                       tuneScoreMethod)
-    svParameters = [{'C': [1.0, 10.0],
+    svmParameters = [{'C': [1.0, 10.0],
                      'epsilon': [0.1, 0.2],
                      'kernel': ['rbf', 'sigmoid']}]
-    svMethod = mltypes.ModellingMethod('Support Vector Machine',
-                                       sklearn.svm.SVR)
-    svConfig = mltypes.TuneModelConfiguration(svMethod.description,
-                                              svMethod,
-                                              svParameters,
-                                              tuneScoreMethod)
+    svmMethod = mltypes.ModellingMethod(constants.supportVectorMachine,
+                                        getSKLearnFunction(constants.supportVectorMachine))
+    svmConfig = mltypes.TuneModelConfiguration(constants.supportVectorMachine,
+                                               svmMethod,
+                                               svmParameters,
+                                               tuneScoreMethod)
     decisionTreeParameters = [{'max_features': ['sqrt', 'auto'],
                                'random_state': [randomSeed]}]
-    decisionTreeMethod = mltypes.ModellingMethod('Decision Tree',
-                                                 sklearn.tree.DecisionTreeRegressor)
-    decisionTreeConfig = mltypes.TuneModelConfiguration(decisionTreeMethod.description,
+    decisionTreeMethod = mltypes.ModellingMethod(constants.decisionTree,
+                                                 getSKLearnFunction(constants.decisionTree))
+    decisionTreeConfig = mltypes.TuneModelConfiguration(constants.decisionTree,
                                                         decisionTreeMethod,
                                                         decisionTreeParameters,
                                                         tuneScoreMethod)
     adaBoostParameters = [{'n_estimators': [50, 100],
                            'learning_rate': [0.5, 1.0],
                            'random_state': [randomSeed]}]
-    adaBoostMethod = mltypes.ModellingMethod('Ada Boost',
-                                             sklearn.ensemble.AdaBoostRegressor)
-    adaBoostConfig = mltypes.TuneModelConfiguration(adaBoostMethod.description,
+    adaBoostMethod = mltypes.ModellingMethod(constants.adaBoost,
+                                             getSKLearnFunction(constants.adaBoost))
+    adaBoostConfig = mltypes.TuneModelConfiguration(constants.adaBoost,
                                                     adaBoostMethod,
                                                     adaBoostParameters,
                                                     tuneScoreMethod)
 
-    tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig, svConfig, decisionTreeConfig, adaBoostConfig]
+    tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig, svmConfig, decisionTreeConfig, adaBoostConfig]
 
     counter = 1
     total = len(dataSetAssociations) * len(tuneModelConfigs)
@@ -615,12 +616,18 @@ def getSKLearnFunction(description):
     :param description:
     :return:
     """
-    if description == 'Ridge Regression':
+    if description == constants.ridgeRegression:
         predictorFunction = sklearn.linear_model.Ridge
-    elif description == 'Random Forest':
+    elif description == constants.randomForest:
         predictorFunction = sklearn.ensemble.RandomForestRegressor
-    elif description == 'K Nearest Neighbors':
+    elif description == constants.kNeighbors:
         predictorFunction = sklearn.neighbors.KNeighborsRegressor
+    elif description == constants.supportVectorMachine:
+        predictorFunction = sklearn.svm.SVR
+    elif description == constants.decisionTree:
+        predictorFunction = sklearn.tree.DecisionTreeRegressor
+    elif description == constants.adaBoost:
+        predictorFunction = sklearn.ensemble.AdaBoostRegressor
     else:
         raise Exception('No matching sklearn function found.')
     return predictorFunction
@@ -690,7 +697,8 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
 
             # Parse each predictor configuration
             predictorConfigs = []
-            predictorTypeList = ['Ridge Regression', 'Random Forest', 'K Nearest Neighbors']
+            predictorTypeList = [constants.ridgeRegression, constants.randomForest, constants.kNeighbors,
+                                 constants.supportVectorMachine, constants.decisionTree, constants.adaBoost]
             for predictorType in predictorTypeList:
 
                 # Get function object that matches predictorType
@@ -732,7 +740,8 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
 
             # Parse each base predictor configuration
             predictorConfigs = []
-            predictorTypeList = ['Ridge Regression', 'Random Forest', 'K Nearest Neighbors']
+            predictorTypeList = [constants.ridgeRegression, constants.randomForest, constants.kNeighbors,
+                                 constants.supportVectorMachine, constants.decisionTree, constants.adaBoost]
             for predictorType in predictorTypeList:
 
                 # Get function object that matches predictorType
@@ -750,7 +759,8 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
 
             try:
                 # Which of the base predictor configs do we use to stack the predictions?
-                stackingPredictorDescription = re.search("'stackingPredictorConfiguration': (.*?) {", modelParameters).group(1)
+                stackingPredictorDescription = re.search("'stackingPredictorConfiguration': "
+                                                         "(.*?) {", modelParameters).group(1)
 
             except AttributeError:
                 raise Exception('Stacking Predictor not found in Stacking Ensemble.')
@@ -772,7 +782,8 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
                                     'includeOriginalFeatures': includeOriginalFeatures}
             modelMethod = mltypes.ModellingMethod(modelDescription, mltypes.StackingEnsemble)
 
-    elif any(x in modelDescription for x in ['Random Forest', 'Ridge Regression', 'K Nearest Neighbors']):
+    elif any(x in modelDescription for x in [constants.randomForest, constants.ridgeRegression, constants.kNeighbors,
+                                             constants.supportVectorMachine, constants.decisionTree, constants.adaBoost]):
 
         # Get model parameters from text string in dictionary form
         trainModelParameters = eval(modelParameters)
@@ -1039,9 +1050,6 @@ def formatWaterYearPredictions(waterYear, predictionsFile):
     yearPath = predictionsFile.split('.')[0] + str(calendarYear) + '.csv'
     yearPredictionsDF.to_csv(yearPath, index=False)
     return
-
-
-# def calculateRatios(flowDataFrame, month, year):
 
 
 
