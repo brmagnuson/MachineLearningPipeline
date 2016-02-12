@@ -50,6 +50,7 @@ for region in regions:
             thesisFunctions.runKFoldPipeline(baseDirectoryPath,
                                              myFeaturesIndex,
                                              myLabelIndex,
+                                             selectedFeatureList,
                                              kFolds,
                                              wetOrDry,
                                              month,

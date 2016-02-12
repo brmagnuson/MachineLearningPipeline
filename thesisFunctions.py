@@ -305,8 +305,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
                                                  tuneScoreMethod)
     randomForestParameters = [{'n_estimators': [50, 75, 100],
                                'max_features': [10, 'sqrt'],
-                               'random_state': [randomSeed],
-                               'n_jobs': [10]}]
+                               'random_state': [randomSeed]}]
     randomForestMethod = mltypes.ModellingMethod(constants.randomForest,
                                                  getSKLearnFunction(constants.randomForest))
     randomForestConfig = mltypes.TuneModelConfiguration(constants.randomForest,
