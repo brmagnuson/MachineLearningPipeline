@@ -360,7 +360,10 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
             if subTaskPrint:
                 print(statusPrintPrefix, 'Tuning (%s of %s):' % (counter, total),
                       tuneModelConfig.description, 'for', dataSetAssociation.trainDataSet.description)
-            tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet, tuneModelConfig, randomSeed)
+            tuneModelResult = mlmodel.tuneModel(dataSetAssociation.trainDataSet,
+                                                tuneModelConfig,
+                                                randomSeed,
+                                                constants.n_jobs)
             tuneModelResults.append(tuneModelResult)
             counter += 1
 

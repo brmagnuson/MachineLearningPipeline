@@ -10,3 +10,5 @@ decisionTree = 'Decision Tree'
 adaBoost = 'Ada Boost'
 
 randomSeed = 47392
+
+n_jobs = 1

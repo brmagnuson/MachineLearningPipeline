@@ -4,7 +4,7 @@ import sklearn.cross_validation
 import mlutilities.types
 
 
-def tuneModel(dataSet, tuneModelConfiguration, randomSeed=None):
+def tuneModel(dataSet, tuneModelConfiguration, randomSeed=None, n_jobs=1):
     """
     Finds the best combination of a set of model parameters for a DataSet.
     :param dataSet: Presumes that the last column in nonFeaturesDataFrame is the label.
@@ -23,7 +23,8 @@ def tuneModel(dataSet, tuneModelConfiguration, randomSeed=None):
                                                                                              n_folds=5,
                                                                                              shuffle=True,
                                                                                              random_state=randomSeed),
-                                                           refit=False)
+                                                           refit=False,
+                                                           n_jobs=n_jobs)
     gridSearchPredictor.fit(features, label)
 
     # GridSearchCV returns negative scores for loss functions (like MSE) so that highest score is best, so this
