@@ -513,7 +513,10 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
         for applyModelConfig in applyModelConfigs:
 
             arguments = {'applyModelConfiguration': applyModelConfig}
-            statusPrint = statusPrintPrefix + ' Applying ({} of {})'.format(counter, total)
+            if subTaskPrint:
+                statusPrint = statusPrintPrefix + ' Applying ({} of {})'.format(counter, total)
+            else:
+                statusPrint = None
             applyModelResultThread = threading.Thread(target=getResultsFromThreads,
                                                       args=(mlmodel.applyModel, arguments, applyModelResults, statusPrint))
             applyModelResultThreads.append(applyModelResultThread)
@@ -553,7 +556,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
 
 
 def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, selectedFeaturesList, kFolds=5,
-                     modelApproach=None, month=None, region=None, randomSeed=None):
+                     modelApproach=None, month=None, region=None, randomSeed=None, multiThreadApplyModels=False):
 
     """
     Splits each region-month base dataset into k-fold test/train sets and runs the pipeline for each one.
@@ -618,7 +621,8 @@ def runKFoldPipeline(baseDirectoryPath, myFeaturesIndex, myLabelIndex, selectedF
                                                     selectedFeatureList=selectedFeaturesList,
                                                     statusPrintPrefix=statusPrintPrefix,
                                                     subTaskPrint=False,
-                                                    randomSeed=randomSeed)
+                                                    randomSeed=randomSeed,
+                                                    multiThreadApplyModels=multiThreadApplyModels)
 
         allFoldScoreModelResultsDFs.append(foldScoreModelResultsDF)
 

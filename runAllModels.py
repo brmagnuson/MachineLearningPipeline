@@ -12,6 +12,7 @@ myLabelIndex = 5
 kFolds = 5
 randomSeed = constants.randomSeed
 multiThreading = False
+multiThreadApplyModels = True
 
 # regions = ['CoastMnt', 'IntMnt', 'Xeric']
 regions = ['IntMnt']
@@ -40,7 +41,8 @@ for region in regions:
                                                                                 wetOrDry,
                                                                                 month,
                                                                                 region,
-                                                                                randomSeed))
+                                                                                randomSeed,
+                                                                                multiThreadApplyModels))
             threads.append(t)
 
         else:
@@ -55,7 +57,8 @@ for region in regions:
                                              wetOrDry,
                                              month,
                                              region,
-                                             randomSeed)
+                                             randomSeed,
+                                             multiThreadApplyModels)
             print()
 
 if multiThreading:
