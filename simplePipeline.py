@@ -10,6 +10,7 @@ startTime = time.strftime('%a, %d %b %Y %X')
 runScaleDatasets = True
 runFeatureEngineering = True
 runEnsembleModels = True
+multiThreadApplyModels = True
 
 randomSeed = constants.randomSeed
 
@@ -37,7 +38,8 @@ flowModelResult = thesisFunctions.flowModelPipeline(universalTestSetFileName,
                                                     randomSeed=randomSeed,
                                                     runScaleDatasets=runScaleDatasets,
                                                     runFeatureEngineering=runFeatureEngineering,
-                                                    runEnsembleModels=runEnsembleModels)
+                                                    runEnsembleModels=runEnsembleModels,
+                                                    multiThreadApplyModels=multiThreadApplyModels)
 
 endSecond = time.time()
 endTime = time.strftime('%a, %d %b %Y %X')

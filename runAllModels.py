@@ -3,15 +3,15 @@ import threading
 import thesisFunctions
 import constants
 
-# baseDirectoryPath = 'AllMonthsDryHalf/'
-# wetOrDry = 'dry'
-baseDirectoryPath = 'AllMonthsWetHalf/'
-wetOrDry = 'wet'
+baseDirectoryPath = 'AllMonthsDryHalf/'
+wetOrDry = 'dry'
+# baseDirectoryPath = 'AllMonthsWetHalf/'
+# wetOrDry = 'wet'
 myFeaturesIndex = 6
 myLabelIndex = 5
 kFolds = 5
 randomSeed = constants.randomSeed
-multiThreading = True
+multiThreading = False
 
 # regions = ['CoastMnt', 'IntMnt', 'Xeric']
 regions = ['IntMnt']

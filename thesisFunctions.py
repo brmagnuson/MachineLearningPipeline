@@ -1,5 +1,6 @@
 import os
 import shutil
+import threading
 import math
 import fnmatch
 import copy
@@ -170,9 +171,15 @@ def copyFoldDataSets(fold, masterDataPath):
     return
 
 
+def getResultsFromThreads(function, arguments, listForAppending, statusPrint=None):
+    if statusPrint is not None:
+        print(statusPrint)
+    listForAppending.append(function(**arguments))
+
 def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, basePath, scoreOutputFilePath,
                       myFeaturesIndex, myLabelIndex, selectedFeatureList, statusPrintPrefix='', subTaskPrint=True,
-                      randomSeed=None, runScaleDatasets=True, runFeatureEngineering=True, runEnsembleModels=True):
+                      randomSeed=None, runScaleDatasets=True, runFeatureEngineering=True, runEnsembleModels=True,
+                      multiThreadApplyModels=False):
 
     """
     Runs the pipeline for a given universal test set.
@@ -351,6 +358,7 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     tuneModelConfigs = [ridgeConfig, randomForestConfig, kNeighborsConfig,
                         svmConfig, decisionTreeConfig, adaBoostConfig]
 
+    # Build tune model configurations
     counter = 1
     total = len(dataSetAssociations) * len(tuneModelConfigs)
     tuneModelResults = []
@@ -496,7 +504,31 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
         applyModelConfigs += ensembleApplyModelConfigs
 
     # Apply models to test data
-    applyModelResults = mlmodel.applyModels(applyModelConfigs, subTaskPrint=subTaskPrint)
+    if multiThreadApplyModels:
+        counter = 1
+        total = len(applyModelConfigs)
+        applyModelResults = []
+        applyModelResultThreads = []
+
+        for applyModelConfig in applyModelConfigs:
+
+            arguments = {'applyModelConfiguration': applyModelConfig}
+            statusPrint = statusPrintPrefix + ' Applying ({} of {})'.format(counter, total)
+            applyModelResultThread = threading.Thread(target=getResultsFromThreads,
+                                                      args=(mlmodel.applyModel, arguments, applyModelResults, statusPrint))
+            applyModelResultThreads.append(applyModelResultThread)
+            counter += 1
+
+        # Start all threads
+        for applyModelResultThread in applyModelResultThreads:
+            applyModelResultThread.start()
+
+        # Wait for all threads to finish populating applyModelResults before continuing
+        for applyModelResultThread in applyModelResultThreads:
+            applyModelResultThread.join()
+
+    else:
+        applyModelResults = mlmodel.applyModels(applyModelConfigs, subTaskPrint=subTaskPrint)
 
     # Score models
     # if runScoreModels:
