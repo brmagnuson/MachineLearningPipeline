@@ -16,6 +16,7 @@ selectedFeatureList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9
                        'p2sum', 'p3sum', 'p6sum', 'PERMAVE', 'RFACT', 'DRAIN_SQKM', 'ELEV_MEAN_M_BASIN_30M',
                        'WD_BASIN', 'IntMnt', 'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug',
                        'sep', 'oct', 'nov']
+multiThreadApplyModels = True
 
 # Run the flow model pipeline for five folds
 thesisFunctions.runKFoldPipeline(baseDirectoryPath,
@@ -24,7 +25,8 @@ thesisFunctions.runKFoldPipeline(baseDirectoryPath,
                                  selectedFeatureList,
                                  kFolds,
                                  modelApproach,
-                                 randomSeed=randomSeed)
+                                 randomSeed=randomSeed,
+                                 multiThreadApplyModels=multiThreadApplyModels)
 
 
 endSecond = time.time()
