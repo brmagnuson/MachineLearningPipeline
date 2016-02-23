@@ -907,7 +907,7 @@ def findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, myFeature
 
 def prepSacramentoData(month, region, wetOrDry=None, waterYearsFilePath=None, proportionOfInterest=None):
 
-    hucFile = '../SacramentoData/Sacramento_basin_huc12_v2.csv'
+    hucFile = '../SacramentoData/Sacramento_basin_huc12_v3.csv'
     hucRegionFile = '../SacramentoData/Sacramento_huc12_ecoregions.csv'
     staticFile = '../SacramentoData/static_vars/h12.static.vars.csv'
     climateBasePath = '../SacramentoData/climate_vars/'

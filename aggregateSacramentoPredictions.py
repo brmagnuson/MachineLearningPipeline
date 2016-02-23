@@ -12,6 +12,5 @@ outputPrefix = 'SacramentoData'
 aggregateFile = thesisFunctions.aggregateSacPredictions(baseFolders, outputFolder, outputPrefix, months)
 
 # Output file for specific water year for use in DWRAT
-# aggregateFile = outputFolder + outputPrefix + region + '.csv'
 waterYear = 1977
 thesisFunctions.formatWaterYearPredictions(waterYear, aggregateFile)

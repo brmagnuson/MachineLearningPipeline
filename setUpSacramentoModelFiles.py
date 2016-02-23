@@ -6,7 +6,6 @@ import thesisFunctions
 sacBasePath = 'SacramentoModel/'
 rfDataPath = '../RF_model_data/data/model_training/'
 
-# Just use IntMnt and Xeric regions, because nothing from the CoastMnt dataset is in the Sacramento watershed
 regions = ['IntMnt', 'Xeric', 'CoastMnt']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 # months = ['jan', 'feb']
