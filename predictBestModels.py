@@ -9,7 +9,7 @@ modelApproach = 'dry'
 # modelApproach = 'wet'
 
 # Parameters
-multiThreading = False
+multiThreading = True
 randomSeed = constants.randomSeed
 trainFeaturesIndex = 6
 trainLabelIndex = 5

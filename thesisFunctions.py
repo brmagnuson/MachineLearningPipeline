@@ -715,7 +715,7 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
 
             try:
                 # Find weights in trainModelParameters string and convert to list
-                weights = re.search("'weights': (.*?])", modelParameters).group(1)
+                weights = re.search("'weights': (\[.*?])", modelParameters).group(1)
                 weights = eval(weights)
 
             except AttributeError:
