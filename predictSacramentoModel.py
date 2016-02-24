@@ -23,8 +23,13 @@ months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 
 
 # Predict for the Sacramento river
 for month in months:
+    if month == 'jan':
+        printLog = True
+    else:
+        printLog = False
     thesisFunctions.processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex,
-                                          selectedFeaturesList, randomSeed, modelApproach, month=month)
+                                          selectedFeaturesList, randomSeed, modelApproach,
+                                          month=month, printLog=printLog)
 
 print()
 

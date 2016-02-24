@@ -9,7 +9,7 @@ modelApproach = 'dry'
 # modelApproach = 'wet'
 
 # Parameters
-multiThreading = True
+multiThreading = False
 randomSeed = constants.randomSeed
 trainFeaturesIndex = 6
 trainLabelIndex = 5
@@ -18,8 +18,9 @@ selectedFeaturesList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p
                         't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12',
                         'p2sum', 'p3sum', 'p6sum', 'PERMAVE', 'RFACT', 'DRAIN_SQKM', 'ELEV_MEAN_M_BASIN_30M',
                         'WD_BASIN']
+printLog = True
 
-regions = ['IntMnt']
+regions = ['IntMnt', 'Xeric']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 startSecond = time.time()
@@ -42,14 +43,16 @@ for region in regions:
                                        randomSeed,
                                        modelApproach,
                                        region,
-                                       month))
+                                       month,
+                                       printLog))
             threads.append(t)
 
         else:
 
             # Run each prediction process in sequence
             thesisFunctions.processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex,
-                                                  selectedFeaturesList, randomSeed, modelApproach, region, month)
+                                                  selectedFeaturesList, randomSeed, modelApproach, region, month,
+                                                  printLog)
 
 if multiThreading:
 

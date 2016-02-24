@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 import threading
 import math
 import fnmatch
@@ -838,8 +839,34 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
     return applyModelConfig
 
 
+def outputPredictionLog(logPath, applyModelConfig, statistics=None):
+
+    """
+    Outputs a log of the applyModelConfig being used to predict.
+    :param logPath:
+    :param applyModelConfig:
+    :param statistics:
+    :return:
+    """
+
+    # Build text string
+    text = 'Date: ' + time.strftime('%a, %d %b %Y %X') + '\n\n'
+    text += 'Prediction dataset: ' + str(applyModelConfig.testDataSet) + '\n'
+    text += 'Prediction method: ' + applyModelConfig.modellingMethod.description + '\n'
+    text += 'Prediction parameters: ' + str(applyModelConfig.parameters) + '\n\n'
+
+    if statistics is not None:
+        text += 'Estimated Statistics:\n'
+        for statistic, value in statistics.iteritems():
+            text += statistic + ': ' + str(value) + '\n'
+
+    # Output to file
+    with open(logPath, 'w') as logFile:
+        logFile.write(text)
+
+
 def findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, myFeaturesIndex, myLabelIndex,
-                        selectedFeaturesList, month, region=None, modelRowIndex=0):
+                        selectedFeaturesList, month, region=None, modelRowIndex=0, printLog=False, logPath=None):
 
     # Read in score model results files.
     averageFile = masterDataPath + 'Output/scoreModelResults_average.csv'
@@ -901,6 +928,9 @@ def findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, myFeature
                                                                predictionDataSet)
 
     # Train model and predict dataset
+    if printLog:
+        statistics = bestModel[2:]
+        outputPredictionLog(logPath, applyModelConfig, statistics)
     applyModelResult = mlmodel.applyModel(applyModelConfig)
     return applyModelResult
 
@@ -981,8 +1011,8 @@ def outputPredictions(applyModelResult, outputPath):
     return
 
 
-def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex,
-                          selectedFeaturesList, randomSeed, modelApproach, region=None, month=None):
+def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex, selectedFeaturesList,
+                          randomSeed, modelApproach, region=None, month=None, printLog=False):
 
     if modelApproach not in ['wet', 'dry', 'sacramento']:
         raise ValueError("Model approach must be either 'wet', 'dry', or 'sacramento'.")
@@ -992,31 +1022,35 @@ def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIn
         print('Predicting for %s, %s' % (region, month.capitalize()))
 
         masterDataPath = basePath + region + '/' + month + '/'
-        predictionPath = masterDataPath + 'Prediction/sacramentoData.csv'
-        outputPath = masterDataPath + 'Prediction/sacramentoPredictions.csv'
+        predictionDataPath = masterDataPath + 'Prediction/sacramentoData.csv'
+        predictionOutputPath = masterDataPath + 'Prediction/sacramentoPredictions.csv'
 
     else:
         print('Predicting for %s' % (month.capitalize()))
 
         masterDataPath = basePath
-        predictionPath = masterDataPath + 'Prediction/sacramentoData_' + month + '.csv'
-        outputPath = masterDataPath + 'Prediction/sacramentoPredictions_' + month + '.csv'
+        predictionDataPath = masterDataPath + 'Prediction/sacramentoData_' + month + '.csv'
+        predictionOutputPath = masterDataPath + 'Prediction/sacramentoPredictions_' + month + '.csv'
+
+    logOutputPath = masterDataPath + 'Prediction/predictionMethod.txt'
 
     predictionDataSet = mltypes.DataSet(month.capitalize() + ' Prediction Data',
-                                        predictionPath,
+                                        predictionDataPath,
                                         featuresIndex=3,
                                         labelIndex=None)
 
     # Train the best model and predict for the Sacramento region
     if modelApproach in ['wet', 'dry']:
         sacResult = findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, trainFeaturesIndex,
-                                        trainLabelIndex, selectedFeaturesList, month, region, modelIndex)
+                                        trainLabelIndex, selectedFeaturesList, month, region, modelIndex,
+                                        printLog, logOutputPath)
     else:
         sacResult = findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, trainFeaturesIndex,
-                                        trainLabelIndex, selectedFeaturesList, month, modelRowIndex=modelIndex)
+                                        trainLabelIndex, selectedFeaturesList, month, modelRowIndex=modelIndex,
+                                        printLog=printLog, logPath=logOutputPath)
 
     # Save the output
-    outputPredictions(sacResult, outputPath)
+    outputPredictions(sacResult, predictionOutputPath)
     return
 
 
