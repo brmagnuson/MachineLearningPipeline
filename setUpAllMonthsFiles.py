@@ -11,8 +11,8 @@ rfDataPath = '../RF_model_data/data/model_training/'
 
 proportionOfInterest = 0.5
 
-regions = ['IntMnt']
-# regions = ['CoastMnt', 'IntMnt', 'Xeric']
+# The Sacramento region only belongs to the IntMnt and Xeric ecoregions.
+regions = ['IntMnt', 'Xeric']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 # Create folder for each month & region in allMonths
@@ -52,12 +52,15 @@ for region in regions:
                 os.makedirs(newSubFolderPath)
 
         # Also add a copy of NOAA water years
-        sourceFilePath = allMonthsPath + 'NOAAWaterYearsDriestToWettest.csv'
-        destinationFilePath = destinationFolderPath + 'NOAAWaterYearsDriestToWettest.csv'
-        shutil.copyfile(sourceFilePath, destinationFilePath)
+        waterYearsSourceFilePath = allMonthsPath + 'NOAAWaterYearsDriestToWettest.csv'
+        waterYearsDestinationFilePath = destinationFolderPath + 'NOAAWaterYearsDriestToWettest.csv'
+        shutil.copyfile(waterYearsSourceFilePath, waterYearsDestinationFilePath)
 
         # Add in Sacramento data for prediction
-        sacData = thesisFunctions.prepSacramentoData(month, region,
-                                                     wetOrDry, destinationFilePath, proportionOfInterest)
+        sacData = thesisFunctions.prepSacramentoData(month,
+                                                     region,
+                                                     wetOrDry,
+                                                     waterYearsDestinationFilePath,
+                                                     proportionOfInterest)
         predictionFilePath = allMonthsPath + region + '/' + month + '/Prediction/sacramentoData.csv'
         sacData.to_csv(predictionFilePath, index=False)

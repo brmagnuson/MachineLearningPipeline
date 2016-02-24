@@ -14,8 +14,7 @@ randomSeed = constants.randomSeed
 multiThreading = False
 multiThreadApplyModels = True
 
-# regions = ['CoastMnt', 'IntMnt', 'Xeric']
-regions = ['IntMnt']
+regions = ['IntMnt', 'Xeric']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 selectedFeatureList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12',

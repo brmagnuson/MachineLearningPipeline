@@ -1,5 +1,5 @@
 """
-This script contains references I want to use in many functions.
+This script contains references I want to use in multiple functions and scripts.
 """
 
 ridgeRegression = 'Ridge Regression'
