@@ -1054,11 +1054,20 @@ def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIn
     return
 
 
-def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, region=None):
+def aggregateSacPredictions(baseFolderList, outputFolder, outputFileName, months, regions=None):
+    """
+    This function pulls all the predictions for the Sacramento basin from different months/models/regions together.
+    :param baseFolderList: List of the folders containing predictions (1 for Sac Model, 2 for Months Models)
+    :param outputFolder: Output destination
+    :param outputFileName: Output filename (with .csv extension)
+    :param months: List of months predicted for
+    :param regions: List of regions predicted for, if models split regionally. If not, leave as default.
+    :return: Relative path to the output file
+    """
 
     allPredictions = pandas.DataFrame()
 
-    # For each half:
+    # For each model (wet half/dry half):
     for baseFolder in baseFolderList:
 
         # Create DataFrame for predictions for this half of the years (wet or dry)
@@ -1068,11 +1077,19 @@ def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, 
         for month in months:
 
             # Read in predictions
-            if region is not None:
-                predictionsFile = baseFolder + region + '/' + month + '/Prediction/sacramentoPredictions.csv'
+            if regions is not None:
+
+                # Aggregate all region predictions for that month
+                monthPredictions = pandas.DataFrame()
+                for region in regions:
+                    predictionsFile = baseFolder + region + '/' + month + '/Prediction/sacramentoPredictions.csv'
+                    regionPredictions = pandas.read_csv(predictionsFile)
+                    monthPredictions = monthPredictions.append(regionPredictions, ignore_index=True)
             else:
+
+                # Get predictions for at month
                 predictionsFile = baseFolder + 'Prediction/sacramentoPredictions_' + month + '.csv'
-            monthPredictions = pandas.read_csv(predictionsFile)
+                monthPredictions = pandas.read_csv(predictionsFile)
 
             # Aggregate results for this half
             halfPredictions = halfPredictions.append(monthPredictions, ignore_index=True)
@@ -1083,14 +1100,11 @@ def aggregateSacPredictions(baseFolderList, outputFolder, outputPrefix, months, 
     sortedAllPredictions = allPredictions.sort(columns=['MONTH', 'YEAR', 'HUC12'])
 
     # Output results for this regional model to file
-    if region is not None:
-        outputFile = outputFolder + outputPrefix + region + '.csv'
-    else:
-        outputFile = outputFolder + outputPrefix + '.csv'
-    sortedAllPredictions.to_csv(outputFile, index=False)
+    outputFilePath = outputFolder + outputFileName
+    sortedAllPredictions.to_csv(outputFilePath, index=False)
 
     # Return aggregated filename
-    return outputFile
+    return outputFilePath
 
 
 def formatWaterYearPredictions(waterYear, predictionsFile):

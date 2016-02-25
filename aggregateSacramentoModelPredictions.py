@@ -6,10 +6,10 @@ sacFolder = 'SacramentoModel/'
 baseFolders = [sacFolder]
 
 outputFolder = 'Output/'
-outputPrefix = 'SacramentoData'
+outputFileName = 'SacramentoData.csv'
 
 # Aggregate predictions into one file
-aggregateFile = thesisFunctions.aggregateSacPredictions(baseFolders, outputFolder, outputPrefix, months)
+aggregateFile = thesisFunctions.aggregateSacPredictions(baseFolders, outputFolder, outputFileName, months)
 
 # Output file for specific water year for use in DWRAT
 waterYear = 1977
