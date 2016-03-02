@@ -548,10 +548,8 @@ def flowModelPipeline(universalTestSetFileName, universalTestSetDescription, bas
     # Convert to data frame for tabulation and visualization
     scoreModelResultsDF = mlutils.createScoreDataFrame(sortedTestScoreModelResults)
 
-    # Add RMSE and arrange column
+    # Add RMSE to results before outputting to file
     scoreModelResultsDF['RMSE (cfs)'] = scoreModelResultsDF['Mean Squared Error (cfs)'].map(lambda x: x ** (1/2))
-
-    # Output to file
     scoreModelResultsDF.to_csv(scoreOutputFilePath, index=False)
     return scoreModelResultsDF
 
