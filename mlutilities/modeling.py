@@ -58,9 +58,10 @@ def tuneModels(dataSets, tuneModelConfigurations, randomSeed=None):
     total = len(dataSets) * len(tuneModelConfigurations)
     for dataSet in dataSets:
         for tuneModelConfiguration in tuneModelConfigurations:
-            print('Tuning (%s of %s):' % (counter, total), tuneModelConfiguration.description, 'for', dataSet.trainDataSet.description)
+            print('Tuning (%s of %s):' % (counter, total), tuneModelConfiguration.description, 'for', dataSet.description)
             tuneModelResult = tuneModel(dataSet, tuneModelConfiguration, randomSeed)
             tuneModelResults.append(tuneModelResult)
+            counter += 1
     return tuneModelResults
 
 
