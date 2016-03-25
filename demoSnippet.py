@@ -37,15 +37,17 @@ knnConfig = mlutilities.types.TuneModelConfiguration('Tune KNN',
                                                      knnMethod,
                                                      knnParameters,
                                                      tuneScoringMethod)
+
+predictorConfigs = [rfConfig, knnConfig]
 tunedModelResults = mlutilities.modeling.tuneModels([trainingData],
-                                                    [rfConfig, knnConfig])
+                                                    predictorConfigs)
 
 # Apply the tuned models to some test data
 applyModelConfigs = []
-for tuneModelResult in tunedModelResults:
-    applyModelConfig = mlutilities.types.ApplyModelConfiguration(tuneModelResult.description,
-                                                                 tuneModelResult.modellingMethod,
-                                                                 tuneModelResult.parameters,
+for tunedModelResult in tunedModelResults:
+    applyModelConfig = mlutilities.types.ApplyModelConfiguration(tunedModelResult.description,
+                                                                 tunedModelResult.modellingMethod,
+                                                                 tunedModelResult.parameters,
                                                                  trainingData,
                                                                  testingData)
     applyModelConfigs.append(applyModelConfig)
@@ -86,4 +88,24 @@ pcaTrainingData, transformer = mlutilities.dataTransformation.\
 pcaTestingData = mlutilities.dataTransformation.engineerFeaturesByTransformer(
                                                          testingData, transformer)
 
+# Create stacking ensemble
+predictorConfigs = []
+for tunedModelResult in tunedModelResults:
+    predictorConfig = mlutilities.types.PredictorConfiguration(tunedModelResult.modellingMethod.description,
+                                                     tunedModelResult.modellingMethod.function,
+                                                     tunedModelResult.parameters)
+    predictorConfigs.append(predictorConfig)
+
+stackMethod = mlutilities.types.ModellingMethod('Stacking Ensemble',
+                                                mlutilities.types.StackingEnsemble)
+stackParameters = {'basePredictorConfigurations': predictorConfigs,
+                   'stackingPredictorConfiguration': predictorConfigs[0]}
+stackApplyModelConfig = mlutilities.types.ApplyModelConfiguration(
+    'Stacking Ensemble',
+    stackMethod,
+    stackParameters,
+    trainingData,
+    testingData)
+
+stackResult = mlutilities.modeling.applyModel(stackApplyModelConfig)
 
