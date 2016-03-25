@@ -60,9 +60,15 @@ testScoringMethods = [r2Method, meanOEMethod]
 testScoreModelResults = mlutilities.modeling.scoreModels(applyModelResults,
                                                          testScoringMethods)
 
-# This prints out a table where each row is a different dataset-model combination
+# Create a dataframe where each row is a different dataset-model combination
 scoreModelResultsDF = mlutilities.utilities.createScoreDataFrame(testScoreModelResults)
 print(scoreModelResultsDF)
+
+# Visualization
+mlutilities.utilities.barChart(scoreModelResultsDF,
+                               'R Squared',
+                               'R Squared for Each Model',
+                               'ExampleData/rSquared.png')
 
 
 # Some other things you can do
@@ -72,12 +78,12 @@ scaledTrainingData, scaler = mlutilities.dataTransformation.scaleDataSet(trainin
 scaledTestingData = mlutilities.dataTransformation.scaleDataSetByScaler(testingData, scaler)
 
 # Perform feature engineering
-pcaConfig = mlutilities.types.FeatureEngineeringConfiguration('PCA with 5 components',
-                                                              'extraction',
-                                                              sklearn.decomposition.PCA,
-                                                              {'n_components': 5})
-pcaTrainingData, transformer = mlutilities.dataTransformation.engineerFeaturesForDataSet(trainingData,
-                                                                                         pcaConfig)
-pcaTestingData = mlutilities.dataTransformation.engineerFeaturesByTransformer(testingData, transformer)
+pcaConfig = mlutilities.types.FeatureEngineeringConfiguration('PCA n5',
+                     'extraction', sklearn.decomposition.PCA, {'n_components': 5})
+
+pcaTrainingData, transformer = mlutilities.dataTransformation.\
+    engineerFeaturesForDataSet(trainingData, pcaConfig)
+pcaTestingData = mlutilities.dataTransformation.engineerFeaturesByTransformer(
+                                                         testingData, transformer)
 
 
