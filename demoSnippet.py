@@ -70,7 +70,15 @@ print(scoreModelResultsDF)
 mlutilities.utilities.barChart(scoreModelResultsDF,
                                'R Squared',
                                'R Squared for Each Model',
-                               'ExampleData/rSquared.png')
+                               'ExampleData/rSquared.png',
+                               '#2d974d')
+
+mlutilities.utilities.scatterPlot(scoreModelResultsDF,
+                                  'Mean O/E',
+                                  'R Squared',
+                                  'Mean O/E by R Squared for Each Model',
+                                  'ExampleData/meanOEbyRSquared.png',
+                                  '#2d974d')
 
 
 # Some other things you can do

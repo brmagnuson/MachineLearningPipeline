@@ -1,4 +1,5 @@
 import time
+import mlutilities.utilities as mlutils
 import thesisFunctions
 import constants
 
@@ -50,41 +51,46 @@ print('Start time:', startTime)
 print('End time:', endTime)
 print('Total: {} minutes and {} seconds'.format(int(totalSeconds // 60), round(totalSeconds % 60)))
 
-# # Visualization
-# scoreModelResultsDF['RMSE'] = scoreModelResultsDF['Mean Squared Error'].map(lambda x: x ** (1 / 2))
-# dryYearScoreModelResultsDF = scoreModelResultsDF[scoreModelResultsDF['Base DataSet'].str.contains('Dry')]
+# Visualization
+dryYearScoreModelResultsDF = flowModelResult[flowModelResult['Base DataSet'].str.contains('Dry')]
 
-# if runVisualization:
-#     mlutils.scatterPlot(scoreModelResultsDF,
-#                         'Mean Squared Error',
-#                         'R Squared',
-#                         'MSE by R Squared for Each Model',
-#                         'Output/mseByR2AllModels.png')
-#     mlutils.scatterPlot(dryYearScoreModelResultsDF,
-#                         'Mean Squared Error',
-#                         'R Squared',
-#                         'MSE by R Squared for Each Model (Dry Year Models Only',
-#                         'Output/mseByR2DryModels.png')
-#     mlutils.scatterPlot(scoreModelResultsDF,
-#                         'RMSE',
-#                         'R Squared',
-#                         'RMSE by R Squared for Each Model',
-#                         'Output/rmseByR2AllModels.png')
-#     mlutils.scatterPlot(dryYearScoreModelResultsDF,
-#                         'RMSE',
-#                         'R Squared',
-#                         'RMSE by R Squared for Each Model (Dry Year Models Only',
-#                         'Output/rmseByR2DryModels.png')
-#
-#     mlutils.barChart(scoreModelResultsDF,
-#                      'Mean Squared Error',
-#                      'MSE for Each Model',
-#                      'Output/meanSquaredError.png')
-#     mlutils.barChart(scoreModelResultsDF,
-#                      'RMSE',
-#                      'Root Mean Squared Error for Each Model',
-#                      'Output/rootMeanSquaredError.png')
-#     mlutils.barChart(scoreModelResultsDF,
-#                      'R Squared',
-#                      'R Squared for Each Model',
-#                      'Output/rSquared.png')
+mlutils.scatterPlot(flowModelResult,
+                    'Mean Squared Error',
+                    'R Squared',
+                    'MSE by R Squared for Each Model',
+                    'Output/mseByR2AllModels.png',
+                    '#2d974d')
+mlutils.scatterPlot(dryYearScoreModelResultsDF,
+                    'Mean Squared Error',
+                    'R Squared',
+                    'MSE by R Squared for Each Model (Dry Year Models Only',
+                    'Output/mseByR2DryModels.png',
+                    '#2d974d')
+mlutils.scatterPlot(flowModelResult,
+                    'RMSE',
+                    'R Squared',
+                    'RMSE by R Squared for Each Model',
+                    'Output/rmseByR2AllModels.png',
+                    '#2d974d')
+mlutils.scatterPlot(dryYearScoreModelResultsDF,
+                    'RMSE',
+                    'R Squared',
+                    'RMSE by R Squared for Each Model (Dry Year Models Only',
+                    'Output/rmseByR2DryModels.png',
+                    '#2d974d')
+
+mlutils.barChart(flowModelResult,
+                 'Mean Squared Error',
+                 'MSE for Each Model',
+                 'Output/meanSquaredError.png',
+                 '#2d974d')
+mlutils.barChart(flowModelResult,
+                 'RMSE',
+                 'Root Mean Squared Error for Each Model',
+                 'Output/rootMeanSquaredError.png',
+                 '#2d974d')
+mlutils.barChart(flowModelResult,
+                 'R Squared',
+                 'R Squared for Each Model',
+                 'Output/rSquared.png',
+                 '#2d974d')

@@ -33,7 +33,7 @@ def createScoreDataFrame(scoreModelResults):
     return pandas.DataFrame(rows, columns=columnNames)
 
 
-def barChart(dataFrame, column, title, outputPath=None):
+def barChart(dataFrame, column, title, outputPath=None, color='b'):
     """
     Creates a simple bar chart from a single column of a pandas dataframe
     :param dataframe:
@@ -49,7 +49,7 @@ def barChart(dataFrame, column, title, outputPath=None):
     plotDataFrame = dataFrame[[column]].sort(columns=column, ascending=ascendingBoolean)
 
     # Create graphic
-    plotDataFrame[column].plot(kind='bar', edgecolor='w')
+    plotDataFrame[column].plot(kind='bar', color=color, edgecolor='w')
     matplotlib.pyplot.xlabel('Models')
     matplotlib.pyplot.ylabel(column)
     matplotlib.pyplot.title(title)
@@ -64,7 +64,7 @@ def barChart(dataFrame, column, title, outputPath=None):
     matplotlib.pyplot.close()
 
 
-def scatterPlot(dataFrame, xColumn, yColumn, title, outputPath=None):
+def scatterPlot(dataFrame, xColumn, yColumn, title, outputPath=None, color='b'):
     """
     Uses two columns of a pandas dataframe to make a scatterplot
     :param dataFrame:
@@ -74,7 +74,7 @@ def scatterPlot(dataFrame, xColumn, yColumn, title, outputPath=None):
     :param outputPath: Optional. If None, graphic is displayed rather than saved to file.
     """
     # Create graphic
-    matplotlib.pyplot.scatter(dataFrame[xColumn], dataFrame[yColumn])
+    matplotlib.pyplot.scatter(dataFrame[xColumn], dataFrame[yColumn], color=color)
     matplotlib.pyplot.title(title)
     matplotlib.pyplot.xlabel(xColumn)
     matplotlib.pyplot.ylabel(yColumn)
