@@ -63,19 +63,19 @@ mlutils.scatterPlot(flowModelResult,
 mlutils.scatterPlot(dryYearScoreModelResultsDF,
                     'Mean Squared Error',
                     'R Squared',
-                    'MSE by R Squared for Each Model (Dry Year Models Only',
+                    'MSE by R Squared for Each Model (Dry Year Models Only)',
                     'Output/mseByR2DryModels.png',
                     '#2d974d')
 mlutils.scatterPlot(flowModelResult,
-                    'RMSE',
+                    'RMSE (cfs)',
                     'R Squared',
                     'RMSE by R Squared for Each Model',
                     'Output/rmseByR2AllModels.png',
                     '#2d974d')
 mlutils.scatterPlot(dryYearScoreModelResultsDF,
-                    'RMSE',
+                    'RMSE (cfs)',
                     'R Squared',
-                    'RMSE by R Squared for Each Model (Dry Year Models Only',
+                    'RMSE by R Squared for Each Model (Dry Year Models Only)',
                     'Output/rmseByR2DryModels.png',
                     '#2d974d')
 
@@ -85,7 +85,7 @@ mlutils.barChart(flowModelResult,
                  'Output/meanSquaredError.png',
                  '#2d974d')
 mlutils.barChart(flowModelResult,
-                 'RMSE',
+                 'RMSE (cfs)',
                  'Root Mean Squared Error for Each Model',
                  'Output/rootMeanSquaredError.png',
                  '#2d974d')

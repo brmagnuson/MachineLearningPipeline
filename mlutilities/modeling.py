@@ -151,9 +151,11 @@ def meanObservedExpectedScore(y_true, y_pred):
 
     """
     Function modeled after sklearn.metrics scoring functions to calculate mean O/E score for a model.
-    Works when y_true and y_pred are vector-like pandas DataFrames or numpy Arrays
+    Works when y_true and y_pred are vector-like pandas DataFrames or numpy Arrays.
+    Will ignore any NaN or inf values.
     """
-    meanOE = numpy.mean(y_true / y_pred)
+    oeRatios = y_true / y_pred
+    meanOE = numpy.nanmean(oeRatios[~ numpy.isinf(oeRatios)])
     return float(meanOE)
 
 
@@ -161,7 +163,9 @@ def sdObservedExpectedScore(y_true, y_pred):
     """
     Function modeled after sklearn.metrics scoring functions to calculate the standard deviation of the O/E score for a
     model.
-    Works when y_true and y_pred are vector-like pandas DataFrames or numpy Arrays
+    Works when y_true and y_pred are vector-like pandas DataFrames or numpy Arrays.
+    Will ignore any NaN or inf values.
     """
-    standardDeviationOE = numpy.std(y_true / y_pred)
+    oeRatios = y_true / y_pred
+    standardDeviationOE = numpy.nanstd(oeRatios[~ numpy.isinf(oeRatios)])
     return float(standardDeviationOE)
