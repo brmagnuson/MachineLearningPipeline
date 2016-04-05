@@ -55,7 +55,7 @@ def barChart(dataFrame, column, title, outputPath=None, color='b'):
     matplotlib.pyplot.title(title)
 
     # Display or save to file
-    if outputPath == None:
+    if outputPath is None:
         matplotlib.pyplot.show()
     else:
         matplotlib.pyplot.savefig(outputPath, bbox_inches='tight')
@@ -80,7 +80,7 @@ def scatterPlot(dataFrame, xColumn, yColumn, title, outputPath=None, color='b'):
     matplotlib.pyplot.ylabel(yColumn)
 
     # Display or save to file
-    if outputPath == None:
+    if outputPath is None:
         matplotlib.pyplot.show()
     else:
         matplotlib.pyplot.savefig(outputPath, bbox_inches='tight')
