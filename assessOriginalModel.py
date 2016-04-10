@@ -197,35 +197,35 @@ def runModels(basePath, performanceEstimation=True, prediction=False):
                 sortedAverageResultsDF.to_csv(modelFolder + 'Output/scoreModelResults_average.csv', index=False)
 
             # Prediction
-            # if prediction:
-            #
-            #     predictionFolder = modelFolder + 'Prediction/'
-            #
-            #     # Get data
-            #     fullTrainingDataSet = mltypes.DataSet(month.capitalize() + ' Training Data',
-            #                                       predictionFolder + '{}_{}_all.csv'.format(month, region),
-            #                                       featuresIndex=myFeaturesIndex,
-            #                                       labelIndex=myLabelIndex)
-            #     fullPredictionDataSet = mltypes.DataSet(month.capitalize() + ' Prediction Data',
-            #                                         predictionFolder + 'sacramentoData.csv',
-            #                                         featuresIndex=3,
-            #                                         labelIndex=None)
-            #
-            #     # Select features
-            #     trainDataSet, transformer = mldata.engineerFeaturesForDataSet(fullTrainingDataSet,
-            #                                                                   expertSelectedConfig)
-            #     predictionDataSet = mldata.engineerFeaturesByTransformer(fullPredictionDataSet,
-            #                                                        transformer)
-            #
-            #     # Train model and predict for the Sacramento region
-            #     applyRFModelConfig = mltypes.ApplyModelConfiguration('Apply ' + constants.randomForest,
-            #                                                          randomForestMethod,
-            #                                                          randomForestParameters,
-            #                                                          trainDataSet,
-            #                                                          predictionDataSet)
-            #     applyRFModelResult = mlmodel.applyModel(applyRFModelConfig)
-            #     predictionOutputPath = predictionFolder + 'sacramentoPredictions.csv'
-            #     thesisFunctions.outputPredictions(applyRFModelResult, predictionOutputPath)
+            if prediction:
+
+                predictionFolder = modelFolder + 'Prediction/'
+
+                # Get data
+                fullTrainingDataSet = mltypes.DataSet(month.capitalize() + ' Training Data',
+                                                  predictionFolder + '{}_{}_all.csv'.format(month, region),
+                                                  featuresIndex=myFeaturesIndex,
+                                                  labelIndex=myLabelIndex)
+                fullPredictionDataSet = mltypes.DataSet(month.capitalize() + ' Prediction Data',
+                                                    predictionFolder + 'sacramentoData.csv',
+                                                    featuresIndex=3,
+                                                    labelIndex=None)
+
+                # Select features
+                trainDataSet, transformer = mldata.engineerFeaturesForDataSet(fullTrainingDataSet,
+                                                                              expertSelectedConfig)
+                predictionDataSet = mldata.engineerFeaturesByTransformer(fullPredictionDataSet,
+                                                                   transformer)
+
+                # Train model and predict for the Sacramento region
+                applyRFModelConfig = mltypes.ApplyModelConfiguration('Apply ' + constants.randomForest,
+                                                                     randomForestMethod,
+                                                                     randomForestParameters,
+                                                                     trainDataSet,
+                                                                     predictionDataSet)
+                applyRFModelResult = mlmodel.applyModel(applyRFModelConfig)
+                predictionOutputPath = predictionFolder + 'sacramentoPredictions.csv'
+                thesisFunctions.outputPredictions(applyRFModelResult, predictionOutputPath)
 
     if prediction:
         print('Aggregating predictions.')
