@@ -936,6 +936,7 @@ def prepSacramentoData(month, region, wetOrDry=None, waterYearsFilePath=None, pr
 
     hucFile = '../SacramentoData/Sacramento_basin_huc12_v3.csv'
     hucRegionFile = '../SacramentoData/Sacramento_huc12_ecoregions.csv'
+    downstreamOfIntMntFile = '../SacramentoData/DownstreamHUC12s.csv'
     staticFile = '../SacramentoData/static_vars/h12.static.vars.csv'
     climateBasePath = '../SacramentoData/climate_vars/'
 
@@ -947,12 +948,17 @@ def prepSacramentoData(month, region, wetOrDry=None, waterYearsFilePath=None, pr
         monthNumber = '0' + monthNumber
     climateFile = climateBasePath + 'm' + monthNumber + '_HUC12.clim.data.' + month + '.csv'
 
-    # Get HUCs for the Sacramento basin for the region of interest
-    sacHUCs = pandas.read_csv(hucFile)
+    # If a Xeric HUC is downstream of an IntMnt HUC, call it an IntMnt HUC
+    downstreamOfIntMnt = pandas.read_csv(downstreamOfIntMntFile)
     sacHUCsWithRegions = pandas.read_csv(hucRegionFile)
+    sacHUCsWithRegions.drop_duplicates(subset='HUC_12', inplace=True)
+    downstreamOfIntMnt = downstreamOfIntMnt.loc[:, ['HUC_12']]
     sacHUCsWithRegions = sacHUCsWithRegions.loc[:, ['HUC_12', 'AggEcoreg']]
+    sacHUCsWithRegions.loc[sacHUCsWithRegions.HUC_12.isin(downstreamOfIntMnt.HUC_12), ['AggEcoreg']] = 'IntMnt'
+
+    # Get HUCs of interest for the Sacramento basin for the region of interest
+    sacHUCs = pandas.read_csv(hucFile)
     sacHUCsWithRegions.rename(columns={'HUC_12': 'HUC12'}, inplace=True)
-    sacHUCsWithRegions.drop_duplicates(subset='HUC12', inplace=True)
     sacHUCs = pandas.merge(sacHUCs, sacHUCsWithRegions, on='HUC12')
     regionHUCs = sacHUCs[sacHUCs.AggEcoreg == region]
 
