@@ -8,6 +8,7 @@ import mlutilities.types as mltypes
 import mlutilities.dataTransformation as mldata
 import mlutilities.modeling as mlmodel
 import mlutilities.utilities as mlutils
+import thesisFunctions
 import constants
 
 
@@ -20,15 +21,21 @@ def setUpFiles(basePath):
     allMonthsPath = 'AllMonthsDryHalf/'
     regions = ['IntMnt', 'Xeric']
     months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-    subFolders = ['CurrentFoldData', 'Output', 'Predictions']
+    subFolders = ['CurrentFoldData', 'Output', 'Prediction']
 
     for region in regions:
         for month in months:
+
+            print('Processing:', region, month.capitalize())
 
             # Create folder for each month & region in original model folder
             newFolderPath = basePath + region + '/' + month
             if not os.path.exists(newFolderPath):
                 os.makedirs(newFolderPath)
+
+            misnamed = newFolderPath + '/Predictions'
+            if os.path.exists(misnamed):
+                os.rmdir(misnamed)
 
             # Create subfolders used in model pipeline
             for subFolder in subFolders:
@@ -50,6 +57,16 @@ def setUpFiles(basePath):
                 # Copy files
                 shutil.copyfile(sourceTrainFilePath, newTrainFilePath)
                 shutil.copyfile(sourceTestFilePath, newTestFilePath)
+
+            # Add in full dataset and Sacramento data for prediction
+            fullFileName = '{}_{}_all.csv'.format(month, region)
+            sourceFullFilePath = allMonthsPath + region + '/' + month + '/' + fullFileName
+            newFullFilePath = newFolderPath + '/Prediction/' + fullFileName
+            shutil.copyfile(sourceFullFilePath, newFullFilePath)
+            sacData = thesisFunctions.prepSacramentoData(month,
+                                                         region)
+            predictionFilePath = newFolderPath + '/Prediction/sacramentoData.csv'
+            sacData.to_csv(predictionFilePath, index=False)
 
 
 def getMonthVars(basepath, month, region):
@@ -79,7 +96,7 @@ def getMonthVars(basepath, month, region):
     return monthVars
 
 
-def runModels(basePath):
+def runModels(basePath, performanceEstimation=True, prediction=False):
 
     randomSeed = constants.randomSeed
     myFeaturesIndex = 6
@@ -94,84 +111,131 @@ def runModels(basePath):
     mseMethod = mltypes.ModelScoreMethod('Mean Squared Error (cfs)', sklearn.metrics.mean_squared_error)
     testScoreMethods = [r2Method, meanOEMethod, sdOEMethod, mseMethod]
 
+    randomForestParameters = {'n_estimators': 2000,
+                              'max_features': .333,
+                              'random_state': randomSeed,
+                              'n_jobs': -1}
+    randomForestMethod = mltypes.ModellingMethod(constants.randomForest,
+                                                 sklearn.ensemble.RandomForestRegressor)
+
     for region in regions:
         for month in months:
 
+            print('Processing:', region, month.capitalize())
+
             # Get expert features from text files
             selectedFeatures = getMonthVars(basePath, month, region)
+            expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
+                                                                           'selection',
+                                                                           mltypes.ExtractSpecificFeatures,
+                                                                           {'featureList': selectedFeatures})
+
+            modelFolder = basePath + region + '/' + month + '/'
 
             # Run model once on each fold to get estimates of test metrics
-            allFoldScoreModelResultsDFs = []
-            modelFolder = basePath + region + '/' + month + '/'
-            for fold in range(kFolds):
+            if performanceEstimation:
+                allFoldScoreModelResultsDFs = []
 
-                # Get dataset info
-                foldTestFilePath = modelFolder + '{}_{}_{}_test.csv'.format(month, region, fold)
-                foldTrainFilePath = modelFolder + '{}_{}_all_{}_train.csv'.format(month, region, fold)
-                testDescription = month.capitalize() + ' ' + region + ' Test'
-                trainDescription = month.capitalize() + ' ' + region + ' Train'
+                for fold in range(kFolds):
 
-                # Copy to CurrentFoldDataFolder
-                testFilePath = modelFolder + 'CurrentFoldData/' + '{}_{}_test.csv'.format(month, region)
-                trainFilePath = modelFolder + 'CurrentFoldData/' + '{}_{}_all_train.csv'.format(month, region)
-                shutil.copyfile(foldTestFilePath, testFilePath)
-                shutil.copyfile(foldTrainFilePath, trainFilePath)
+                    # Get dataset info
+                    foldTestFilePath = modelFolder + '{}_{}_{}_test.csv'.format(month, region, fold)
+                    foldTrainFilePath = modelFolder + '{}_{}_all_{}_train.csv'.format(month, region, fold)
+                    testDescription = month.capitalize() + ' ' + region + ' Test'
+                    trainDescription = month.capitalize() + ' ' + region + ' Train'
 
-                # Get datasets
-                fullTestDataSet = mltypes.DataSet(testDescription,
-                                                  testFilePath,
-                                                  featuresIndex=myFeaturesIndex,
-                                                  labelIndex=myLabelIndex)
-                fullTrainDataSet = mltypes.DataSet(trainDescription,
-                                                   trainFilePath,
-                                                   featuresIndex=myFeaturesIndex,
-                                                   labelIndex=myLabelIndex)
+                    # Copy to CurrentFoldDataFolder
+                    testFilePath = modelFolder + 'CurrentFoldData/' + '{}_{}_test.csv'.format(month, region)
+                    trainFilePath = modelFolder + 'CurrentFoldData/' + '{}_{}_all_train.csv'.format(month, region)
+                    shutil.copyfile(foldTestFilePath, testFilePath)
+                    shutil.copyfile(foldTrainFilePath, trainFilePath)
 
-                # Select features
-                expertSelectedConfig = mltypes.FeatureEngineeringConfiguration('Expert Selection',
-                                                                               'selection',
-                                                                               mltypes.ExtractSpecificFeatures,
-                                                                               {'featureList': selectedFeatures})
-                trainDataSet, transformer = mldata.engineerFeaturesForDataSet(fullTrainDataSet,
-                                                                              expertSelectedConfig)
-                testDataSet = mldata.engineerFeaturesByTransformer(fullTestDataSet,
-                                                                   transformer)
+                    # Get datasets
+                    fullTestDataSet = mltypes.DataSet(testDescription,
+                                                      testFilePath,
+                                                      featuresIndex=myFeaturesIndex,
+                                                      labelIndex=myLabelIndex)
+                    fullTrainDataSet = mltypes.DataSet(trainDescription,
+                                                       trainFilePath,
+                                                       featuresIndex=myFeaturesIndex,
+                                                       labelIndex=myLabelIndex)
 
-                # Apply model
-                randomForestParameters = {'n_estimators': 2000,
-                                          'max_features': .333,
-                                          'random_state': randomSeed,
-                                          'n_jobs': -1}
-                randomForestMethod = mltypes.ModellingMethod(constants.randomForest,
-                                                             sklearn.ensemble.RandomForestRegressor)
-                applyRFModelConfig = mltypes.ApplyModelConfiguration('Apply ' + constants.randomForest,
-                                                                     randomForestMethod,
-                                                                     randomForestParameters,
-                                                                     trainDataSet,
-                                                                     testDataSet)
-                randomForestResult = mlmodel.applyModel(applyRFModelConfig)
-                applyModelResults = [randomForestResult]
+                    # Select features
+                    trainDataSet, transformer = mldata.engineerFeaturesForDataSet(fullTrainDataSet,
+                                                                                  expertSelectedConfig)
+                    testDataSet = mldata.engineerFeaturesByTransformer(fullTestDataSet,
+                                                                       transformer)
 
-                # Score model and convert results to data frame
-                scoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)
-                scoreModelResultsDF = mlutils.createScoreDataFrame(scoreModelResults)
+                    # Apply model
+                    applyRFModelConfig = mltypes.ApplyModelConfiguration('Apply ' + constants.randomForest,
+                                                                         randomForestMethod,
+                                                                         randomForestParameters,
+                                                                         trainDataSet,
+                                                                         testDataSet)
+                    randomForestResult = mlmodel.applyModel(applyRFModelConfig)
+                    applyModelResults = [randomForestResult]
 
-                # Add RMSE, then add to list of results for this month
-                scoreModelResultsDF['RMSE (cfs)'] = scoreModelResultsDF['Mean Squared Error (cfs)'].map(lambda x: x ** (1/2))
-                allFoldScoreModelResultsDFs.append(scoreModelResultsDF)
+                    # Score model and convert results to data frame
+                    scoreModelResults = mlmodel.scoreModels(applyModelResults, testScoreMethods)
+                    scoreModelResultsDF = mlutils.createScoreDataFrame(scoreModelResults)
 
-                print(region, month, fold, 'processed')
+                    # Add RMSE, then add to list of results for this month
+                    scoreModelResultsDF['RMSE (cfs)'] = scoreModelResultsDF['Mean Squared Error (cfs)'].map(lambda x: x ** (1/2))
+                    allFoldScoreModelResultsDFs.append(scoreModelResultsDF)
 
-            # Aggregate results into a single DataFrame
-            allResultsDF = pandas.DataFrame()
-            for fold in allFoldScoreModelResultsDFs:
-                allResultsDF = allResultsDF.append(fold, ignore_index=True)
-            allResultsDF.to_csv(modelFolder + 'Output/scoreModelResults_all.csv', index=False)
+                    print(region, month, fold, 'processed')
 
-            # Group by unique model & dataset combinations to average
-            averageResultsDF = allResultsDF.groupby(['Base DataSet', 'Model Method']).mean().reset_index()
-            sortedAverageResultsDF = averageResultsDF.sort(columns='R Squared', ascending=False)
-            sortedAverageResultsDF.to_csv(modelFolder + 'Output/scoreModelResults_average.csv', index=False)
+                # Aggregate results into a single DataFrame
+                allResultsDF = pandas.DataFrame()
+                for fold in allFoldScoreModelResultsDFs:
+                    allResultsDF = allResultsDF.append(fold, ignore_index=True)
+                allResultsDF.to_csv(modelFolder + 'Output/scoreModelResults_all.csv', index=False)
+
+                # Group by unique model & dataset combinations to average
+                averageResultsDF = allResultsDF.groupby(['Base DataSet', 'Model Method']).mean().reset_index()
+                sortedAverageResultsDF = averageResultsDF.sort(columns='R Squared', ascending=False)
+                sortedAverageResultsDF.to_csv(modelFolder + 'Output/scoreModelResults_average.csv', index=False)
+
+            # Prediction
+            # if prediction:
+            #
+            #     predictionFolder = modelFolder + 'Prediction/'
+            #
+            #     # Get data
+            #     fullTrainingDataSet = mltypes.DataSet(month.capitalize() + ' Training Data',
+            #                                       predictionFolder + '{}_{}_all.csv'.format(month, region),
+            #                                       featuresIndex=myFeaturesIndex,
+            #                                       labelIndex=myLabelIndex)
+            #     fullPredictionDataSet = mltypes.DataSet(month.capitalize() + ' Prediction Data',
+            #                                         predictionFolder + 'sacramentoData.csv',
+            #                                         featuresIndex=3,
+            #                                         labelIndex=None)
+            #
+            #     # Select features
+            #     trainDataSet, transformer = mldata.engineerFeaturesForDataSet(fullTrainingDataSet,
+            #                                                                   expertSelectedConfig)
+            #     predictionDataSet = mldata.engineerFeaturesByTransformer(fullPredictionDataSet,
+            #                                                        transformer)
+            #
+            #     # Train model and predict for the Sacramento region
+            #     applyRFModelConfig = mltypes.ApplyModelConfiguration('Apply ' + constants.randomForest,
+            #                                                          randomForestMethod,
+            #                                                          randomForestParameters,
+            #                                                          trainDataSet,
+            #                                                          predictionDataSet)
+            #     applyRFModelResult = mlmodel.applyModel(applyRFModelConfig)
+            #     predictionOutputPath = predictionFolder + 'sacramentoPredictions.csv'
+            #     thesisFunctions.outputPredictions(applyRFModelResult, predictionOutputPath)
+
+    if prediction:
+        print('Aggregating predictions.')
+        aggregateFile = thesisFunctions.aggregateSacPredictions([basePath],
+                                                                'Output/',
+                                                                'RandomForestData.csv',
+                                                                months,
+                                                                regions)
+        waterYear = 1977
+        thesisFunctions.formatWaterYearPredictions(waterYear, aggregateFile)
 
 
 # Initial setup
@@ -181,7 +245,7 @@ originalModelPath = 'ThesisAnalysis/OriginalModelAssessment/'
 
 # Modeling process
 # setUpFiles(originalModelPath)
-runModels(originalModelPath)
+runModels(originalModelPath, performanceEstimation=False, prediction=True)
 
 # Report finish
 endSecond = time.time()
