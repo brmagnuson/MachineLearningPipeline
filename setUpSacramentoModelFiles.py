@@ -8,7 +8,6 @@ rfDataPath = '../RF_model_data/data/model_training/'
 
 regions = ['IntMnt', 'Xeric', 'CoastMnt']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-# months = ['jan', 'feb']
 
 # Get gages for the Sacramento basin
 sacGagesFile = sacBasePath + 'Sac_gages_list.csv'
