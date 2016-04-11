@@ -862,7 +862,7 @@ def outputPredictionLog(logPath, applyModelConfig, statistics=None):
         logFile.write(text)
 
 
-def findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, myFeaturesIndex, myLabelIndex,
+def findModelAndPredict(unscaledPredictionDataSet, masterDataPath, randomSeed, myFeaturesIndex, myLabelIndex,
                         selectedFeaturesList, month, region=None, modelRowIndex=0, printLog=False, logPath=None):
 
     # Read in score model results files.
@@ -896,10 +896,14 @@ def findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, myFeature
     copiedTrainingFilePath = masterDataPath + 'Prediction/' + trainingFileName
     shutil.copyfile(trainingFilePath, copiedTrainingFilePath)
 
-    trainDataSet = mltypes.DataSet(month.title() + ' Training Set',
+    unscaledTrainDataSet = mltypes.DataSet(month.title() + ' Training Set',
                                    copiedTrainingFilePath,
                                    featuresIndex=myFeaturesIndex,
                                    labelIndex=myLabelIndex)
+
+    # Get scaled label (runoff/drainage unit)
+    trainDataSet = makeLabelRunoffPerDrainageUnit(unscaledTrainDataSet, 'labeled')
+    predictionDataSet = makeLabelRunoffPerDrainageUnit(unscaledPredictionDataSet, 'prediction')
 
     # Scale if necessary
     if 'Scaled' in trainDataSetDescription:
@@ -929,6 +933,9 @@ def findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, myFeature
         statistics = bestModel[2:]
         outputPredictionLog(logPath, applyModelConfig, statistics)
     applyModelResult = mlmodel.applyModel(applyModelConfig)
+
+    # Rescale predictions to flow rate rather than flow rate/drainage sq km
+    rescalePredictions(applyModelResult, predictionDataSet)
     return applyModelResult
 
 
@@ -1139,4 +1146,43 @@ def formatWaterYearPredictions(waterYear, predictionsFile):
     return
 
 
+def makeLabelRunoffPerDrainageUnit(dataSet, dataSetType):
+
+    if dataSetType == 'labeled':
+        dataSet.dataFrame['RunoffPerDrainageUnit'] = dataSet.dataFrame.qmeas / dataSet.dataFrame.DRAIN_SQKM
+        columns = dataSet.dataFrame.columns.tolist()
+        newColumns = columns[:6] + columns[48:49] + columns[216:] + columns[6:48] + columns[49:216]
+        orderedFullTrainDF = dataSet.dataFrame[newColumns]
+        newDataSet = mltypes.DataSet(dataSet.description,
+                                     dataSet.path[:-4] + '_ratio.csv',
+                                     mode='w',
+                                     dataFrame=orderedFullTrainDF,
+                                     featuresIndex=8,
+                                     labelIndex=7)
+    elif dataSetType == 'prediction':
+        columns = dataSet.dataFrame.columns.tolist()
+        newColumns = columns[:3] + columns[45:46] + columns[3:45] + columns[46:]
+        orderedFullTrainDF = dataSet.dataFrame[newColumns]
+        newDataSet = mltypes.DataSet(dataSet.description,
+                                     dataSet.path[:-4] + '_ratio.csv',
+                                     mode='w',
+                                     dataFrame=orderedFullTrainDF,
+                                     featuresIndex=4,
+                                     labelIndex=None)
+    else:
+        raise Exception('dataSetType not recognized.')
+
+    return newDataSet
+
+
+def rescalePredictions(applyModelResult, predictionDataSet):
+
+    predictions = applyModelResult.testPredictions
+    predictionsDataFrame = pandas.DataFrame(predictions, columns=['RunoffPerDrainageUnit'])
+    drainageArea = predictionDataSet.dataFrame.DRAIN_SQKM
+    combinedDataFrame = pandas.concat([predictionsDataFrame, drainageArea], axis=1)
+    combinedDataFrame['qpred'] = combinedDataFrame['RunoffPerDrainageUnit'] * combinedDataFrame['DRAIN_SQKM']
+    scaledPredictions = combinedDataFrame.qpred.tolist()
+    applyModelResult.testPredictions = scaledPredictions
+    return
 
