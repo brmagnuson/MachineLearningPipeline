@@ -1,3 +1,4 @@
+import sys
 import os
 import shutil
 import time
@@ -32,10 +33,6 @@ def setUpFiles(basePath):
             newFolderPath = basePath + region + '/' + month
             if not os.path.exists(newFolderPath):
                 os.makedirs(newFolderPath)
-
-            misnamed = newFolderPath + '/Predictions'
-            if os.path.exists(misnamed):
-                os.rmdir(misnamed)
 
             # Create subfolders used in model pipeline
             for subFolder in subFolders:
@@ -90,8 +87,8 @@ def getMonthVars(basepath, month, region):
     monthVarString = monthVarString.replace(',"TOPWET"', '')
     monthVars = eval(monthVarString)
 
-    # Drop the first 4, because they are ID variables and the label
-    monthVars = monthVars[4:]
+    # Drop the first 5, because they are ID variables and the label
+    monthVars = monthVars[5:]
 
     return monthVars
 
@@ -160,6 +157,9 @@ def runModels(basePath, performanceEstimation=True, prediction=False):
                                                        featuresIndex=myFeaturesIndex,
                                                        labelIndex=myLabelIndex)
 
+                    fullTrainDataSet = makeLabelRunoffPerDrainageUnit(fullTrainDataSet, 'labeled')
+                    fullTestDataSet = makeLabelRunoffPerDrainageUnit(fullTestDataSet, 'labeled')
+
                     # Select features
                     trainDataSet, transformer = mldata.engineerFeaturesForDataSet(fullTrainDataSet,
                                                                                   expertSelectedConfig)
@@ -202,7 +202,7 @@ def runModels(basePath, performanceEstimation=True, prediction=False):
                 predictionFolder = modelFolder + 'Prediction/'
 
                 # Get data
-                fullTrainingDataSet = mltypes.DataSet(month.capitalize() + ' Training Data',
+                fullTrainDataSet = mltypes.DataSet(month.capitalize() + ' Training Data',
                                                   predictionFolder + '{}_{}_all.csv'.format(month, region),
                                                   featuresIndex=myFeaturesIndex,
                                                   labelIndex=myLabelIndex)
@@ -211,8 +211,12 @@ def runModels(basePath, performanceEstimation=True, prediction=False):
                                                     featuresIndex=3,
                                                     labelIndex=None)
 
+                # Get scaled label (runoff/drainage unit)
+                fullTrainDataSet = makeLabelRunoffPerDrainageUnit(fullTrainDataSet, 'labeled')
+                fullPredictionDataSet = makeLabelRunoffPerDrainageUnit(fullPredictionDataSet, 'prediction')
+
                 # Select features
-                trainDataSet, transformer = mldata.engineerFeaturesForDataSet(fullTrainingDataSet,
+                trainDataSet, transformer = mldata.engineerFeaturesForDataSet(fullTrainDataSet,
                                                                               expertSelectedConfig)
                 predictionDataSet = mldata.engineerFeaturesByTransformer(fullPredictionDataSet,
                                                                    transformer)
@@ -224,6 +228,7 @@ def runModels(basePath, performanceEstimation=True, prediction=False):
                                                                      trainDataSet,
                                                                      predictionDataSet)
                 applyRFModelResult = mlmodel.applyModel(applyRFModelConfig)
+                rescalePredictions(applyRFModelResult, predictionDataSet)
                 predictionOutputPath = predictionFolder + 'sacramentoPredictions.csv'
                 thesisFunctions.outputPredictions(applyRFModelResult, predictionOutputPath)
 
@@ -238,6 +243,48 @@ def runModels(basePath, performanceEstimation=True, prediction=False):
         thesisFunctions.formatWaterYearPredictions(waterYear, aggregateFile)
 
 
+def makeLabelRunoffPerDrainageUnit(dataSet, dataSetType):
+
+    if dataSetType == 'labeled':
+        dataSet.dataFrame['RunoffPerDrainageUnit'] = dataSet.dataFrame.qmeas / dataSet.dataFrame.DRAIN_SQKM
+        columns = dataSet.dataFrame.columns.tolist()
+        newColumns = columns[:6] + columns[48:49] + columns[216:] + columns[6:48] + columns[49:216]
+        orderedFullTrainDF = dataSet.dataFrame[newColumns]
+        newDataSet = mltypes.DataSet(dataSet.description,
+                                     dataSet.path[:-4] + '_ratio.csv',
+                                     mode='w',
+                                     dataFrame=orderedFullTrainDF,
+                                     featuresIndex=8,
+                                     labelIndex=7)
+    elif dataSetType == 'prediction':
+        columns = dataSet.dataFrame.columns.tolist()
+        newColumns = columns[:3] + columns[45:46] + columns[3:45] + columns[46:]
+        orderedFullTrainDF = dataSet.dataFrame[newColumns]
+        newDataSet = mltypes.DataSet(dataSet.description,
+                                     dataSet.path[:-4] + '_ratio.csv',
+                                     mode='w',
+                                     dataFrame=orderedFullTrainDF,
+                                     featuresIndex=4,
+                                     labelIndex=None)
+    else:
+        raise Exception('dataSetType not recognized.')
+
+    return newDataSet
+
+
+def rescalePredictions(applyModelResult, predictionDataSet):
+
+    predictions = applyModelResult.testPredictions
+    predictionsDataFrame = pandas.DataFrame(predictions, columns=['RunoffPerDrainageUnit'])
+    drainageArea = predictionDataSet.dataFrame.DRAIN_SQKM
+    combinedDataFrame = pandas.concat([predictionsDataFrame, drainageArea], axis=1)
+    combinedDataFrame['qpred'] = combinedDataFrame['RunoffPerDrainageUnit'] * combinedDataFrame['DRAIN_SQKM']
+    scaledPredictions = combinedDataFrame.qpred.tolist()
+    applyModelResult.testPredictions = scaledPredictions
+    return
+
+
+
 # Initial setup
 startSecond = time.time()
 startTime = time.strftime('%a, %d %b %Y %X')
@@ -245,7 +292,7 @@ originalModelPath = 'ThesisAnalysis/OriginalModelAssessment/'
 
 # Modeling process
 # setUpFiles(originalModelPath)
-runModels(originalModelPath, performanceEstimation=False, prediction=True)
+runModels(originalModelPath, performanceEstimation=True, prediction=False)
 
 # Report finish
 endSecond = time.time()
