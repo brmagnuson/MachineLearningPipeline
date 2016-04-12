@@ -3,13 +3,16 @@ import threading
 import thesisFunctions
 import constants
 
-basePath = 'AllMonthsDryHalf/'
-# basePath = 'AllMonthsWetHalf/'
-modelApproach = 'dry'
-# modelApproach = 'wet'
+# basePath = 'AllMonthsDryHalf/'
+basePath = 'AllMonthsWetHalf/'
+# modelApproach = 'dry'
+modelApproach = 'wet'
 
 # Parameters
 multiThreading = True
+printLog = False
+singleModel = True
+scaleLabel = True
 randomSeed = constants.randomSeed
 trainFeaturesIndex = 6
 trainLabelIndex = 5
@@ -18,7 +21,6 @@ selectedFeaturesList = ['p0', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p
                         't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12',
                         'p2sum', 'p3sum', 'p6sum', 'PERMAVE', 'RFACT', 'ELEV_MEAN_M_BASIN_30M',
                         'WD_BASIN']
-printLog = True
 
 regions = ['IntMnt', 'Xeric']
 months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
@@ -44,7 +46,9 @@ for region in regions:
                                        modelApproach,
                                        region,
                                        month,
-                                       printLog))
+                                       printLog,
+                                       singleModel,
+                                       scaleLabel))
             threads.append(t)
 
         else:
@@ -52,7 +56,7 @@ for region in regions:
             # Run each prediction process in sequence
             thesisFunctions.processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex,
                                                   selectedFeaturesList, randomSeed, modelApproach, region, month,
-                                                  printLog)
+                                                  printLog, singleModel, scaleLabel)
 
 if multiThreading:
 

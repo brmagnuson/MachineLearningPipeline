@@ -750,7 +750,7 @@ def parseDescriptionToBuildApplyModelConfig(modelDescription, modelParameters, t
         else:
 
             # Parse trainModelParameters string for stacking ensemble so that its pieces can be correctly evaluated.
-            originalFeaturesSearch = re.search("'includeOriginalFeatures': (.*?),", modelParameters)
+            originalFeaturesSearch = re.search("'includeOriginalFeatures': (True|False)", modelParameters)
 
             if originalFeaturesSearch is None:
 
@@ -863,24 +863,49 @@ def outputPredictionLog(logPath, applyModelConfig, statistics=None):
 
 
 def findModelAndPredict(unscaledPredictionDataSet, masterDataPath, randomSeed, myFeaturesIndex, myLabelIndex,
-                        selectedFeaturesList, month, region=None, modelRowIndex=0, printLog=False, logPath=None):
+                        selectedFeaturesList, month, region=None, modelRowIndex=0, printLog=False, logPath=None,
+                        singleModel=False, scaleLabel=False):
 
-    # Read in score model results files.
-    averageFile = masterDataPath + 'Output/scoreModelResults_average.csv'
-    allFile = masterDataPath + 'Output/scoreModelResults_all.csv'
-    averageResults = pandas.read_csv(averageFile)
-    allResults = pandas.read_csv(allFile)
+    if printLog == True and singleModel == True:
+        raise Exception('printLog and singleModel cannot both be true.')
 
-    # Get model with highest average R2
-    bestModel = averageResults.iloc[modelRowIndex]
-    trainDataSetDescription = bestModel.loc['Base DataSet']
-    trainModelDescription = bestModel.loc['Model Method']
+    if singleModel:
+        print('Training with single model.')
+        if 'Dry' in masterDataPath and 'IntMnt' in masterDataPath:
+            print('Training with dry dataset.')
+            trainDataSetDescription = 'Dry Scaled'
+        else:
+            trainDataSetDescription = 'All Scaled'
+        trainModelDescription = 'Stacking Ensemble'
+        trainModelParameters = "{'basePredictorConfigurations': " \
+                               "[Ridge Regression {'alpha': 0.1, 'normalize': True}, " \
+                               "Random Forest {'max_features': 'sqrt', 'random_state': 47392, 'n_estimators': 100}, " \
+                               "K Nearest Neighbors {'weights': 'distance', 'n_neighbors': 5, 'metric': 'minkowski'}, " \
+                               "Support Vector Machine {'C': 10.0, 'epsilon': 0.2, 'kernel': 'rbf'}, " \
+                               "Decision Tree {'max_features': 'sqrt', 'random_state': 47392}, " \
+                               "Ada Boost {'random_state': 47392, 'learning_rate': 0.5, 'n_estimators': 50}], " \
+                               "'stackingPredictorConfiguration': " \
+                               "Random Forest {'max_features': 'sqrt', 'random_state': 47392, 'n_estimators': 100}, " \
+                               "'includeOriginalFeatures': False}"
 
-    # From all the fold results that match the best model, extract the parameters of the one with the highest R2
-    bestModelFolds = allResults.loc[(allResults['Model Method'] == trainModelDescription) &
-                                    (allResults['Base DataSet'] == trainDataSetDescription)]
-    sortedBestModelFolds = bestModelFolds.sort(columns='R Squared', ascending=False)
-    trainModelParameters = sortedBestModelFolds.iloc[0].loc['Parameters']
+    else:
+
+        # Read in score model results files.
+        averageFile = masterDataPath + 'Output/scoreModelResults_average.csv'
+        allFile = masterDataPath + 'Output/scoreModelResults_all.csv'
+        averageResults = pandas.read_csv(averageFile)
+        allResults = pandas.read_csv(allFile)
+
+        # Get model with highest average R2
+        bestModel = averageResults.iloc[modelRowIndex]
+        trainDataSetDescription = bestModel.loc['Base DataSet']
+        trainModelDescription = bestModel.loc['Model Method']
+
+        # From all the fold results that match the best model, extract the parameters of the one with the highest R2
+        bestModelFolds = allResults.loc[(allResults['Model Method'] == trainModelDescription) &
+                                        (allResults['Base DataSet'] == trainDataSetDescription)]
+        sortedBestModelFolds = bestModelFolds.sort(columns='R Squared', ascending=False)
+        trainModelParameters = sortedBestModelFolds.iloc[0].loc['Parameters']
 
     # Find appropriate dataset based on the description and copy to Prediction folder
     if 'Sacramento' in trainDataSetDescription:
@@ -901,9 +926,13 @@ def findModelAndPredict(unscaledPredictionDataSet, masterDataPath, randomSeed, m
                                    featuresIndex=myFeaturesIndex,
                                    labelIndex=myLabelIndex)
 
-    # Get scaled label (runoff/drainage unit)
-    trainDataSet = makeLabelRunoffPerDrainageUnit(unscaledTrainDataSet, 'labeled')
-    predictionDataSet = makeLabelRunoffPerDrainageUnit(unscaledPredictionDataSet, 'prediction')
+    if scaleLabel:
+        # Get scaled label (runoff/drainage unit)
+        trainDataSet = makeLabelRunoffPerDrainageUnit(unscaledTrainDataSet, 'labeled')
+        predictionDataSet = makeLabelRunoffPerDrainageUnit(unscaledPredictionDataSet, 'prediction')
+    else:
+        trainDataSet = unscaledTrainDataSet
+        predictionDataSet = unscaledPredictionDataSet
 
     # Scale if necessary
     if 'Scaled' in trainDataSetDescription:
@@ -935,7 +964,8 @@ def findModelAndPredict(unscaledPredictionDataSet, masterDataPath, randomSeed, m
     applyModelResult = mlmodel.applyModel(applyModelConfig)
 
     # Rescale predictions to flow rate rather than flow rate/drainage sq km
-    rescalePredictions(applyModelResult, predictionDataSet)
+    if scaleLabel:
+        rescalePredictions(applyModelResult, predictionDataSet)
     return applyModelResult
 
 
@@ -1022,7 +1052,8 @@ def outputPredictions(applyModelResult, outputPath):
 
 
 def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex, selectedFeaturesList,
-                          randomSeed, modelApproach, region=None, month=None, printLog=False):
+                          randomSeed, modelApproach, region=None, month=None, printLog=False, singleModel=False,
+                          scaleLabel=False):
 
     if modelApproach not in ['wet', 'dry', 'sacramento']:
         raise ValueError("Model approach must be either 'wet', 'dry', or 'sacramento'.")
@@ -1053,11 +1084,11 @@ def processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIn
     if modelApproach in ['wet', 'dry']:
         sacResult = findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, trainFeaturesIndex,
                                         trainLabelIndex, selectedFeaturesList, month, region, modelIndex,
-                                        printLog, logOutputPath)
+                                        printLog, logOutputPath, singleModel, scaleLabel)
     else:
         sacResult = findModelAndPredict(predictionDataSet, masterDataPath, randomSeed, trainFeaturesIndex,
                                         trainLabelIndex, selectedFeaturesList, month, modelRowIndex=modelIndex,
-                                        printLog=printLog, logPath=logOutputPath)
+                                        printLog=printLog, logPath=logOutputPath, scaleLabel=scaleLabel)
 
     # Save the output
     outputPredictions(sacResult, predictionOutputPath)

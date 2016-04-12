@@ -5,6 +5,7 @@ import constants
 basePath = 'SacramentoModel/'
 
 # Parameters
+scaleLabel = False
 trainFeaturesIndex = 6
 trainLabelIndex = 5
 modelIndex = 0
@@ -29,7 +30,7 @@ for month in months:
         printLog = False
     thesisFunctions.processSacPredictions(basePath, trainFeaturesIndex, trainLabelIndex, modelIndex,
                                           selectedFeaturesList, randomSeed, modelApproach,
-                                          month=month, printLog=printLog)
+                                          month=month, printLog=printLog, scaleLabel=scaleLabel)
 
 print()
 

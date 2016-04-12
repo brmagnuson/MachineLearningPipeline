@@ -4,7 +4,6 @@ import time
 import numpy
 import pandas
 import matplotlib.pyplot as plt
-# import seaborn
 
 
 def partitionDataFrame(dataFrame, method):
@@ -45,10 +44,10 @@ def twoClassScatterPlot(dataPath, title, partitionMethod, outputPath=None, zoom=
     xColumn = 'R Squared'
     yColumn = 'Mean O/E'
     plt.axhline(1, color='#000000', linestyle='dotted', zorder=0)
-    plt.scatter(dataFrame1[xColumn], dataFrame1[yColumn], s=110, facecolors='#2d974d', edgecolors='#2d974d', label=label1,
-                linewidths='2', marker='.')
-    plt.scatter(dataframe2[xColumn], dataframe2[yColumn], s=40, facecolors='none', edgecolors='#96d98e', label=label2,
-                linewidths='2', marker='.', alpha=0.9)
+    plt.scatter(dataFrame1[xColumn], dataFrame1[yColumn], s=110, facecolors='#2d974d', edgecolors='#2d974d',
+                label=label1, linewidths='2', marker='.')
+    plt.scatter(dataframe2[xColumn], dataframe2[yColumn], s=40, facecolors='none', edgecolors='#96d98e',
+                label=label2, linewidths='2', marker='.', alpha=0.9)
 
     # Formatting
     if zoom is None:
@@ -129,7 +128,7 @@ def specificFoldGraphs(baseDataPath, pathToFigures):
     suffix = '2'
     resultsPath = os.path.join(baseDataPath, region, month, 'Output', 'scoreModelResults_' + suffix + '.csv')
     title = month.title() + ' ' + region + ' Results for Fold #2'
-    zoom=[-2, -1, 4]
+    zoom = [-2, -1, 4]
 
     # Specific fold: dry vs all split
     partitionMethod = 'dry'
@@ -193,7 +192,8 @@ def appendixCGraphs(pathToAppendixFigures):
                 partitionMethod = 'dry' if scenario == 'AllMonthsDryHalf' else 'wet'
                 outputPath = os.path.join(pathToAppendixFigures,
                                           scenario,
-                                          partitionMethod.title() + ' R v meanOE ' + region + month.title() + suffix.title())
+                                          partitionMethod.title() + ' R v meanOE ' + region + month.title() +
+                                          suffix.title())
                 twoClassScatterPlot(resultsPath, title, partitionMethod, outputPath)
 
                 time.sleep(1)
@@ -215,6 +215,7 @@ def appendixCGraphs(pathToAppendixFigures):
     outputPath = os.path.join(pathToAppendixFigures, 'Sacramento Ensemble R v meanOE ' + suffix.title())
     twoClassScatterPlot(resultsPath, title, partitionMethod, outputPath)
     return
+
 
 def dataTransformationGraph(baseDataPath, pathToFigures):
 
@@ -283,7 +284,7 @@ def generalBestResultsGraphs(pathToFigures):
                                     outputPath=figurePath, legendLocation='upper right')
             else:
                 twoClassScatterPlot(csvPath, scenario + ' ' + region + ' Best Models', 'stacking',
-                                outputPath=figurePath, legendLocation='lower right')
+                                    outputPath=figurePath, legendLocation='lower right')
     return
 
 
@@ -336,7 +337,7 @@ def meVsUSGSGraphs(pathToFigures):
         usgsModelResults = pandas.DataFrame()
         for month in months:
             monthResultsPath = os.path.join(baseUSGSPath, region, month, 'Output',
-                                       'scoreModelResults_average.csv')
+                                            'scoreModelResults_average.csv')
             monthResults = pandas.read_csv(monthResultsPath)
             monthResults['Month'] = month.title()
             usgsModelResults = usgsModelResults.append(monthResults, ignore_index=True)
@@ -344,10 +345,6 @@ def meVsUSGSGraphs(pathToFigures):
         # Fix Base DataSet names for output
         datasetInfo = usgsModelResults['Base DataSet']
         usgsModelResults['Base DataSet'] = datasetInfo.str.split(',').str.get(0)
-
-        # desiredColumnOrder = ['Month', 'Base DataSet', 'Model Method', 'R Squared', 'Mean O/E',
-        #                       'Standard Deviation O/E', 'Mean Squared Error', 'RMSE (cfs)']
-        # usgsModelResults = usgsModelResults[desiredColumnOrder]
 
         # Get my best results
         csvPath = os.path.join('BestModels', scenario + region + 'BestModels.csv')
@@ -377,16 +374,72 @@ def meVsUSGSGraphs(pathToFigures):
     return
 
 
+def multiModelFlowEstimatesGraph(outputPath, title, *args):
+
+    # Data prep
+    namedMonths = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    numericMonths = []
+    for month in range(1, 13):
+        numericMonths.append(month)
+
+    # Make plot
+    plt.title(title)
+    plt.ylabel('Estimated average flow (cfs)')
+    plt.xlabel('Month')
+    plt.xticks(numericMonths, namedMonths)
+    for df in args:
+
+        # Add line to plot
+        yColumn = df.columns[1]
+        plt.plot(numericMonths, df[yColumn], label=yColumn)
+
+    plt.legend()
+
+    if outputPath is None:
+        plt.show()
+    else:
+        plt.savefig(outputPath, bbox_inches='tight')
+    plt.close()
+
+
+def compareSacramentoPredictions(pathToFigures):
+
+    dataPath = '../../SacramentoData/ComparingNaturalFlows.csv'
+
+    # Get data
+    comparisonFlowEstimates = pandas.read_csv(dataPath)
+
+    # Resort data from Jan to Dec so it plots correctly
+    namedMonths = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    comparisonFlowEstimates['MonthCat'] = pandas.Categorical(comparisonFlowEstimates['Month'],
+                                                             categories=namedMonths,
+                                                             ordered=True)
+    comparisonFlowEstimates = comparisonFlowEstimates.sort('MonthCat')
+
+    sacValleyEstimates = comparisonFlowEstimates[['Month', 'SACC0']]
+    usgsEstimates = comparisonFlowEstimates[['Month', 'USGS Model']]
+    myEstimates = comparisonFlowEstimates[['Month', 'New Models']]
+    myImprovedEstimates = comparisonFlowEstimates[['Month', 'Modified New Models']]
+
+    outputPath = os.path.join(pathToFigures, '4-11 Comparison with SACC0')
+    multiModelFlowEstimatesGraph(outputPath, 'Comparison with SACC0', sacValleyEstimates, usgsEstimates, myEstimates)
+    outputPath = os.path.join(pathToFigures, '4-12 Modified Comparison with SACC0')
+    multiModelFlowEstimatesGraph(outputPath, 'Modified Comparison with SACC0', sacValleyEstimates, usgsEstimates,
+                                 myImprovedEstimates)
+
+    return
+
+
 # Parameters
-pathToFigures = os.path.join('..', '..', '..', 'Figures')
-pathToAppendixFigures = os.path.join(pathToFigures, 'AppendixC')
-baseDataPath = '../AllMonthsDryHalf'
+myPathToFigures = os.path.join('..', '..', '..', 'Figures')
+myPathToAppendixFigures = os.path.join(myPathToFigures, 'AppendixC')
+myBaseDataPath = '../AllMonthsDryHalf'
 
 # Graph production
-# specificFoldGraphs(baseDataPath, pathToFigures)
-# julyCrossValidatedResults(baseDataPath, pathToFigures)
-# appendixCGraphs(pathToAppendixFigures)
-# dataTransformationGraph(baseDataPath, pathToFigures)
-# generalBestResultsGraphs(pathToFigures)
-meVsUSGSGraphs(pathToFigures)
-
+# specificFoldGraphs(myBaseDataPath, myPathToFigures)
+# julyCrossValidatedResults(myBaseDataPath, myPathToFigures)
+# appendixCGraphs(myPathToAppendixFigures)
+# dataTransformationGraph(myBaseDataPath, myPathToFigures)
+# generalBestResultsGraphs(myPathToFigures)
+# meVsUSGSGraphs(myPathToFigures)
+compareSacramentoPredictions(myPathToFigures)
