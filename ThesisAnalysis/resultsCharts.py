@@ -376,6 +376,10 @@ def meVsUSGSGraphs(pathToFigures):
 
 def multiModelFlowEstimatesGraph(outputPath, title, *args):
 
+    lineTypes = ['solid', 'dashed', 'dashdot', 'dotted']
+    if len(args) > len(lineTypes):
+        raise Exception('There are not enough different line types to display the given amount of flow estimates.')
+
     # Data prep
     namedMonths = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
     numericMonths = []
@@ -387,11 +391,11 @@ def multiModelFlowEstimatesGraph(outputPath, title, *args):
     plt.ylabel('Estimated average flow (cfs)')
     plt.xlabel('Month')
     plt.xticks(numericMonths, namedMonths)
-    for df in args:
+    for df, lineType in zip(args, lineTypes):
 
         # Add line to plot
         yColumn = df.columns[1]
-        plt.plot(numericMonths, df[yColumn], label=yColumn)
+        plt.plot(numericMonths, df[yColumn], label=yColumn, linestyle=lineType)
 
     plt.legend()
 
