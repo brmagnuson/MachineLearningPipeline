@@ -381,10 +381,10 @@ def multiModelFlowEstimatesGraph(outputPath, title, *args):
         raise Exception('There are not enough different line types to display the given amount of flow estimates.')
 
     # Data prep
-    namedMonths = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    namedMonths = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']
     numericMonths = []
-    for month in range(1, 13):
-        numericMonths.append(month)
+    for namedMonth in namedMonths:
+        numericMonths.append((time.strptime(namedMonth, '%b').tm_mon + 2) % 12)
 
     # Make plot
     plt.title(title)
@@ -412,13 +412,6 @@ def compareSacramentoPredictions(pathToFigures):
 
     # Get data
     comparisonFlowEstimates = pandas.read_csv(dataPath)
-
-    # Resort data from Jan to Dec so it plots correctly
-    namedMonths = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-    comparisonFlowEstimates['MonthCat'] = pandas.Categorical(comparisonFlowEstimates['Month'],
-                                                             categories=namedMonths,
-                                                             ordered=True)
-    comparisonFlowEstimates = comparisonFlowEstimates.sort('MonthCat')
 
     sacValleyEstimates = comparisonFlowEstimates[['Month', 'SACC0']]
     usgsEstimates = comparisonFlowEstimates[['Month', 'USGS Model']]
