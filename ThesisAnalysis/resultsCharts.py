@@ -397,7 +397,11 @@ def multiModelFlowEstimatesGraph(outputPath, title, *args):
         yColumn = df.columns[1]
         plt.plot(numericMonths, df[yColumn], label=yColumn, linestyle=lineType)
 
-    plt.legend()
+    legendLoc = 'upper right'
+    if 'Modified' in title:
+        if any(gage in title for gage in ['AMF', 'FTO', 'SIS']):
+            legendLoc = 'upper left'
+    plt.legend(loc=legendLoc)
 
     if outputPath is None:
         plt.show()
@@ -406,23 +410,24 @@ def multiModelFlowEstimatesGraph(outputPath, title, *args):
     plt.close()
 
 
-def compareSacramentoPredictions(pathToFigures):
+def compareSacramentoPredictions(pathToFigures, comparisonGage):
 
-    dataPath = '../../SacramentoData/ComparingNaturalFlows.csv'
+    dataPath = '../../SacramentoData/FNFGages/Comparison_' + comparisonGage + '_averageCFS.csv'
 
     # Get data
     comparisonFlowEstimates = pandas.read_csv(dataPath)
 
-    sacValleyEstimates = comparisonFlowEstimates[['Month', 'SACC0']]
+    sacValleyEstimates = comparisonFlowEstimates[['Month', comparisonGage]]
     usgsEstimates = comparisonFlowEstimates[['Month', 'USGS Model']]
     myEstimates = comparisonFlowEstimates[['Month', 'New Models']]
     myImprovedEstimates = comparisonFlowEstimates[['Month', 'Modified New Models']]
 
-    outputPath = os.path.join(pathToFigures, '4-11 Comparison with SACC0')
-    multiModelFlowEstimatesGraph(outputPath, 'Comparison with SACC0', sacValleyEstimates, usgsEstimates, myEstimates)
-    outputPath = os.path.join(pathToFigures, '4-12 Modified Comparison with SACC0')
-    multiModelFlowEstimatesGraph(outputPath, 'Modified Comparison with SACC0', sacValleyEstimates, usgsEstimates,
-                                 myImprovedEstimates)
+    outputPath = os.path.join(pathToFigures, '4-11 Comparison with ' + comparisonGage)
+    multiModelFlowEstimatesGraph(outputPath, 'Water Year 1977: Comparison with ' + comparisonGage + ' (cfs)',
+                                 sacValleyEstimates, usgsEstimates, myEstimates)
+    outputPath = os.path.join(pathToFigures, '4-12 Modified Comparison with ' + comparisonGage)
+    multiModelFlowEstimatesGraph(outputPath, 'Water Year 1977: Modified Comparison with ' + comparisonGage + ' (cfs)',
+                                 sacValleyEstimates, usgsEstimates, myImprovedEstimates)
 
     return
 
@@ -439,4 +444,7 @@ myBaseDataPath = '../AllMonthsDryHalf'
 # dataTransformationGraph(myBaseDataPath, myPathToFigures)
 # generalBestResultsGraphs(myPathToFigures)
 # meVsUSGSGraphs(myPathToFigures)
-compareSacramentoPredictions(myPathToFigures)
+
+gages = ['SACC0', 'AMF', 'YRS', 'FTO', 'SBB', 'SIS']
+for gage in gages:
+    compareSacramentoPredictions(myPathToFigures, gage)
