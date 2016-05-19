@@ -429,6 +429,15 @@ def compareSacramentoPredictions(pathToFigures, comparisonGage):
     multiModelFlowEstimatesGraph(outputPath, 'Water Year 1977: Modified Comparison with ' + comparisonGage + ' (cfs)',
                                  sacValleyEstimates, usgsEstimates, myImprovedEstimates)
 
+    # Print statistics
+    modifiedDifferences = comparisonFlowEstimates['Modified New Models'] - comparisonFlowEstimates[comparisonGage]
+    usgsDifferences = comparisonFlowEstimates['USGS Model'] - comparisonFlowEstimates[comparisonGage]
+    print(', '.join([comparisonGage,
+                     str(int(round(numpy.mean(modifiedDifferences)))),
+                     str(int(round(numpy.std(modifiedDifferences)))),
+                     str(int(round(numpy.mean(usgsDifferences)))),
+                     str(int(round(numpy.std(usgsDifferences))))]))
+
     return
 
 
@@ -445,6 +454,7 @@ myBaseDataPath = '../AllMonthsDryHalf'
 # generalBestResultsGraphs(myPathToFigures)
 # meVsUSGSGraphs(myPathToFigures)
 
-gages = ['SACC0', 'AMF', 'YRS', 'FTO', 'SBB', 'SIS']
+gages = ['SIS', 'SBB', 'SACC0', 'FTO', 'YRS', 'AMF']
+print(', '.join(['Location', 'Mean Modified Difference', 'Std Dev Modified Difference', 'Mean USGS Difference', 'Std Dev USGS Difference']))
 for gage in gages:
     compareSacramentoPredictions(myPathToFigures, gage)
