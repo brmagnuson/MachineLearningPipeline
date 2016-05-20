@@ -188,7 +188,7 @@ def splitDataSet(dataSet, testProportion, randomSeed=None, trainPath=None, testP
     :param randomSeed: Optional. Integer. If None, test-train split randomness will not be controlled and replicable.
     :param trainPath: Optional. If None, automatically creates new files in same location and appends _test and _train
     to the end. If specified, you can control location and/or name of the new files.
-    :return: tuple of training DataSet and testing DataSet
+    :return: SplitDataSet
     """
     originalDataFrame = dataSet.dataFrame
     trainDataFrame, testDataFrame = sklearn.cross_validation.train_test_split(originalDataFrame,

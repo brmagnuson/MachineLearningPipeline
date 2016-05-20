@@ -12,14 +12,16 @@ import mlutilities.modeling
 import mlutilities.utilities
 
 # Paths
-pathToTrainingData = 'ExampleData/myTrainingData.csv'
-pathToTestingData = 'ExampleData/myTestingData.csv'
+pathToData = 'ExampleData/myData.csv'
 
 # Read data sets
-trainingData = mlutilities.types.DataSet('My Training Data',
-                                         pathToTrainingData)
-testingData = mlutilities.types.DataSet('My Testing Data',
-                                        pathToTestingData)
+myData = mlutilities.types.DataSet('My Training Data',
+                                   pathToData)
+splitData = mlutilities.dataTransformation.splitDataSet(myData,
+                                                        testProportion=0.3,
+                                                        randomSeed=89271)
+trainingData = splitData.trainDataSet
+testingData = splitData.testDataSet
 
 # Tune models for training data set
 tuneScoringMethod = 'r2'
